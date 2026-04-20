@@ -53,12 +53,12 @@ export const storageService = {
           id: d.id,
           type: 'expense' as const,
           category: d.category || 'Geral',
-          amount: parseFloat(d.amount) || 0,
-          date: d.date,
+          amount: parseFloat(d.amount) || parseFloat(d.valor) || 0,
+          date: d.date || d.data || d.vencimento,
           observacao: d.observacao,
-          description: d.description,
-          vencimento: d.vencimento,
-          status: d.status,
+          description: d.description || d.descricao || 'Despesa',
+          vencimento: d.vencimento || d.date || d.data,
+          status: d.status || 'Pago',
         })));
       }
 
