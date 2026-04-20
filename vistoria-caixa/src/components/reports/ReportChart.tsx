@@ -45,7 +45,7 @@ export function ReportChart({ data, type }: ReportChartProps) {
             ))}
           </Pie>
           <Tooltip 
-             formatter={(value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
+             formatter={(value: any) => typeof value === 'number' ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'}) : value}
              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
           />
           <Legend verticalAlign="bottom" height={36} iconType="circle" />

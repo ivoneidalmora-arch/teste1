@@ -31,7 +31,7 @@ export function useFinance(selectedDate: Date) {
     let prevExpense = 0;
 
     // Filter array to current month
-    const currentMonthTransactions = [];
+    const currentMonthTransactions: Transaction[] = [];
 
     transactions.forEach((t) => {
       const tDate = new Date(t.date);
