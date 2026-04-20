@@ -91,33 +91,53 @@ export default function RelatoriosPage() {
       {/* Grid de Gráficos Superiores */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <ReportChart data={filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart} type={filters.filterType === 'expense' ? 'expense' : 'income'} />
+          <ReportChart 
+            data={filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart} 
+            type={filters.filterType === 'all' ? 'income' : filters.filterType} 
+          />
         </div>
         <div className="lg:col-span-1">
           <CategorySummary 
             data={filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart} 
-            type={filters.filterType === 'expense' ? 'expense' : 'income'}
-            totalValue={filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome}
+            type={filters.filterType === 'all' ? 'income' : filters.filterType}
+            totalValue={filters.filterType === 'all' ? metrics.totalIncome : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome)}
           />
         </div>
         
-        {/* Card Resumo com Ticket Médio */}
+        {/* Card Resumo com Balanço Inteligente */}
         <div className="lg:col-span-1 flex flex-col gap-4">
-           {/* Box de Rec/Despesa Trocável */}
            <div className={cn(
-             "flex-1 rounded-2xl p-6 border flex flex-col justify-center",
-             filters.filterType === 'expense' ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"
+             "flex-1 rounded-2xl p-6 border flex flex-col justify-center transition-colors duration-500",
+             filters.filterType === 'expense' 
+               ? "bg-rose-50 border-rose-100" 
+               : (filters.filterType === 'all' 
+                 ? (metrics.netBalance >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100")
+                 : "bg-emerald-50 border-emerald-100")
            )}>
               <span className={cn(
                 "text-sm font-semibold mb-2 uppercase tracking-wide",
-                filters.filterType === 'expense' ? "text-rose-600" : "text-emerald-600"
+                filters.filterType === 'expense' 
+                  ? "text-rose-600" 
+                  : (filters.filterType === 'all' 
+                    ? (metrics.netBalance >= 0 ? "text-emerald-600" : "text-rose-600")
+                    : "text-emerald-600")
               )}>
-                {filters.filterType === 'expense' ? 'Total Saídas' : 'Total Líquido Entradas'}
+                {filters.filterType === 'all' ? 'Saldo Líquido (Geral)' : (filters.filterType === 'expense' ? 'Total Saídas' : 'Total Líquido Entradas')}
               </span>
               <span className="text-4xl font-bold text-slate-800 tracking-tighter">
-                {formatBRL(filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome)}
+                {formatBRL(filters.filterType === 'all' ? metrics.netBalance : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome))}
               </span>
-              <span className="text-sm font-medium mt-1 text-slate-500">Filtrado ({transactions.length} Registros)</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm font-medium text-slate-500">Filtrado ({transactions.length} Registros)</span>
+                {filters.filterType === 'all' && (
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
+                    metrics.netBalance >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                  )}>
+                    {metrics.netBalance >= 0 ? 'Lucro' : 'Déficit'}
+                  </span>
+                )}
+              </div>
            </div>
            
            {/* Box Ticket Medio */}

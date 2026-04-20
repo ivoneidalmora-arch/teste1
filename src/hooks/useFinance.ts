@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/types/transaction';
 import { storageService } from '@/services/storage';
-import { startOfMonth, endOfMonth, subMonths, isWithinInterval } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 
 export function useFinance(selectedDate: Date) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -19,11 +19,8 @@ export function useFinance(selectedDate: Date) {
   }, [fetchData]);
 
   const metrics = useMemo(() => {
-    const currentStart = startOfMonth(selectedDate);
-    const currentEnd = endOfMonth(selectedDate);
-
-    const prevStart = startOfMonth(subMonths(selectedDate, 1));
-    const prevEnd = endOfMonth(subMonths(selectedDate, 1));
+    const currentMonthKey = format(selectedDate, 'yyyy-MM');
+    const prevMonthKey = format(subMonths(selectedDate, 1), 'yyyy-MM');
 
     let currentIncome = 0;
     let currentExpense = 0;
@@ -31,13 +28,14 @@ export function useFinance(selectedDate: Date) {
     let prevExpense = 0;
     let totalGlobalIncome = 0;
     let totalGlobalExpense = 0;
-
-    // Filter array to current month
+    
+    const monthsSet = new Set<string>();
     const currentMonthTransactions: Transaction[] = [];
 
     transactions.forEach((t) => {
-      const tDate = new Date(t.date);
-      // Usando valor líquido (se existir) para as receitas e desconsiderando despesas pendentes
+      const monthKey = t.date.substring(0, 7);
+      monthsSet.add(monthKey);
+
       const tValue = t.type === 'income' 
           ? ((t as IncomeTransaction).amountLiquido || t.amount) 
           : t.amount;
@@ -46,11 +44,11 @@ export function useFinance(selectedDate: Date) {
       if (t.type === 'income') totalGlobalIncome += tValue;
       if (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente') totalGlobalExpense += tValue;
 
-      if (isWithinInterval(tDate, { start: currentStart, end: currentEnd })) {
+      if (monthKey === currentMonthKey) {
         currentMonthTransactions.push(t);
         if (t.type === 'income') currentIncome += tValue;
         if (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente') currentExpense += tValue;
-      } else if (isWithinInterval(tDate, { start: prevStart, end: prevEnd })) {
+      } else if (monthKey === prevMonthKey) {
         if (t.type === 'income') prevIncome += tValue;
         if (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente') prevExpense += tValue;
       }
@@ -60,10 +58,7 @@ export function useFinance(selectedDate: Date) {
     const prevBalance = prevIncome - prevExpense;
     const totalGlobalBalance = totalGlobalIncome - totalGlobalExpense;
 
-    // Disponibilidade de meses (YYYY-MM)
-    const availableMonths = Array.from(new Set(
-      transactions.map(t => t.date.substring(0, 7))
-    )).sort((a, b) => b.localeCompare(a));
+    const availableMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
 
     const calcVariation = (curr: number, prev: number) => {
       if (prev === 0) return curr > 0 ? 100 : (curr < 0 ? -100 : 0);

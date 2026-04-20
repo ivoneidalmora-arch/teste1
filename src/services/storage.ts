@@ -23,8 +23,13 @@ export const storageService = {
   // === Transactions CRUD (Cloud Supabase) ===
   getTransactions: async (): Promise<Transaction[]> => {
     try {
-      const { data: receitas, error: errRec } = await supabase.from('Receitas').select('*');
-      const { data: despesas, error: errDes } = await supabase.from('Despesas').select('*');
+      const [resRec, resDes] = await Promise.all([
+        supabase.from('Receitas').select('*'),
+        supabase.from('Despesas').select('*')
+      ]);
+
+      const { data: receitas, error: errRec } = resRec;
+      const { data: despesas, error: errDes } = resDes;
 
       if (errRec) console.error('Erro ao buscar receitas:', errRec);
       if (errDes) console.error('Erro ao buscar despesas:', errDes);

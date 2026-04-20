@@ -7,13 +7,15 @@ import { cn } from '@/utils/cn';
 import { storageService } from '@/services/storage';
 import { Transaction, IncomeTransaction } from '@/types/transaction';
 
+import { memo } from 'react';
+
 interface RecentActivityProps {
   transactions: Transaction[];
   onEdit: (t: Transaction) => void;
   onRefresh: () => void;
 }
 
-export function RecentActivity({ transactions, onEdit, onRefresh }: RecentActivityProps) {
+export const RecentActivity = memo(function RecentActivity({ transactions, onEdit, onRefresh }: RecentActivityProps) {
   // Pegar as ultimas 6 transações considerando que o array root já veio formatado decrescente
   const recent = transactions.slice(0, 6);
 
