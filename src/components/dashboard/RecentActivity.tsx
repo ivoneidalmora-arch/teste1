@@ -1,12 +1,18 @@
 "use client";
 
-import { Transaction, IncomeTransaction } from '@/types/transaction';
-import { ArrowDownRight, ArrowUpRight, Clock } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Clock, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
+import { storageService } from '@/services/storage';
 
-export function RecentActivity({ transactions }: { transactions: Transaction[] }) {
+interface RecentActivityProps {
+  transactions: Transaction[];
+  onEdit: (t: Transaction) => void;
+  onRefresh: () => void;
+}
+
+export function RecentActivity({ transactions, onEdit, onRefresh }: RecentActivityProps) {
   // Pegar as ultimas 6 transações considerando que o array root já veio formatado decrescente
   const recent = transactions.slice(0, 6);
 
@@ -49,13 +55,37 @@ export function RecentActivity({ transactions }: { transactions: Transaction[] }
                 </div>
               </div>
               
-              <div className="flex flex-col items-end">
-                <span className={cn(
-                  "text-sm font-bold",
-                  isIncome ? "text-emerald-600" : "text-rose-600"
-                )}>
-                  {isIncome ? '+' : '-'} {t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end mr-2">
+                  <span className={cn(
+                    "text-sm font-bold",
+                    isIncome ? "text-emerald-600" : "text-rose-600"
+                  )}>
+                    {isIncome ? '+' : '-'} {t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => onEdit(t)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) {
+                        const success = await storageService.deleteTransaction(t.id, t.type);
+                        if (success) onRefresh();
+                      }
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           );

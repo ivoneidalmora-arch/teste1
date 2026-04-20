@@ -6,15 +6,18 @@ import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { NovaVistoriaModal } from '@/components/modals/NovaVistoriaModal';
 import { NovaDespesaModal } from '@/components/modals/NovaDespesaModal';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Wallet, RefreshCcw, Plus, Minus, Globe, Calendar } from 'lucide-react';
+import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Wallet, RefreshCcw, Plus, Minus, Globe, Calendar, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { format, startOfMonth } from 'date-fns';
+import { format, startOfMonth, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Transaction } from '@/types/transaction';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const { metrics, transactions, loading, refresh } = useFinance(selectedDate);
 
@@ -41,17 +44,28 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-900 tracking-tight">
             Dashboard Financeiro
           </h1>
-          <div className="flex items-center gap-2 text-slate-500">
+          <div className="flex items-center gap-2 text-slate-500 relative group">
             <Calendar className="w-4 h-4" />
-            <input 
-              type="month" 
+            <select 
               value={format(selectedDate, 'yyyy-MM')}
               onChange={(e) => {
+                if (!e.target.value) return;
                 const [year, month] = e.target.value.split('-');
                 setSelectedDate(new Date(parseInt(year), parseInt(month) - 1, 1));
               }}
-              className="bg-transparent border-none p-0 font-medium focus:ring-0 cursor-pointer hover:text-slate-700 transition-colors"
-            />
+              className="appearance-none bg-transparent border-none p-0 pr-6 font-semibold focus:ring-0 cursor-pointer hover:text-slate-700 transition-colors capitalize outline-none"
+            >
+              {metrics.availableMonths.length === 0 ? (
+                <option value="">Sem lançamentos</option>
+              ) : (
+                metrics.availableMonths.map(m => (
+                  <option key={m} value={m}>
+                    {format(parseISO(`${m}-01`), 'MMMM yyyy', { locale: ptBR })}
+                  </option>
+                ))
+              )}
+            </select>
+            <ChevronDown className="w-3 h-3 absolute right-0 pointer-events-none opacity-50" />
           </div>
         </div>
         
@@ -87,24 +101,25 @@ export default function Dashboard() {
         <div className="absolute top-0 right-0 p-8 opacity-10">
           <Globe className="w-32 h-32" />
         </div>
-        <div className="relative z-10">
-          <h2 className="text-slate-400 font-semibold uppercase tracking-wider text-sm mb-6 flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Balanço Global (Todos os Tempos)
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <p className="text-slate-400 text-sm mb-1">Total Receitas</p>
-              <p className="text-3xl font-bold text-emerald-400">{formatBRL(metrics.totalGlobalIncome)}</p>
-            </div>
-            <div className="border-l border-white/10 md:pl-8">
-              <p className="text-slate-400 text-sm mb-1">Total Despesas</p>
-              <p className="text-3xl font-bold text-rose-400">{formatBRL(metrics.totalGlobalExpense)}</p>
-            </div>
-            <div className="border-l border-white/10 md:pl-8">
-              <p className="text-slate-400 text-sm mb-1">Saldo Acumulado</p>
-              <p className="text-4xl font-black text-white tracking-tight">{formatBRL(metrics.totalGlobalBalance)}</p>
-            </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-slate-400 font-semibold uppercase tracking-wider text-sm mb-2 flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              Balanço Global
+            </h2>
+            <p className="text-5xl font-black text-white tracking-tight leading-none">
+              {formatBRL(metrics.totalGlobalBalance)}
+            </p>
+            <p className="text-slate-400 mt-2 text-sm">Patrimônio líquido acumulado no sistema</p>
+          </div>
+          
+          <div className="hidden md:block h-12 w-px bg-white/10"></div>
+          
+          <div className="flex items-center gap-4 text-sm font-medium text-slate-300">
+             <div className="flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+               Sistema Online & Sincronizado
+             </div>
           </div>
         </div>
       </div>
@@ -193,9 +208,20 @@ export default function Dashboard() {
           <DashboardCalendar currentDate={selectedDate} transactions={metrics.currentMonthTransactions} />
         </div>
         <div className="lg:col-span-1">
-          <RecentActivity transactions={transactions} />
+          <RecentActivity 
+            transactions={transactions} 
+            onEdit={(t) => setEditingTransaction(t)}
+            onRefresh={refresh}
+          />
         </div>
       </div>
+
+      <EditTransactionModal 
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        onSuccess={refresh}
+        transaction={editingTransaction}
+      />
 
       <NovaVistoriaModal 
         isOpen={isVistoriaModalOpen} 

@@ -60,6 +60,11 @@ export function useFinance(selectedDate: Date) {
     const prevBalance = prevIncome - prevExpense;
     const totalGlobalBalance = totalGlobalIncome - totalGlobalExpense;
 
+    // Disponibilidade de meses (YYYY-MM)
+    const availableMonths = Array.from(new Set(
+      transactions.map(t => t.date.substring(0, 7))
+    )).sort((a, b) => b.localeCompare(a));
+
     const calcVariation = (curr: number, prev: number) => {
       if (prev === 0) return curr > 0 ? 100 : (curr < 0 ? -100 : 0);
       return ((curr - prev) / Math.abs(prev)) * 100;
@@ -72,6 +77,7 @@ export function useFinance(selectedDate: Date) {
       totalGlobalIncome,
       totalGlobalExpense,
       totalGlobalBalance,
+      availableMonths,
       incomeVariation: calcVariation(currentIncome, prevIncome),
       expenseVariation: calcVariation(currentExpense, prevExpense),
       balanceVariation: calcVariation(currentBalance, prevBalance),
