@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --color-brand-success: #10b981;
+  --color-brand-danger: #ef4444;
+  --color-brand-primary: #3b82f6;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Utilitários Extras Mencionados no Guia */
+@layer utilities {
+  .glass-nav {
+    background-color: rgb(15 23 42 / 0.6);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgb(255 255 255 / 0.05);
+  }
+
+  .border-detran {
+    border: 1px solid #f1f5f9;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #cbd5e1;
+  }
+}
