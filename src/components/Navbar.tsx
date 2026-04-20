@@ -24,9 +24,15 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <div className="relative group cursor-pointer" onClick={() => router.push('/')}>
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative flex items-center justify-center p-1 bg-white rounded-lg">
-                 {/* Reusing existing logo from legacy if wanted, or placeholder text */}
-                <span className="text-xl font-bold text-slate-800 tracking-tighter px-2">Alfa</span>
+              <div className="relative flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
+                <Image 
+                  src="/logo.png" 
+                  alt="Alfa Logo" 
+                  width={110} 
+                  height={40} 
+                  className="h-9 w-auto object-contain"
+                  priority
+                />
               </div>
             </div>
             
