@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
 import { storageService } from '@/services/storage';
+import { Transaction, IncomeTransaction } from '@/types/transaction';
 
 interface RecentActivityProps {
   transactions: Transaction[];

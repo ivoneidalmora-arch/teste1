@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BaseModal } from './BaseModal';
 import { storageService } from '@/services/storage';
+import { Transaction } from '@/types/transaction';
 import { format } from 'date-fns';
 
 interface Props {

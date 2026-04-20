@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { storageService } from '@/services/storage';
-import { Transaction } from '@/types/transaction';
+import { Transaction, IncomeTransaction } from '@/types/transaction';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
 
