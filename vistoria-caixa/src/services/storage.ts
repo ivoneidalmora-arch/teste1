@@ -23,8 +23,8 @@ export const storageService = {
   // === Transactions CRUD (Cloud Supabase) ===
   getTransactions: async (): Promise<Transaction[]> => {
     try {
-      const { data: receitas, error: errRec } = await supabase.from('receitas').select('*');
-      const { data: despesas, error: errDes } = await supabase.from('despesas').select('*');
+      const { data: receitas, error: errRec } = await supabase.from('Receitas').select('*');
+      const { data: despesas, error: errDes } = await supabase.from('Despesas').select('*');
 
       if (errRec) console.error('Erro ao buscar receitas:', errRec);
       if (errDes) console.error('Erro ao buscar despesas:', errDes);
@@ -77,14 +77,14 @@ export const storageService = {
         // Evitamos enviar ID caso seja mock string de locale antigo
         const dbPayload = typeof id === 'string' && id.startsWith('inc_') ? payload : { id, ...payload };
         
-        const { data, error } = await supabase.from('receitas').insert([dbPayload]).select().single();
+        const { data, error } = await supabase.from('Receitas').insert([dbPayload]).select().single();
         if (error) throw error;
         return { ...data, type: 'income' } as IncomeTransaction;
       } else {
         const { id, type, ...payload } = transaction as ExpenseTransaction;
         const dbPayload = typeof id === 'string' && id.startsWith('exp_') ? payload : { id, ...payload };
 
-        const { data, error } = await supabase.from('despesas').insert([dbPayload]).select().single();
+        const { data, error } = await supabase.from('Despesas').insert([dbPayload]).select().single();
         if (error) throw error;
         return { ...data, type: 'expense' } as ExpenseTransaction;
       }
@@ -98,11 +98,11 @@ export const storageService = {
     try {
       if (updatedTransaction.type === 'income') {
         const { type, id: _, ...payload } = updatedTransaction as IncomeTransaction;
-        const { error } = await supabase.from('receitas').update(payload).eq('id', id);
+        const { error } = await supabase.from('Receitas').update(payload).eq('id', id);
         if (error) throw error;
       } else {
         const { type, id: _, ...payload } = updatedTransaction as ExpenseTransaction;
-        const { error } = await supabase.from('despesas').update(payload).eq('id', id);
+        const { error } = await supabase.from('Despesas').update(payload).eq('id', id);
         if (error) throw error;
       }
       return true;
@@ -115,10 +115,10 @@ export const storageService = {
   deleteTransaction: async (id: string | number, type: 'income' | 'expense'): Promise<boolean> => {
     try {
       if (type === 'income') {
-        const { error } = await supabase.from('receitas').delete().eq('id', id);
+        const { error } = await supabase.from('Receitas').delete().eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('despesas').delete().eq('id', id);
+        const { error } = await supabase.from('Despesas').delete().eq('id', id);
         if (error) throw error;
       }
       return true;
