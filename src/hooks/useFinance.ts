@@ -29,6 +29,8 @@ export function useFinance(selectedDate: Date) {
     let currentExpense = 0;
     let prevIncome = 0;
     let prevExpense = 0;
+    let totalGlobalIncome = 0;
+    let totalGlobalExpense = 0;
 
     // Filter array to current month
     const currentMonthTransactions: Transaction[] = [];
@@ -39,6 +41,10 @@ export function useFinance(selectedDate: Date) {
       const tValue = t.type === 'income' 
           ? ((t as IncomeTransaction).amountLiquido || t.amount) 
           : t.amount;
+
+      // Global Sums
+      if (t.type === 'income') totalGlobalIncome += tValue;
+      if (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente') totalGlobalExpense += tValue;
 
       if (isWithinInterval(tDate, { start: currentStart, end: currentEnd })) {
         currentMonthTransactions.push(t);
@@ -52,6 +58,7 @@ export function useFinance(selectedDate: Date) {
 
     const currentBalance = currentIncome - currentExpense;
     const prevBalance = prevIncome - prevExpense;
+    const totalGlobalBalance = totalGlobalIncome - totalGlobalExpense;
 
     const calcVariation = (curr: number, prev: number) => {
       if (prev === 0) return curr > 0 ? 100 : (curr < 0 ? -100 : 0);
@@ -62,6 +69,9 @@ export function useFinance(selectedDate: Date) {
       currentIncome,
       currentExpense,
       currentBalance,
+      totalGlobalIncome,
+      totalGlobalExpense,
+      totalGlobalBalance,
       incomeVariation: calcVariation(currentIncome, prevIncome),
       expenseVariation: calcVariation(currentExpense, prevExpense),
       balanceVariation: calcVariation(currentBalance, prevBalance),
