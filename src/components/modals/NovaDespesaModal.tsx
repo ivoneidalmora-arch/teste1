@@ -5,6 +5,7 @@ import { BaseModal } from './BaseModal';
 import { storageService } from '@/services/storage';
 import { Transaction } from '@/types/transaction';
 import { format } from 'date-fns';
+import { isHoliday, adjustToNextBusinessDay } from '@/utils/holidays';
 
 interface Props {
   isOpen: boolean;
@@ -19,8 +20,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     categoria: 'Operacional',
     descricao: '',
     valor: '',
-    data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
-    vencimento: format(defaultDate || new Date(), 'yyyy-MM-dd'),
+    data: format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    vencimento: format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
     status: 'Pago' as 'Pago' | 'Pendente',
     observacao: ''
   });
@@ -28,7 +29,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
   // Sincroniza a data se o filtro mudar
   useEffect(() => {
     if (isOpen && defaultDate) {
-      const formatted = format(defaultDate, 'yyyy-MM-dd');
+      const adjustedDate = adjustToNextBusinessDay(defaultDate);
+      const formatted = format(adjustedDate, 'yyyy-MM-dd');
       setFormData(prev => ({ 
         ...prev, 
         data: formatted,
@@ -39,8 +41,21 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    const v = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'date' ? value.toUpperCase() : value;
+    let v = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'date' ? value.toUpperCase() : value;
     
+    // Validação de Dia Útil (Lançamento e Vencimento)
+    if ((name === 'data' || name === 'vencimento') && value) {
+      const selectedDate = new Date(value + 'T12:00:00');
+      const adjusted = adjustToNextBusinessDay(selectedDate);
+      const adjustedStr = format(adjusted, 'yyyy-MM-dd');
+
+      if (adjustedStr !== value) {
+        const holiday = isHoliday(selectedDate);
+        alert(`Atenção: A ${name === 'data' ? 'data de lançamento' : 'data de vencimento'} escolhida cai em um ${holiday ? `feriado (${holiday})` : 'final de semana'}.\n\nO campo será ajustado para o próximo dia útil: ${format(adjusted, 'dd/MM/yyyy')}`);
+        v = adjustedStr;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: v

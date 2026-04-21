@@ -6,6 +6,8 @@ import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay } from '
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
 
+import { isHoliday } from '@/utils/holidays';
+
 interface CalendarProps {
   currentDate: Date;
   transactions: Transaction[];
@@ -53,6 +55,7 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
           Calendário de Fluxo <span className="text-sm font-normal text-slate-400 block sm:inline sm:ml-2">{format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })}</span>
         </h3>
         <div className="flex items-center gap-3 text-[10px] md:text-xs">
+          <div className="flex items-center gap-1 text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded">Feriado</div>
           <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-success"></span> Recebimentos</div>
           <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-danger"></span> Saídas</div>
           <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Misto</div>
@@ -75,24 +78,33 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
           const dateKey = format(day, 'yyyy-MM-dd');
           const stats = dayStats[dateKey] || { totalIn: 0, totalOut: 0, hasIn: false, hasOut: false };
           const isToday = dateKey === todayStr;
+          const holidayName = isHoliday(day);
 
           return (
             <div 
               key={dateKey} 
               className={cn(
                 "relative p-1 md:p-2 h-16 md:h-20 border border-slate-100/50 rounded-xl flex flex-col items-center justify-start hover:border-blue-300 hover:bg-blue-50/50 transition-colors group cursor-pointer",
-                isToday && "ring-2 ring-blue-500 ring-offset-1 bg-blue-50/20"
+                isToday && "ring-2 ring-blue-500 ring-offset-1 bg-blue-50/20",
+                holidayName && "bg-slate-50 border-slate-200"
               )}
+              title={holidayName || undefined}
             >
               <span className={cn(
                  "text-xs md:text-sm font-semibold mb-1",
-                 isToday ? "text-blue-600" : "text-slate-600"
+                 isToday ? "text-blue-600" : (holidayName ? "text-slate-400" : "text-slate-600")
               )}>
                 {format(day, 'd')}
               </span>
+
+              {holidayName && (
+                <span className="text-[7px] md:text-[8px] font-black text-slate-300 uppercase leading-tight text-center px-1 line-clamp-2">
+                  {holidayName}
+                </span>
+              )}
               
               {/* Pontos de Lógica */}
-              <div className="flex gap-1 mb-1">
+              <div className="flex gap-1 mb-1 mt-auto">
                 {stats.hasIn && stats.hasOut && (
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse drop-shadow-sm"></span>
                 )}
