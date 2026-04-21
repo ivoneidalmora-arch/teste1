@@ -1,6 +1,7 @@
 "use client";
 
 import { useReports } from '@/hooks/useReports';
+import { ReportChart } from '@/components/reports/ReportChart';
 import { CategorySummary } from '@/components/reports/CategorySummary';
 import { ClientRanking } from '@/components/reports/ClientRanking';
 import { emitirRelatorioPDF } from '@/services/pdf';

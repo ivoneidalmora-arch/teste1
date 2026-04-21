@@ -100,4 +100,4 @@ export const RecentActivity = memo(function RecentActivity({ transactions, onEdi
       </button>
     </div>
   );
-}
+});

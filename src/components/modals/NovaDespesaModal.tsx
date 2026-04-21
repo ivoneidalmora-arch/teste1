@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { storageService } from '@/services/storage';
 import { Transaction } from '@/types/transaction';
