@@ -45,7 +45,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-900 tracking-tight">
-            Dashboard Financeiro
+            Dashboard Financeiro <span className="text-xs font-medium text-slate-400 align-top ml-1">v2.2</span>
           </h1>
           <div className="flex items-center gap-2 text-slate-500 relative group">
             <Calendar className="w-4 h-4" />
