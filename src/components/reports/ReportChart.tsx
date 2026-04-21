@@ -37,7 +37,7 @@ export function ReportChart({ data, type }: ReportChartProps) {
   };
 
   return (
-    <div className="h-72 w-full p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg transition-all duration-300">
+    <div className="h-64 sm:h-72 w-full p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg transition-all duration-300">
       <h3 className="text-slate-700 font-bold mb-2 ml-4">
         {getTitle()}
       </h3>

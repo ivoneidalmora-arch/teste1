@@ -65,7 +65,7 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-800 tracking-tight">Consolidado Financeiro (DRE)</h3>
-            <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase">Relatório Analítico</span>
+            <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full uppercase">Relatório Analítico</span>
           </div>
 
           <div className="space-y-6">
@@ -120,7 +120,7 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
             )}>
               <div>
                 <span className={cn(
-                  "text-xs font-black uppercase tracking-widest block mb-1",
+                  "text-[10px] sm:text-xs font-black uppercase tracking-widest block mb-1",
                   netProfit >= 0 ? "text-emerald-600" : "text-rose-600"
                 )}>
                   Resultado Líquido

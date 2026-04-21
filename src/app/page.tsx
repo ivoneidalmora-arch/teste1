@@ -44,8 +44,8 @@ export default function Dashboard() {
       {/* Header Context */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-900 tracking-tight">
-            Dashboard Financeiro <span className="text-xs font-medium text-slate-400 align-top ml-1">v2.2</span>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-900 tracking-tight flex items-center gap-2">
+            Dashboard Financeiro <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-md border border-slate-200 leading-none">v2.2</span>
           </h1>
           <div className="flex items-center gap-2 text-slate-500 relative group">
             <Calendar className="w-4 h-4" />
@@ -72,37 +72,37 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button 
             onClick={() => setIsDespesaModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold rounded-xl transition-colors"
+            className="flex-1 sm:flex-none h-11 flex items-center justify-center gap-2 px-4 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold rounded-xl transition-colors border border-rose-100"
           >
-            <Minus className="w-5 h-5" />
-            <span className="hidden sm:inline">Despesa</span>
+            <Minus className="w-4 h-4" />
+            <span className="text-sm">Despesa</span>
           </button>
           
           <button 
             onClick={() => setIsVistoriaModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
+            className="flex-1 sm:flex-none h-11 flex items-center justify-center gap-2 px-5 bg-emerald-600 text-white hover:bg-emerald-700 font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
           >
-            <Plus className="w-5 h-5" />
-            <span>Nova Vistoria</span>
+            <Plus className="w-4 h-4" />
+            <span className="text-sm">Nova Vistoria</span>
           </button>
  
           <button 
             onClick={refresh}
-            className="flex items-center justify-center p-2.5 bg-white border border-slate-200 shadow-sm text-slate-700 rounded-xl hover:bg-slate-50 transition-colors ml-2"
+            className="h-11 w-11 flex items-center justify-center bg-white border border-slate-200 shadow-sm text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
             title="Atualizar Dados"
           >
-            <RefreshCcw className="w-5 h-5" />
+            <RefreshCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Seção Balanço Global */}
       <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Globe className="w-32 h-32" />
+        <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10">
+          <Globe className="w-20 md:w-32 h-20 md:h-32" />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>

@@ -26,9 +26,9 @@ export default function LoginPage() {
       <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-brand-success rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-blob animation-delay-2000"></div>
       
       <div className="relative w-full max-w-md px-6 py-12">
-        <div className="glass-nav rounded-2xl p-8 shadow-2xl border border-white/10">
+        <div className="glass-nav rounded-2xl p-6 sm:p-10 shadow-2xl border border-white/10">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-xl mb-6 border border-white/20">
+            <div className="inline-flex items-center justify-center p-2 bg-white rounded-xl shadow-xl mb-4 border border-white/20">
               <Image 
                 src="/logo.png" 
                 alt="Alfa Logo" 
@@ -38,10 +38,10 @@ export default function LoginPage() {
                 priority
               />
             </div>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
               Dashboard Alfa
             </h1>
-            <p className="text-slate-400 mt-2 text-sm">Autentique-se para acessar o sistema corporativo</p>
+            <p className="text-slate-400 mt-1.5 text-xs sm:text-sm">Autentique-se para acessar o sistema corporativo</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6">
