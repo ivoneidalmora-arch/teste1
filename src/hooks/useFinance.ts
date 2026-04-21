@@ -66,33 +66,41 @@ export function useFinance(selectedDate: Date) {
     };
 
     // --- Novas estatísticas dinâmicas para o Dashboard ---
-    const rankingMap: Record<string, { count: number, total: number }> = {};
+    const rankingMap: Record<string, { count: number, bruto: number, liquido: number }> = {};
     const inspectionMap: Record<string, { count: number, total: number }> = {};
 
     currentMonthTransactions.forEach(t => {
-       const val = t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount;
-       
        if (t.type === 'income') {
+         const inc = t as IncomeTransaction;
+         const valBruto = inc.amountBruto || inc.amount || 0;
+         const valLiquido = inc.amountLiquido || valBruto;
+         
          // Ranking de Clientes (Filtro Dinâmico Mensal)
-         const cliente = ((t as IncomeTransaction).cliente || '').trim().toUpperCase();
+         const cliente = (inc.cliente || '').trim().toUpperCase();
          if (cliente && cliente !== 'S/N' && cliente !== 'SN') {
-            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, total: 0 };
+            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0 };
             rankingMap[cliente].count += 1;
-            rankingMap[cliente].total += val;
+            rankingMap[cliente].bruto += valBruto;
+            rankingMap[cliente].liquido += valLiquido;
          }
 
          // Balanço de Vistorias Detalhado
          const cat = t.category;
          if (!inspectionMap[cat]) inspectionMap[cat] = { count: 0, total: 0 };
          inspectionMap[cat].count += 1;
-         inspectionMap[cat].total += val;
+         inspectionMap[cat].total += valLiquido;
        }
     });
 
     const clientRanking = Object.keys(rankingMap)
-      .map(name => ({ name, count: rankingMap[name].count, total: rankingMap[name].total }))
-      .sort((a,b) => b.total - a.total) // Ordenado por valor conforme solicitado
-      .slice(0, 5);
+      .map(name => ({ 
+        name, 
+        count: rankingMap[name].count, 
+        total: rankingMap[name].liquido, // Usado para ordenação
+        bruto: rankingMap[name].bruto,
+        liquido: rankingMap[name].liquido 
+      }))
+      .sort((a,b) => b.total - a.total); // Agora mostra todos, sem .slice(0, 5)
 
     const inspectionSummary = Object.keys(inspectionMap)
       .map(name => ({ name, count: inspectionMap[name].count, total: inspectionMap[name].total }))

@@ -59,28 +59,33 @@ export function useReports() {
     // Agrupamentos
     const incomeByCategory: Record<string, number> = {};
     const expenseByCategory: Record<string, number> = {};
-    const rankingMap: Record<string, { count: number, total: number }> = {};
+    const rankingMap: Record<string, { count: number, bruto: number, liquido: number }> = {};
     
     // Métricas baseadas no período INTEGRAL (ignorando filtro de tipo para o balanço)
     periodFilteredTransactions.forEach(t => {
-       const val = t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount;
-       
        if (t.type === 'income') {
-         totalIncome += val;
+         const inc = t as IncomeTransaction;
+         const valBruto = inc.amountBruto || inc.amount || 0;
+         const valLiquido = inc.amountLiquido || valBruto;
+         
+         totalIncome += valLiquido;
          validIncomesCount++;
          
          // Por Categoria
-         incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + val;
+         incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + valLiquido;
          
          // Ranking de Clientes (ignora S/N ou vazios)
-         const cliente = ((t as IncomeTransaction).cliente || '').trim().toUpperCase();
-         if (cliente && cliente !== 'S/N' && cliente !== 'S.N') {
-            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, total: 0 };
+         const cliente = (inc.cliente || '').trim().toUpperCase();
+         if (cliente && cliente !== 'S/N' && cliente !== 'S.N' && cliente !== 'SN') {
+            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0 };
             rankingMap[cliente].count += 1;
-            rankingMap[cliente].total += val;
+            rankingMap[cliente].bruto += valBruto;
+            rankingMap[cliente].liquido += valLiquido;
          }
        } else {
-         if ((t as ExpenseTransaction).status !== 'Pendente') {
+         const exp = t as ExpenseTransaction;
+         const val = exp.amount || 0;
+         if (exp.status !== 'Pendente') {
             totalExpense += val;
             expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + val;
          }
@@ -98,15 +103,16 @@ export function useReports() {
       .map(key => ({ name: key, value: expenseByCategory[key] }))
       .sort((a,b) => b.value - a.value);
 
-    // Ranking de Clientes (Top 5 por valor pago)
+    // Ranking de Clientes (Baseado no valor Líquido)
     const clientRanking = Object.keys(rankingMap)
       .map(name => ({
         name,
         count: rankingMap[name].count,
-        total: rankingMap[name].total
+        total: rankingMap[name].liquido,
+        bruto: rankingMap[name].bruto,
+        liquido: rankingMap[name].liquido
       }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
+      .sort((a, b) => b.total - a.total);
 
     return {
       totalIncome,
