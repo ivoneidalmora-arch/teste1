@@ -1,8 +1,8 @@
 "use client";
 
 import { useReports } from '@/hooks/useReports';
-import { ReportChart } from '@/components/reports/ReportChart';
 import { CategorySummary } from '@/components/reports/CategorySummary';
+import { ClientRanking } from '@/components/reports/ClientRanking';
 import { emitirRelatorioPDF } from '@/services/pdf';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -104,49 +104,69 @@ export default function RelatoriosPage() {
           />
         </div>
         
-        {/* Card Resumo com Balanço Inteligente */}
         <div className="lg:col-span-1 flex flex-col gap-4">
+           {/* Card Balanço Geral do Período */}
            <div className={cn(
-             "flex-1 rounded-2xl p-6 border flex flex-col justify-center transition-colors duration-500",
-             filters.filterType === 'expense' 
-               ? "bg-rose-50 border-rose-100" 
-               : (filters.filterType === 'all' 
-                 ? (metrics.netBalance >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100")
-                 : "bg-emerald-50 border-emerald-100")
+             "flex-1 rounded-2xl p-6 border flex flex-col justify-center transition-all duration-500 hover:shadow-md",
+             metrics.netBalance >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"
            )}>
               <span className={cn(
-                "text-sm font-semibold mb-2 uppercase tracking-wide",
-                filters.filterType === 'expense' 
-                  ? "text-rose-600" 
-                  : (filters.filterType === 'all' 
-                    ? (metrics.netBalance >= 0 ? "text-emerald-600" : "text-rose-600")
-                    : "text-emerald-600")
+                "text-xs font-bold mb-2 uppercase tracking-widest",
+                metrics.netBalance >= 0 ? "text-emerald-600" : "text-rose-600"
               )}>
-                {filters.filterType === 'all' ? 'Saldo Líquido (Geral)' : (filters.filterType === 'expense' ? 'Total Saídas' : 'Total Líquido Entradas')}
+                Saldo Líquido no Período
               </span>
-              <span className="text-4xl font-bold text-slate-800 tracking-tighter">
-                {formatBRL(filters.filterType === 'all' ? metrics.netBalance : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome))}
+              <span className="text-4xl font-black text-slate-900 tracking-tighter">
+                {formatBRL(metrics.netBalance)}
               </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm font-medium text-slate-500">Filtrado ({transactions.length} Registros)</span>
-                {filters.filterType === 'all' && (
-                  <span className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
-                    metrics.netBalance >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                  )}>
-                    {metrics.netBalance >= 0 ? 'Lucro' : 'Déficit'}
-                  </span>
-                )}
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Receitas: {formatBRL(metrics.totalIncome)}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Despesas: {formatBRL(metrics.totalExpense)}</span>
+                </div>
+                <div className="ml-auto">
+                   <span className={cn(
+                     "text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider",
+                     metrics.netBalance >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                   )}>
+                     {metrics.netBalance >= 0 ? 'Lucro' : 'Déficit'}
+                   </span>
+                </div>
               </div>
            </div>
            
            {/* Box Ticket Medio */}
-           <div className="h-32 bg-slate-900 border-none rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center">
+           <div className="h-28 bg-slate-900 border-none rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center">
               <div className="absolute top-0 right-0 p-4 font-black text-6xl text-white/5 pointer-events-none">TM</div>
               <span className="text-sm font-medium text-slate-400">Poder de Venda (Ticket Médio)</span>
               <span className="text-2xl font-bold text-white tracking-tight">{formatBRL(metrics.ticketMedio)}/laudo</span>
            </div>
         </div>
+      </div>
+
+      {/* Grid Inferior: Ranking de Clientes e Outras Métricas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         <div className="lg:col-span-2">
+            <ClientRanking data={metrics.clientRanking} />
+         </div>
+         <div className="lg:col-span-1 bg-white border border-slate-100 rounded-2xl p-6 flex flex-col justify-center shadow-sm">
+            <h3 className="text-slate-700 font-bold mb-4 opacity-50 flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              Estado da Visualização
+            </h3>
+            <div className="space-y-4">
+               <div>
+                  <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Registros Filtrados:</span>
+                  <p className="text-2xl font-black text-slate-800">{transactions.length}</p>
+               </div>
+               <div className="pt-4 border-t border-slate-50">
+                  <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Subtotal em Tela:</span>
+                  <p className="text-2xl font-black text-brand-primary">
+                    {transactions.reduce((acc, t) => acc + (t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+               </div>
+            </div>
+         </div>
       </div>
 
       {/* Tabela de Resultados (Desktop > Table, Mobile > Cards) */}

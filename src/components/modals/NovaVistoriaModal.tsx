@@ -81,6 +81,9 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     e.preventDefault();
     
     if (!formData.placa) return alert('Placa é obrigatória');
+    if (!formData.cliente || formData.cliente.trim() === 'S/N' || formData.cliente.trim() === 'SN' || formData.cliente.trim() === '') {
+      return alert('O nome do cliente é obrigatório para o ranking. Não utilize "S/N".');
+    }
 
     // Duplicity Check
     const dataCompMonth = formData.data.substring(0, 7);

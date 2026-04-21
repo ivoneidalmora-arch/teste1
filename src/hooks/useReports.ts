@@ -26,12 +26,9 @@ export function useReports() {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  const filteredTransactions = useMemo(() => {
+  const periodFilteredTransactions = useMemo(() => {
     let filtered = transactions;
 
-    if (filterType !== 'all') {
-       filtered = filtered.filter(t => t.type === filterType);
-    }
     if (startDate) {
        filtered = filtered.filter(t => t.date >= startDate);
     }
@@ -47,41 +44,51 @@ export function useReports() {
        filtered = filtered.filter(t => t.type === 'income' && ((t as IncomeTransaction).cliente || '').toUpperCase().includes(cli));
     }
     return filtered;
-  }, [transactions, filterType, startDate, endDate, searchPlaca, searchCliente]);
+  }, [transactions, startDate, endDate, searchPlaca, searchCliente]);
+
+  const viewFilteredTransactions = useMemo(() => {
+    if (filterType === 'all') return periodFilteredTransactions;
+    return periodFilteredTransactions.filter(t => t.type === filterType);
+  }, [periodFilteredTransactions, filterType]);
 
   const metrics = useMemo(() => {
     let totalIncome = 0;
     let totalExpense = 0;
     let validIncomesCount = 0;
     
-    // Totais no filtro
-    filteredTransactions.forEach(t => {
+    // Agrupamentos
+    const incomeByCategory: Record<string, number> = {};
+    const expenseByCategory: Record<string, number> = {};
+    const rankingMap: Record<string, { count: number, total: number }> = {};
+    
+    // Métricas baseadas no período INTEGRAL (ignorando filtro de tipo para o balanço)
+    periodFilteredTransactions.forEach(t => {
+       const val = t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount;
+       
        if (t.type === 'income') {
-         totalIncome += ((t as IncomeTransaction).amountLiquido || t.amount);
+         totalIncome += val;
          validIncomesCount++;
-       }
-       if (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente') {
-         totalExpense += t.amount;
+         
+         // Por Categoria
+         incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + val;
+         
+         // Ranking de Clientes (ignora S/N ou vazios)
+         const cliente = ((t as IncomeTransaction).cliente || '').trim().toUpperCase();
+         if (cliente && cliente !== 'S/N' && cliente !== 'S.N') {
+            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, total: 0 };
+            rankingMap[cliente].count += 1;
+            rankingMap[cliente].total += val;
+         }
+       } else {
+         if ((t as ExpenseTransaction).status !== 'Pendente') {
+            totalExpense += val;
+            expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + val;
+         }
        }
     });
 
     const netBalance = totalIncome - totalExpense;
     const ticketMedio = validIncomesCount > 0 ? (totalIncome / validIncomesCount) : 0;
-
-    // Agrupamento de Categorias de Vistoria pra plotar Ranking Horizontal
-    const incomeByCategory: Record<string, number> = {};
-    const expenseByCategory: Record<string, number> = {};
-
-    filteredTransactions.forEach(t => {
-      const val = t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount;
-      if (t.type === 'income') {
-        incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + val;
-      } else {
-        if ((t as ExpenseTransaction).status !== 'Pendente') {
-           expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + val;
-        }
-      }
-    });
 
     const incomeChart = Object.keys(incomeByCategory)
       .map(key => ({ name: key, value: incomeByCategory[key] }))
@@ -91,6 +98,16 @@ export function useReports() {
       .map(key => ({ name: key, value: expenseByCategory[key] }))
       .sort((a,b) => b.value - a.value);
 
+    // Ranking de Clientes (Top 5 por valor pago)
+    const clientRanking = Object.keys(rankingMap)
+      .map(name => ({
+        name,
+        count: rankingMap[name].count,
+        total: rankingMap[name].total
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
     return {
       totalIncome,
       totalExpense,
@@ -99,13 +116,14 @@ export function useReports() {
       validIncomesCount,
       incomeChart,
       expenseChart,
+      clientRanking
     };
-  }, [filteredTransactions]);
+  }, [periodFilteredTransactions]);
 
   return {
     loading,
     refresh: fetchTransactions,
-    transactions: filteredTransactions,
+    transactions: viewFilteredTransactions,
     rawTransactions: transactions,
     metrics,
     filters: {
