@@ -93,15 +93,33 @@ export default function RelatoriosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <ReportChart 
-            data={filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart} 
-            type={filters.filterType === 'all' ? 'income' : filters.filterType} 
+            data={
+              filters.filterType === 'all' 
+                ? [
+                    { name: 'Receitas', value: metrics.totalIncome },
+                    { name: 'Despesas', value: metrics.totalExpense }
+                  ]
+                : (filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart)
+            } 
+            type={filters.filterType} 
           />
         </div>
         <div className="lg:col-span-1">
           <CategorySummary 
-            data={filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart} 
-            type={filters.filterType === 'all' ? 'income' : filters.filterType}
-            totalValue={filters.filterType === 'all' ? metrics.totalIncome : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome)}
+            data={
+              filters.filterType === 'all'
+                ? [
+                    { name: 'Receitas', value: metrics.totalIncome },
+                    { name: 'Despesas', value: metrics.totalExpense }
+                  ]
+                : (filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart)
+            } 
+            type={filters.filterType}
+            totalValue={
+              filters.filterType === 'all' 
+                ? (metrics.totalIncome + metrics.totalExpense) 
+                : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome)
+            }
           />
         </div>
         
