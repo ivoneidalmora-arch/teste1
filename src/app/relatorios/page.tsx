@@ -4,6 +4,7 @@ import { useReports } from '@/hooks/useReports';
 import { ReportChart } from '@/components/reports/ReportChart';
 import { CategorySummary } from '@/components/reports/CategorySummary';
 import { ClientRanking } from '@/components/reports/ClientRanking';
+import { SeniorFinancialReport } from '@/components/reports/SeniorFinancialReport';
 import { emitirRelatorioPDF } from '@/services/pdf';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -162,6 +163,9 @@ export default function RelatoriosPage() {
            </div>
         </div>
       </div>
+
+      {/* Seção de Análise Financeira Sênior (DRE & Rosca) */}
+      <SeniorFinancialReport metrics={metrics} />
 
       {/* Grid Inferior: Ranking de Clientes e Outras Métricas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
