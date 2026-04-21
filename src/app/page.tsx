@@ -13,6 +13,9 @@ import { format, startOfMonth, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Transaction } from '@/types/transaction';
 
+import { ClientRanking } from '@/components/reports/ClientRanking';
+import { InspectionTypeBalance } from '@/components/dashboard/InspectionTypeBalance';
+
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
@@ -85,7 +88,7 @@ export default function Dashboard() {
             <Plus className="w-5 h-5" />
             <span>Nova Vistoria</span>
           </button>
-
+ 
           <button 
             onClick={refresh}
             className="flex items-center justify-center p-2.5 bg-white border border-slate-200 shadow-sm text-slate-700 rounded-xl hover:bg-slate-50 transition-colors ml-2"
@@ -202,8 +205,14 @@ export default function Dashboard() {
 
       </div>
 
+      {/* Seção Estratégica: Ranking e Balanço de Tipos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <ClientRanking data={metrics.clientRanking} />
+        <InspectionTypeBalance data={metrics.inspectionSummary} />
+      </div>
+
       {/* Grid Inferior (Calendário e Atividades) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
         <div className="lg:col-span-2">
           <DashboardCalendar currentDate={selectedDate} transactions={metrics.currentMonthTransactions} />
         </div>

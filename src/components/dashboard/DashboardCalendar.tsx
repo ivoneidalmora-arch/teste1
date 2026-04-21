@@ -86,19 +86,19 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
               className={cn(
                 "relative p-1 md:p-2 h-16 md:h-20 border border-slate-100/50 rounded-xl flex flex-col items-center justify-start hover:border-blue-300 hover:bg-blue-50/50 transition-colors group cursor-pointer",
                 isToday && "ring-2 ring-blue-500 ring-offset-1 bg-blue-50/20",
-                holidayName && "bg-slate-50 border-slate-200"
+                holidayName && "bg-amber-50/40 border-l-4 border-l-amber-400 shadow-sm"
               )}
               title={holidayName || undefined}
             >
               <span className={cn(
                  "text-xs md:text-sm font-semibold mb-1",
-                 isToday ? "text-blue-600" : (holidayName ? "text-slate-400" : "text-slate-600")
+                 isToday ? "text-blue-600" : (holidayName ? "text-amber-700" : "text-slate-600")
               )}>
                 {format(day, 'd')}
               </span>
 
               {holidayName && (
-                <span className="text-[7px] md:text-[8px] font-black text-slate-300 uppercase leading-tight text-center px-1 line-clamp-2">
+                <span className="text-[7px] md:text-[8px] font-bold text-amber-600 uppercase leading-tight text-center px-1 line-clamp-2">
                   {holidayName}
                 </span>
               )}
