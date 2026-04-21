@@ -12,6 +12,7 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   existingTransactions: Transaction[];
+  defaultDate?: Date;
 }
 
 const CONVERSAO_2025: Record<number, number> = {
@@ -22,13 +23,13 @@ const CONVERSAO_2025: Record<number, number> = {
   94.35: 63.49
 };
 
-export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransactions }: Props) {
+export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransactions, defaultDate }: Props) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'Transferência',
     placa: '',
     cliente: '',
-    data: format(new Date(), 'yyyy-MM-dd'),
+    data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     valorBruto: 198.13,
     valorLiquido: 147.41,
     pagamento: 'Dinheiro',
@@ -36,14 +37,29 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     observacao: ''
   });
 
+  // Atualiza a data se a prop mudar e o modal for aberto
+  useEffect(() => {
+    if (isOpen && defaultDate) {
+      setFormData(prev => ({ 
+        ...prev, 
+        data: format(defaultDate, 'yyyy-MM-dd') 
+      }));
+    }
+  }, [isOpen, defaultDate]);
+
   // VRTE Auto-Calculus Engine
   useEffect(() => {
     if (formData.categoria === 'Vistoria de Retorno') {
       setFormData(prev => ({ ...prev, valorBruto: 0, valorLiquido: 0 }));
       return;
     }
+    
+    // Se for Cautelar, não segue a tabela automática (usuário define)
+    if (formData.categoria === 'Vistoria Cautelar') {
+       return;
+    }
 
-    // Acha o valor mais próximo ou exato
+    // Acha o valor mais próximo ou exato na tabela para Transferência/Entrada
     const match = Object.keys(CONVERSAO_2025).find(k => Math.abs(parseFloat(k) - formData.valorBruto) < 0.001);
     if (match) {
       setFormData(prev => ({ ...prev, valorLiquido: CONVERSAO_2025[parseFloat(match)] }));
@@ -100,6 +116,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     onClose();
   };
 
+  const isManualValue = formData.categoria === 'Vistoria Cautelar';
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Novo Laudo de Vistoria" headerColorContext="success">
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -109,9 +127,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
             <label className="block text-sm font-semibold text-slate-700 mb-1">Tipo de Vistoria</label>
             <select name="categoria" value={formData.categoria} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
               <option value="Transferência">Transferência</option>
-              <option value="2ª Via Recibo">2ª Via Recibo</option>
-              <option value="Motor">Motor</option>
-              <option value="Especial">Especial</option>
+              <option value="Vistoria Cautelar">Vistoria Cautelar</option>
               <option value="Vistoria de Entrada">Vistoria de Entrada</option>
               <option value="Vistoria de Retorno">Vistoria de Retorno</option>
             </select>
@@ -155,10 +171,10 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
               required 
               value={formData.valorLiquido} 
               onChange={handleChange} 
-              disabled={formData.categoria === 'Vistoria de Retorno'}
+              disabled={formData.categoria === 'Vistoria de Retorno' || (!isManualValue && !!CONVERSAO_2025[formData.valorBruto])}
               className={cn(
                 "w-full bg-emerald-100/50 border border-emerald-200 rounded-lg px-4 py-2.5 font-bold text-emerald-800 outline-none",
-                formData.categoria === 'Vistoria de Retorno' && "bg-slate-100 cursor-not-allowed opacity-60"
+                (formData.categoria === 'Vistoria de Retorno' || (!isManualValue && !!CONVERSAO_2025[formData.valorBruto])) && "bg-slate-100 cursor-not-allowed opacity-60"
               )} 
             />
           </div>

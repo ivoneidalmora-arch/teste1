@@ -10,19 +10,32 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultDate?: Date;
 }
 
-export function NovaDespesaModal({ isOpen, onClose, onSuccess }: Props) {
+export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Props) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'Operacional',
     descricao: '',
     valor: '',
-    data: format(new Date(), 'yyyy-MM-dd'),
-    vencimento: format(new Date(), 'yyyy-MM-dd'),
+    data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
+    vencimento: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     status: 'Pago' as 'Pago' | 'Pendente',
     observacao: ''
   });
+
+  // Sincroniza a data se o filtro mudar
+  useEffect(() => {
+    if (isOpen && defaultDate) {
+      const formatted = format(defaultDate, 'yyyy-MM-dd');
+      setFormData(prev => ({ 
+        ...prev, 
+        data: formatted,
+        vencimento: formatted
+      }));
+    }
+  }, [isOpen, defaultDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

@@ -228,12 +228,14 @@ export default function Dashboard() {
         onClose={() => setIsVistoriaModalOpen(false)} 
         onSuccess={refresh}
         existingTransactions={transactions}
+        defaultDate={selectedDate}
       />
       
       <NovaDespesaModal 
         isOpen={isDespesaModalOpen} 
         onClose={() => setIsDespesaModalOpen(false)} 
         onSuccess={refresh}
+        defaultDate={selectedDate}
       />
     </div>
   );
