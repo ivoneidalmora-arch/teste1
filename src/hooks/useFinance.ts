@@ -66,7 +66,7 @@ export function useFinance(selectedDate: Date) {
     };
 
     // --- Novas estatísticas dinâmicas para o Dashboard ---
-    const rankingMap: Record<string, { count: number, bruto: number, liquido: number }> = {};
+    const rankingMap: Record<string, { count: number, bruto: number, liquido: number, categories: Record<string, number> }> = {};
     const inspectionMap: Record<string, { count: number, total: number }> = {};
 
     currentMonthTransactions.forEach(t => {
@@ -74,18 +74,23 @@ export function useFinance(selectedDate: Date) {
          const inc = t as IncomeTransaction;
          const valBruto = inc.amountBruto || inc.amount || 0;
          const valLiquido = inc.amountLiquido || valBruto;
+         const cat = t.category;
          
          // Ranking de Clientes (Filtro Dinâmico Mensal)
          const cliente = (inc.cliente || '').trim().toUpperCase();
          if (cliente && cliente !== 'S/N' && cliente !== 'SN') {
-            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0 };
+            if (!rankingMap[cliente]) {
+              rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0, categories: {} };
+            }
             rankingMap[cliente].count += 1;
             rankingMap[cliente].bruto += valBruto;
             rankingMap[cliente].liquido += valLiquido;
+            
+            // Detalhamento de Categorias por Cliente
+            rankingMap[cliente].categories[cat] = (rankingMap[cliente].categories[cat] || 0) + 1;
          }
 
          // Balanço de Vistorias Detalhado
-         const cat = t.category;
          if (!inspectionMap[cat]) inspectionMap[cat] = { count: 0, total: 0 };
          inspectionMap[cat].count += 1;
          inspectionMap[cat].total += valLiquido;
@@ -98,7 +103,8 @@ export function useFinance(selectedDate: Date) {
         count: rankingMap[name].count, 
         total: rankingMap[name].liquido, // Usado para ordenação
         bruto: rankingMap[name].bruto,
-        liquido: rankingMap[name].liquido 
+        liquido: rankingMap[name].liquido,
+        categories: rankingMap[name].categories
       }))
       .sort((a,b) => b.total - a.total); // Agora mostra todos, sem .slice(0, 5)
 

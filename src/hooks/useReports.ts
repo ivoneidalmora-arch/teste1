@@ -59,7 +59,7 @@ export function useReports() {
     // Agrupamentos
     const incomeByCategory: Record<string, number> = {};
     const expenseByCategory: Record<string, number> = {};
-    const rankingMap: Record<string, { count: number, bruto: number, liquido: number }> = {};
+    const rankingMap: Record<string, { count: number, bruto: number, liquido: number, categories: Record<string, number> }> = {};
     
     // Métricas baseadas no período INTEGRAL (ignorando filtro de tipo para o balanço)
     periodFilteredTransactions.forEach(t => {
@@ -67,20 +67,26 @@ export function useReports() {
          const inc = t as IncomeTransaction;
          const valBruto = inc.amountBruto || inc.amount || 0;
          const valLiquido = inc.amountLiquido || valBruto;
+         const cat = t.category;
          
          totalIncome += valLiquido;
          validIncomesCount++;
          
          // Por Categoria
-         incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + valLiquido;
+         incomeByCategory[cat] = (incomeByCategory[cat] || 0) + valLiquido;
          
          // Ranking de Clientes (ignora S/N ou vazios)
          const cliente = (inc.cliente || '').trim().toUpperCase();
          if (cliente && cliente !== 'S/N' && cliente !== 'S.N' && cliente !== 'SN') {
-            if (!rankingMap[cliente]) rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0 };
+            if (!rankingMap[cliente]) {
+              rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0, categories: {} };
+            }
             rankingMap[cliente].count += 1;
             rankingMap[cliente].bruto += valBruto;
             rankingMap[cliente].liquido += valLiquido;
+            
+            // Detalhamento de Categorias por Cliente
+            rankingMap[cliente].categories[cat] = (rankingMap[cliente].categories[cat] || 0) + 1;
          }
        } else {
          const exp = t as ExpenseTransaction;
@@ -110,7 +116,8 @@ export function useReports() {
         count: rankingMap[name].count,
         total: rankingMap[name].liquido,
         bruto: rankingMap[name].bruto,
-        liquido: rankingMap[name].liquido
+        liquido: rankingMap[name].liquido,
+        categories: rankingMap[name].categories
       }))
       .sort((a, b) => b.total - a.total);
 
