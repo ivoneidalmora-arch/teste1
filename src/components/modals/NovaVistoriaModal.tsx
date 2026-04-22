@@ -31,7 +31,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     categoria: 'Transferência',
     placa: '',
     cliente: '',
-    data: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    data: storageService.getLastUsedDate() || format(defaultDate || new Date(), 'yyyy-MM-dd'),
     valorBruto: 198.13,
     valorLiquido: 147.41,
     pagamento: 'Dinheiro',
@@ -67,19 +67,6 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     // Always uppercase for input text 
     let v = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'date' ? value.toUpperCase() : value;
     
-    // Validação de Dia Útil
-    if (name === 'data' && value) {
-      const selectedDate = new Date(value + 'T12:00:00');
-      const adjusted = adjustToNextBusinessDay(selectedDate);
-      const adjustedStr = format(adjusted, 'yyyy-MM-dd');
-
-      if (adjustedStr !== value) {
-        const holiday = isHoliday(selectedDate);
-        alert(`Atenção: A data escolhida cai em um ${holiday ? `feriado (${holiday})` : 'final de semana'}.\n\nO lançamento será ajustado para o próximo dia útil: ${format(adjusted, 'dd/MM/yyyy')}`);
-        v = adjustedStr;
-      }
-    }
-
     setFormData(prev => ({
       ...prev,
       [name]: name.includes('valor') ? parseFloat(v) || 0 : v

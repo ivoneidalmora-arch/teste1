@@ -20,8 +20,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     categoria: 'Operacional',
     descricao: '',
     valor: '',
-    data: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
-    vencimento: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    data: storageService.getLastUsedDate() || format(defaultDate || new Date(), 'yyyy-MM-dd'),
+    vencimento: storageService.getLastUsedDate() || format(defaultDate || new Date(), 'yyyy-MM-dd'),
     status: 'Pago' as 'Pago' | 'Pendente',
     observacao: ''
   });
@@ -33,19 +33,6 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     const { name, value } = e.target;
     let v = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'date' ? value.toUpperCase() : value;
     
-    // Validação de Dia Útil (Lançamento e Vencimento)
-    if ((name === 'data' || name === 'vencimento') && value) {
-      const selectedDate = new Date(value + 'T12:00:00');
-      const adjusted = adjustToNextBusinessDay(selectedDate);
-      const adjustedStr = format(adjusted, 'yyyy-MM-dd');
-
-      if (adjustedStr !== value) {
-        const holiday = isHoliday(selectedDate);
-        alert(`Atenção: A ${name === 'data' ? 'data de lançamento' : 'data de vencimento'} escolhida cai em um ${holiday ? `feriado (${holiday})` : 'final de semana'}.\n\nO campo será ajustado para o próximo dia útil: ${format(adjusted, 'dd/MM/yyyy')}`);
-        v = adjustedStr;
-      }
-    }
-
     setFormData(prev => ({
       ...prev,
       [name]: v
