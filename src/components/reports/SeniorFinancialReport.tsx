@@ -171,7 +171,7 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
                   />
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => [formatBRL(value), 'Valor']}
+                  formatter={(value: any) => [formatBRL(Number(value)), 'Valor']}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                 />
                 <Legend 
