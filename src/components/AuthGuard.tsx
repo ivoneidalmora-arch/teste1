@@ -9,20 +9,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   
-  // Inicializa o estado sincronamente se estiver no cliente para evitar flashes de conteúdo não autorizado
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return storageService.getSession();
-    }
-    return false;
-  });
-  
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
+    setMounted(true);
     const session = storageService.getSession();
+    setIsAuthenticated(session);
     
     // Lógica para garantir que o sistema inicie SEMPRE no Dashboard (/)
     // quando o sistema é aberto pela primeira vez na sessão do navegador
@@ -45,7 +41,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     setIsChecking(false);
   }, [pathname, router, isLoginPage]);
 
-  if (isChecking && !isAuthenticated && !isLoginPage) {
+  if (!mounted || (isChecking && !isAuthenticated && !isLoginPage)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>

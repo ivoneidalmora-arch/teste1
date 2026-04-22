@@ -31,7 +31,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     categoria: 'Transferência',
     placa: '',
     cliente: '',
-    data: format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    data: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
     valorBruto: 198.13,
     valorLiquido: 147.41,
     pagamento: 'Dinheiro',
@@ -39,15 +39,9 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     observacao: ''
   });
 
-  // Atualiza a data se a prop mudar e o modal for aberto
-  useEffect(() => {
-    if (isOpen && defaultDate) {
-      setFormData(prev => ({ 
-        ...prev, 
-        data: format(adjustToNextBusinessDay(defaultDate), 'yyyy-MM-dd') 
-      }));
-    }
-  }, [isOpen, defaultDate]);
+  // Removido useEffect que forçava a data do filtro, 
+  // para respeitar a regra de "sempre salvar a última data" selecionada pelo usuário.
+
 
   // VRTE Auto-Calculus Engine
   useEffect(() => {
@@ -100,12 +94,17 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
       return alert('O nome do cliente é obrigatório para o ranking. Não utilize "S/N".');
     }
 
-    // Duplicity Check
+    // Verificação de Duplicidade mais robusta
     const dataCompMonth = formData.data.substring(0, 7);
     const hasDuplicate = existingTransactions.some((t: any) => {
-      if (t.type !== 'income') return false;
+      if (t.type !== 'income' || !t.placa || !formData.placa) return false;
+      
       const tMonth = t.date.substring(0, 7);
-      return t.placa === formData.placa && t.category === formData.categoria && tMonth === dataCompMonth;
+      const isSamePlaca = t.placa.trim().toUpperCase() === formData.placa.trim().toUpperCase();
+      const isSameCategory = t.category === formData.categoria;
+      const isSameMonth = tMonth === dataCompMonth;
+
+      return isSamePlaca && isSameCategory && isSameMonth;
     });
 
     if (hasDuplicate) {
@@ -114,8 +113,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     }
 
     setLoading(true);
-    await storageService.saveTransaction({
-      id: `loc_${Date.now()}`, // fallback only
+    const result = await storageService.saveTransaction({
+      id: `inc_${Date.now()}`, // Consistent with storageService check
       type: 'income',
       category: formData.categoria,
       placa: formData.placa,
@@ -130,8 +129,14 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     });
 
     setLoading(false);
-    onSuccess();
-    onClose();
+
+    if (result) {
+      storageService.setLastUsedDate(formData.data);
+      onSuccess();
+      onClose();
+    } else {
+      alert('Erro ao salvar o lançamento no banco de dados. Verifique sua conexão.');
+    }
   };
 
   const isManualValue = formData.categoria === 'Vistoria Cautelar';

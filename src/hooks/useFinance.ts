@@ -7,8 +7,8 @@ export function useFinance(selectedDate: Date) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const data = await storageService.getTransactions();
     setTransactions(data);
     setLoading(false);
@@ -133,6 +133,6 @@ export function useFinance(selectedDate: Date) {
     transactions,
     metrics,
     loading,
-    refresh: fetchData,
+    refresh: () => fetchData(true),
   };
 }

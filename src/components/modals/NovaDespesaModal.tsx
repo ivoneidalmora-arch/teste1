@@ -20,24 +20,14 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     categoria: 'Operacional',
     descricao: '',
     valor: '',
-    data: format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
-    vencimento: format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    data: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
+    vencimento: storageService.getLastUsedDate() || format(adjustToNextBusinessDay(defaultDate || new Date()), 'yyyy-MM-dd'),
     status: 'Pago' as 'Pago' | 'Pendente',
     observacao: ''
   });
 
-  // Sincroniza a data se o filtro mudar
-  useEffect(() => {
-    if (isOpen && defaultDate) {
-      const adjustedDate = adjustToNextBusinessDay(defaultDate);
-      const formatted = format(adjustedDate, 'yyyy-MM-dd');
-      setFormData(prev => ({ 
-        ...prev, 
-        data: formatted,
-        vencimento: formatted
-      }));
-    }
-  }, [isOpen, defaultDate]);
+  // Removido sincronização automática com o filtro para respeitar a "última data" do usuário
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -67,7 +57,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     if (!formData.descricao || !formData.valor) return alert('Descrição e Valor são obrigatórios');
 
     setLoading(true);
-    await storageService.saveTransaction({
+    const result = await storageService.saveTransaction({
       id: `exp_${Date.now()}`,
       type: 'expense',
       category: formData.categoria,
@@ -80,8 +70,14 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     });
 
     setLoading(false);
-    onSuccess();
-    onClose();
+    
+    if (result) {
+      storageService.setLastUsedDate(formData.data);
+      onSuccess();
+      onClose();
+    } else {
+      alert('Erro ao salvar a despesa no banco de dados. Verifique sua conexão.');
+    }
   };
 
   return (

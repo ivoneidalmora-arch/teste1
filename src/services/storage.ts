@@ -20,6 +20,17 @@ export const storageService = {
     localStorage.removeItem(SESSION_KEY);
   },
 
+  // === Persistência de Preferências ===
+  getLastUsedDate: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('last_used_date');
+  },
+
+  setLastUsedDate: (date: string): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('last_used_date', date);
+  },
+
   // === Transactions CRUD (Cloud Supabase) ===
   getTransactions: async (): Promise<Transaction[]> => {
     try {
@@ -50,6 +61,7 @@ export const storageService = {
           pagamento: r.pagamento,
           amountBruto: parseFloat(r.amountBruto),
           amountLiquido: parseFloat(r.amountLiquido),
+          createdAt: r.created_at || r.createdAt
         })));
       }
 
@@ -64,11 +76,16 @@ export const storageService = {
           description: d.description || d.descricao || 'Despesa',
           vencimento: d.vencimento || d.date || d.data,
           status: d.status || 'Pago',
+          createdAt: d.created_at || d.createdAt
         })));
       }
 
-      // Ordenar por data decrescente
-      return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Ordenar por data de lançamento decrescente e ID decrescente (mais recentes primeiro)
+      return combined.sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
     } catch (e) {
       console.error('Error fetching transactions from Supabase', e);
       return [];
@@ -79,15 +96,15 @@ export const storageService = {
     try {
       if (transaction.type === 'income') {
         const { id, type, ...payload } = transaction as IncomeTransaction;
-        // Evitamos enviar ID caso seja mock string de locale antigo
-        const dbPayload = typeof id === 'string' && id.startsWith('inc_') ? payload : { id, ...payload };
+        // Se o ID for string (ex: loc_... ou inc_...), omitimos para o Supabase gerar o ID real
+        const dbPayload = typeof id === 'string' ? payload : { id, ...payload };
         
         const { data, error } = await supabase.from('Receitas').insert([dbPayload]).select().single();
         if (error) throw error;
         return { ...data, type: 'income' } as IncomeTransaction;
       } else {
         const { id, type, ...payload } = transaction as ExpenseTransaction;
-        const dbPayload = typeof id === 'string' && id.startsWith('exp_') ? payload : { id, ...payload };
+        const dbPayload = typeof id === 'string' ? payload : { id, ...payload };
 
         const { data, error } = await supabase.from('Despesas').insert([dbPayload]).select().single();
         if (error) throw error;
@@ -102,11 +119,11 @@ export const storageService = {
   updateTransaction: async (id: string | number, updatedTransaction: Transaction): Promise<boolean> => {
     try {
       if (updatedTransaction.type === 'income') {
-        const { type, id: _, ...payload } = updatedTransaction as IncomeTransaction;
+        const { type, id: _, createdAt, ...payload } = updatedTransaction as IncomeTransaction;
         const { error } = await supabase.from('Receitas').update(payload).eq('id', id);
         if (error) throw error;
       } else {
-        const { type, id: _, ...payload } = updatedTransaction as ExpenseTransaction;
+        const { type, id: _, createdAt, ...payload } = updatedTransaction as ExpenseTransaction;
         const { error } = await supabase.from('Despesas').update(payload).eq('id', id);
         if (error) throw error;
       }

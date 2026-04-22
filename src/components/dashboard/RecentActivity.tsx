@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, Clock, Edit2, Trash2 } from 'lucide-react
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
+import { formatDisplayDate } from '@/utils/dateUtils';
 import { storageService } from '@/services/storage';
 import { Transaction, IncomeTransaction } from '@/types/transaction';
 
@@ -48,13 +49,29 @@ export const RecentActivity = memo(function RecentActivity({ transactions, onEdi
                   {isIncome ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
                 </div>
                 
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800 line-clamp-1">
-                    {isIncome ? (t as IncomeTransaction).cliente || 'Movimentação Sem Nome' : (t as any).description || 'Despesa'}
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">
-                    {t.category} • {format(new Date(t.date), "dd MMM", { locale: ptBR })}
-                  </span>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-bold text-slate-800 truncate">
+                      {isIncome ? (t as IncomeTransaction).cliente || 'Movimentação Sem Nome' : (t as any).description || 'Despesa'}
+                    </span>
+                    {isIncome && (t as IncomeTransaction).placa && (
+                      <span className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 uppercase">
+                        {(t as IncomeTransaction).placa}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-brand-primary uppercase tracking-tight">
+                      {formatDisplayDate(t.date, 'dd/MM/yyyy')}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">
+                      ({formatDisplayDate(t.date, 'eee')})
+                    </span>
+                    <span className="text-slate-300 text-[10px]">•</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase truncate">
+                      {t.category}
+                    </span>
+                  </div>
                 </div>
               </div>
               

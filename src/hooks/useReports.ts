@@ -15,8 +15,8 @@ export function useReports() {
   const [searchPlaca, setSearchPlaca] = useState<string>('');
   const [searchCliente, setSearchCliente] = useState<string>('');
 
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true);
+  const fetchTransactions = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const data = await storageService.getTransactions();
     setTransactions(data);
     setLoading(false);
@@ -135,7 +135,7 @@ export function useReports() {
 
   return {
     loading,
-    refresh: fetchTransactions,
+    refresh: () => fetchTransactions(true),
     transactions: viewFilteredTransactions,
     rawTransactions: transactions,
     metrics,

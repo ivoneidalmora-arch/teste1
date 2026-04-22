@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { Download, Filter, Search } from 'lucide-react';
 import { IncomeTransaction } from '@/types/transaction';
 import { cn } from '@/utils/cn';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 export default function RelatoriosPage() {
   const { loading, transactions, metrics, filters } = useReports();
@@ -32,7 +33,7 @@ export default function RelatoriosPage() {
       netBalance: metrics.netBalance,
       ticketMedio: metrics.ticketMedio,
       dateRange: (filters.startDate || filters.endDate) 
-        ? `${filters.startDate ? format(new Date(filters.startDate), 'dd/MM/yyyy') : 'Início'} Até ${filters.endDate ? format(new Date(filters.endDate), 'dd/MM/yyyy') : 'Hoje'}`
+        ? `${filters.startDate ? formatDisplayDate(filters.startDate) : 'Início'} Até ${filters.endDate ? formatDisplayDate(filters.endDate) : 'Hoje'}`
         : 'Todos os Lançamentos'
     });
   };
@@ -219,7 +220,12 @@ export default function RelatoriosPage() {
                     const isInc = t.type === 'income';
                     return (
                        <tr key={`${t.id}-${i}`} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3 px-6 text-sm text-slate-600 whitespace-nowrap">{format(new Date(t.date), 'dd MMM yyyy', { locale: ptBR })}</td>
+                          <td className="py-3 px-6 whitespace-nowrap">
+                             <div className="flex flex-col">
+                                <span className="text-sm text-slate-800 font-medium">{formatDisplayDate(t.date)}</span>
+                                <span className="text-[10px] text-slate-400 capitalize">{formatDisplayDate(t.date, 'eeee')}</span>
+                             </div>
+                          </td>
                           <td className="py-3 px-6 text-sm text-slate-800 font-medium">{t.category}</td>
                           <td className="py-3 px-6 text-sm text-slate-600">
                              {isInc ? ((t as IncomeTransaction).cliente || 'S/N') : ((t as any).description || 'Despesa')}
