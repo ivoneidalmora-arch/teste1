@@ -228,14 +228,20 @@ export default function Dashboard() {
       <EditTransactionModal 
         isOpen={!!editingTransaction}
         onClose={() => setEditingTransaction(null)}
-        onSuccess={refresh}
+        onSuccess={(date) => {
+          if (date) setSelectedDate(date);
+          refresh();
+        }}
         transaction={editingTransaction}
       />
 
       <NovaVistoriaModal 
         isOpen={isVistoriaModalOpen} 
         onClose={() => setIsVistoriaModalOpen(false)} 
-        onSuccess={refresh}
+        onSuccess={(date) => {
+          if (date) setSelectedDate(date);
+          refresh();
+        }}
         existingTransactions={transactions}
         defaultDate={selectedDate}
       />
@@ -243,7 +249,10 @@ export default function Dashboard() {
       <NovaDespesaModal 
         isOpen={isDespesaModalOpen} 
         onClose={() => setIsDespesaModalOpen(false)} 
-        onSuccess={refresh}
+        onSuccess={(date) => {
+          if (date) setSelectedDate(date);
+          refresh();
+        }}
         defaultDate={selectedDate}
       />
     </div>

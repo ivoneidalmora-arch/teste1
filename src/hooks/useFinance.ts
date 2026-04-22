@@ -131,6 +131,7 @@ export function useFinance(selectedDate: Date) {
 
   return {
     transactions,
+    allTransactions: transactions, // For now, transactions state already contains all loaded data if we didn't filter in the hook
     metrics,
     loading,
     refresh: () => fetchData(true),

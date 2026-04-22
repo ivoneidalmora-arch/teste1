@@ -10,7 +10,7 @@ import { isHoliday, adjustToNextBusinessDay } from '@/utils/holidays';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (date?: Date) => void;
   defaultDate?: Date;
 }
 
@@ -60,7 +60,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     
     if (result) {
       storageService.setLastUsedDate(formData.data);
-      onSuccess();
+      onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
     } else {
       alert('Erro ao salvar a despesa no banco de dados. Verifique sua conexão.');

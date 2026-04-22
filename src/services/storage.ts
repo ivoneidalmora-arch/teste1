@@ -23,7 +23,18 @@ export const storageService = {
   // === Persistência de Preferências ===
   getLastUsedDate: (): string | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('last_used_date');
+    const stored = localStorage.getItem('last_used_date');
+    if (!stored) return null;
+    
+    // Se a data salva for de um mês/ano diferente do atual, ignoramos para evitar lançamentos retroativos acidentais
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!stored.startsWith(currentMonth)) {
+      localStorage.removeItem('last_used_date');
+      return null;
+    }
+    
+    return stored;
   },
 
   setLastUsedDate: (date: string): void => {
@@ -80,10 +91,9 @@ export const storageService = {
         })));
       }
 
-      // Ordenar por data de lançamento decrescente e ID decrescente (mais recentes primeiro)
+      // Ordenar por data (string YYYY-MM-DD) decrescente e ID decrescente
       return combined.sort((a, b) => {
-        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-        if (dateDiff !== 0) return dateDiff;
+        if (b.date !== a.date) return b.date.localeCompare(a.date);
         return (Number(b.id) || 0) - (Number(a.id) || 0);
       });
     } catch (e) {

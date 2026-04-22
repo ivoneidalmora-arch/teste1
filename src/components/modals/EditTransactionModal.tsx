@@ -11,7 +11,7 @@ import { Save, Trash2, X } from 'lucide-react';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (date?: Date) => void;
   transaction: Transaction | null;
 }
 
@@ -105,7 +105,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
     
     setLoading(false);
     if (success) {
-      onSuccess();
+      onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
     } else {
       alert('Erro ao atualizar lançamento.');
