@@ -40,9 +40,10 @@ export const storageService = {
         combined.push(...receitas.map((r: any) => ({
           ...r,
           type: 'income' as const,
+          date: r.date || '', // Garante que data seja string
           amount: parseFloat(r.amount) || parseFloat(r.amountBruto) || 0,
-          amountBruto: parseFloat(r.amountBruto),
-          amountLiquido: parseFloat(r.amountLiquido),
+          amountBruto: parseFloat(r.amountBruto) || 0,
+          amountLiquido: parseFloat(r.amountLiquido) || 0,
           createdAt: r.created_at
         })));
       }
@@ -52,7 +53,7 @@ export const storageService = {
           ...d,
           type: 'expense' as const,
           amount: parseFloat(d.amount) || parseFloat(d.valor) || 0,
-          date: d.date || d.data || d.vencimento,
+          date: d.date || d.data || d.vencimento || '', // Garante que data seja string
           description: d.description || d.descricao || 'Despesa',
           status: d.status || 'Pago',
           createdAt: d.created_at
@@ -60,7 +61,9 @@ export const storageService = {
       }
 
       return combined.sort((a, b) => {
-        if (b.date !== a.date) return b.date.localeCompare(a.date);
+        const dateA = a.date || '';
+        const dateB = b.date || '';
+        if (dateB !== dateA) return dateB.localeCompare(dateA);
         return (Number(b.id) || 0) - (Number(a.id) || 0);
       });
     } catch (e) {

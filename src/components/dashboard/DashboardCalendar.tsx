@@ -25,14 +25,14 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
     const stats: Record<string, { totalIn: number, totalOut: number, hasIn: boolean, hasOut: boolean }> = {};
     
     transactions.forEach(t => {
-      const dateKey = t.date.substring(0, 10); // Normaliza para YYYY-MM-DD
+      const dateKey = t.date ? t.date.substring(0, 10) : '0000-00-00';
       if (!stats[dateKey]) {
         stats[dateKey] = { totalIn: 0, totalOut: 0, hasIn: false, hasOut: false };
       }
 
       const tValue = t.type === 'income' 
-        ? ((t as IncomeTransaction).amountLiquido || t.amount) 
-        : t.amount;
+        ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) 
+        : (t.amount || 0);
 
       if (t.type === 'income') {
         stats[dateKey].totalIn += tValue;

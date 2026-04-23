@@ -30,9 +30,9 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           categoria: t.category,
           placa: t.placa || '',
           cliente: t.cliente || '',
-          data: t.date,
-          valorBruto: t.amountBruto || t.amount,
-          valorLiquido: t.amountLiquido || t.amount,
+          data: t.date || '',
+          valorBruto: t.amountBruto || t.amount || 0,
+          valorLiquido: t.amountLiquido || t.amount || 0,
           pagamento: t.pagamento || 'Pix',
           nf: t.nf || '',
           observacao: t.observacao || ''
@@ -43,9 +43,9 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           type: 'expense',
           categoria: t.category,
           descricao: t.description || '',
-          valor: t.amount,
-          data: t.date,
-          vencimento: t.vencimento || t.date,
+          valor: t.amount || 0,
+          data: t.date || '',
+          vencimento: t.vencimento || t.date || '',
           status: t.status || 'Pago',
           observacao: t.observacao || ''
         });

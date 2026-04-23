@@ -33,12 +33,12 @@ export function useFinance(selectedDate: Date) {
     const currentMonthTransactions: Transaction[] = [];
 
     transactions.forEach((t) => {
-      const monthKey = t.date.substring(0, 7);
+      const monthKey = t.date ? t.date.substring(0, 7) : '0000-00';
       monthsSet.add(monthKey);
 
       const tValue = t.type === 'income' 
-          ? ((t as IncomeTransaction).amountLiquido || t.amount) 
-          : t.amount;
+          ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) 
+          : (t.amount || 0);
 
       // Global Sums
       if (t.type === 'income') totalGlobalIncome += tValue;

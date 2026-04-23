@@ -66,8 +66,8 @@ export function useReports() {
        if (t.type === 'income') {
          const inc = t as IncomeTransaction;
          const valBruto = inc.amountBruto || inc.amount || 0;
-         const valLiquido = inc.amountLiquido || valBruto;
-         const cat = t.category;
+         const valLiquido = inc.amountLiquido || valBruto || 0;
+         const cat = t.category || 'Outros';
          
          totalIncome += valLiquido;
          validIncomesCount++;
@@ -88,12 +88,13 @@ export function useReports() {
             // Detalhamento de Categorias por Cliente
             rankingMap[cliente].categories[cat] = (rankingMap[cliente].categories[cat] || 0) + 1;
          }
-       } else {
+       } else if (t.type === 'expense') {
          const exp = t as ExpenseTransaction;
          const val = exp.amount || 0;
+         const cat = t.category || 'Outros';
          if (exp.status !== 'Pendente') {
             totalExpense += val;
-            expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + val;
+            expenseByCategory[cat] = (expenseByCategory[cat] || 0) + val;
          }
        }
     });
