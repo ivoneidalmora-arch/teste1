@@ -10,7 +10,7 @@ export function parseLocalDate(dateStr: string): Date {
   
   // Dividimos a string manualmente para evitar que o fuso horário interfira.
   // Suporta formatos como "YYYY-MM-DD", "YYYY-MM-DDTHH:mm:ss", etc.
-  const parts = dateStr.split(/[-T ]/);
+  const parts = dateStr.split(/[-T /]/);
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10) - 1; // Meses em JS são 0-11
   const day = parseInt(parts[2], 10);
