@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from '@/utils/cn';
+import { formatBRL } from '@/utils/formatters';
 import { ClipboardCheck, TrendingUp } from 'lucide-react';
 
 interface InspectionData {
@@ -53,7 +54,7 @@ export function InspectionTypeBalance({ data }: InspectionTypeBalanceProps) {
                 </div>
                 <div className="text-right">
                    <div className="text-sm font-black text-slate-800">
-                     {item.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
+                     {formatBRL(item.total)}
                    </div>
                    <div className="text-[10px] font-bold text-emerald-600 flex items-center justify-end gap-0.5">
                      <TrendingUp className="w-2 h-2" />
@@ -76,7 +77,7 @@ export function InspectionTypeBalance({ data }: InspectionTypeBalanceProps) {
       <div className="mt-8 pt-6 border-t border-slate-50">
          <div className="flex justify-between items-center bg-slate-900 rounded-xl p-4 text-white">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Líquido</span>
-            <span className="text-xl font-black">{grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</span>
+            <span className="text-xl font-black">{formatBRL(grandTotal)}</span>
          </div>
       </div>
     </div>

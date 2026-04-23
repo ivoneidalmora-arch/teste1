@@ -5,6 +5,7 @@ import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/types/tran
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
+import { formatBRL } from '@/utils/formatters';
 
 import { isHoliday } from '@/utils/holidays';
 
@@ -118,8 +119,8 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
 
               {/* Overlay de Valores - visível apenas quando há valores e com hover suave */}
               <div className="flex flex-col items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity absolute bottom-1 md:bottom-2">
-                {stats.totalIn > 0 && <span className="text-[7px] md:text-[9px] font-medium text-brand-success leading-none mb-0.5">+{stats.totalIn.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace('R$', '')}</span>}
-                {stats.totalOut > 0 && <span className="text-[7px] md:text-[9px] font-medium text-brand-danger leading-none">-{stats.totalOut.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace('R$', '')}</span>}
+                {stats.totalIn > 0 && <span className="text-[7px] md:text-[9px] font-medium text-brand-success leading-none mb-0.5">+{formatBRL(stats.totalIn).replace('R$', '')}</span>}
+                {stats.totalOut > 0 && <span className="text-[7px] md:text-[9px] font-medium text-brand-danger leading-none">-{formatBRL(stats.totalOut).replace('R$', '')}</span>}
               </div>
             </div>
           );

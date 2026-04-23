@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/utils/cn';
 import { formatDisplayDate } from '@/utils/dateUtils';
+import { formatBRL } from '@/utils/formatters';
 import { storageService } from '@/services/storage';
 import { Transaction, IncomeTransaction } from '@/types/transaction';
 
@@ -81,7 +82,7 @@ export const RecentActivity = memo(function RecentActivity({ transactions, onEdi
                     "text-sm font-bold",
                     isIncome ? "text-emerald-600" : "text-rose-600"
                   )}>
-                    {isIncome ? '+' : '-'} {t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {isIncome ? '+' : '-'} {formatBRL(t.amount)}
                   </span>
                 </div>
                 
