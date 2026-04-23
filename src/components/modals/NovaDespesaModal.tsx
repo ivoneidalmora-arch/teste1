@@ -41,7 +41,23 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.descricao || !formData.valor) return alert('Descrição e Valor são obrigatórios');
+    
+    if (!formData.descricao || formData.descricao.trim().length < 3) {
+      return alert('A descrição deve ter pelo menos 3 caracteres.');
+    }
+    
+    const amount = parseFloat(formData.valor);
+    if (isNaN(amount) || amount <= 0) {
+      return alert('O valor deve ser maior que zero.');
+    }
+
+    const selectedDate = new Date(formData.data + 'T12:00:00');
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (selectedDate > today) {
+      return alert('Não é possível lançar despesas com data de lançamento futura.');
+    }
 
     setLoading(true);
     const result = await storageService.saveTransaction({
@@ -104,7 +120,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
           </div>
           <div className="col-span-1">
             <label className="block text-sm font-semibold text-slate-700 mb-1">Data Lançamento</label>
-            <input type="date" name="data" required value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500" />
+            <input type="date" name="data" required max={format(new Date(), 'yyyy-MM-dd')} value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500" />
           </div>
           <div className="col-span-1">
             <label className="block text-sm font-semibold text-slate-700 mb-1">Vencimento Limite</label>

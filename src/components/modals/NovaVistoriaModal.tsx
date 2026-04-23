@@ -76,9 +76,21 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.placa) return alert('Placa é obrigatória');
-    if (!formData.cliente || formData.cliente.trim() === 'S/N' || formData.cliente.trim() === 'SN' || formData.cliente.trim() === '') {
-      return alert('O nome do cliente é obrigatório para o ranking. Não utilize "S/N".');
+    // Validações de Segurança
+    if (!formData.placa || formData.placa.length < 7) {
+      return alert('Placa inválida. Certifique-se de digitar os 7 caracteres.');
+    }
+    
+    if (!formData.cliente || formData.cliente.trim().length < 3) {
+      return alert('O nome do cliente deve ter pelo menos 3 caracteres.');
+    }
+
+    const selectedDate = new Date(formData.data + 'T12:00:00');
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (selectedDate > today) {
+      return alert('Não é possível registrar vistorias com data futura.');
     }
 
     // Verificação de Duplicidade mais robusta
@@ -204,7 +216,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Data</label>
-            <input type="date" name="data" required value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input type="date" name="data" required max={format(new Date(), 'yyyy-MM-dd')} value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">NF-e (Opcional)</label>
