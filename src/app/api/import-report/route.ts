@@ -8,8 +8,9 @@ export async function POST(req: NextRequest) {
     const apiKey = 'AIzaSyBprvxTiWQQp8Yjcq5Au4WMVA8IReeiWCc';
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Utilizando o motor 1.5 Flash que possui cota gratuita liberada para PDF
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Utilizando o motor 2.5 Flash, validado com sucesso para esta chave
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
 
 
 
