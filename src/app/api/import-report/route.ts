@@ -25,10 +25,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
     }
 
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'Chave GOOGLE_GEMINI_API_KEY não configurada no Vercel.' }, { status: 500 });
-    }
-
     // Converter arquivo para Base64 para o Gemini
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString('base64');
