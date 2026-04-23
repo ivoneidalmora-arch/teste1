@@ -11,7 +11,7 @@ import { storageService } from '@/services/storage';
 import { emitirRelatorioPDF } from '@/services/pdf';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, Filter, Search, Edit2, Trash2 } from 'lucide-react';
+import { Download, Filter, Search, Edit2, Trash2, Sparkles, Upload } from 'lucide-react';
 import { Transaction, IncomeTransaction } from '@/types/transaction';
 import { cn } from '@/utils/cn';
 import { formatDisplayDate } from '@/utils/dateUtils';
@@ -44,6 +44,42 @@ export default function RelatoriosPage() {
     });
   };
 
+  const handleImportPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      // 1. Chamar a IA para extrair os dados
+      const response = await fetch('/api/import-report', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Falha no processamento da IA');
+      const extractedData = await response.json();
+
+      // 2. Salvar em Massa (Bulk Insert) no Supabase
+      const result = await storageService.saveBulkIncomes(extractedData);
+
+      if (result.success) {
+        alert(`Sucesso! ${result.count} laudos foram extraídos e importados automaticamente via IA.`);
+        refresh();
+      } else {
+        alert('Erro ao salvar os dados extraídos no banco.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ocorreu um erro ao processar o relatório. Verifique se o arquivo é um PDF ou imagem válida.');
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in pb-24">
       {/* Header Context */}
@@ -54,14 +90,29 @@ export default function RelatoriosPage() {
           </h1>
           <p className="text-slate-500 mt-1">Busca avançada, gráficos modulares e documentos em PDF.</p>
         </div>
-        <button 
-          onClick={handleExportPDF}
-          disabled={transactions.length === 0}
-          className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
-        >
-          <Download className="w-5 h-5" />
-          Exportar Oficial (PDF)
-        </button>
+        <div className="flex items-center gap-3">
+          <label className={cn(
+            "flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-lg transition-all cursor-pointer",
+            importing && "opacity-50 cursor-not-allowed pointer-events-none"
+          )}>
+            {importing ? (
+              <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span>
+            ) : (
+              <Sparkles className="w-5 h-5 text-amber-400" />
+            )}
+            {importing ? 'Processando IA...' : 'Importar Relatório (PDF)'}
+            <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleImportPDF} disabled={importing} />
+          </label>
+
+          <button 
+            onClick={handleExportPDF}
+            disabled={transactions.length === 0}
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
+          >
+            <Download className="w-5 h-5" />
+            Exportar PDF
+          </button>
+        </div>
       </div>
 
       {/* Caixa de Filtros */}

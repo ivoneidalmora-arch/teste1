@@ -224,5 +224,45 @@ export const storageService = {
       console.error('Erro na importação', e);
       return { success: false, count: 0 };
     }
+  },
+
+  saveBulkIncomes: async (incomes: any[]): Promise<{ success: boolean, count: number }> => {
+    try {
+      // Mapeamento VRTE para cálculo automático do líquido
+      const CONVERSAO: Record<number, number> = {
+        198.13: 147.41,
+        169.83: 127.08,
+        141.52: 105.86,
+        108.50: 75.96,
+        94.35: 63.49
+      };
+
+      const payload = incomes.map(item => {
+        const bruto = parseFloat(item.valorBruto) || 0;
+        // Acha o valor líquido correspondente na tabela ou usa o bruto se não houver match
+        const match = Object.keys(CONVERSAO).find(k => Math.abs(parseFloat(k) - bruto) < 0.01);
+        const liquido = match ? CONVERSAO[parseFloat(match)] : bruto;
+
+        return {
+          category: item.categoria || 'Transferência',
+          placa: item.placa?.toUpperCase(),
+          cliente: item.cliente?.toUpperCase(),
+          amountBruto: bruto,
+          amountLiquido: liquido,
+          amount: bruto,
+          date: item.data, // Esperado YYYY-MM-DD
+          pagamento: 'Pix',
+          type: 'income'
+        };
+      });
+
+      const { data, error } = await supabase.from('Receitas').insert(payload).select();
+      if (error) throw error;
+
+      return { success: true, count: data?.length || 0 };
+    } catch (e) {
+      console.error('Erro no bulk insert', e);
+      return { success: false, count: 0 };
+    }
   }
 };
