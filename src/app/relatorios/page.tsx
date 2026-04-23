@@ -1,20 +1,24 @@
 "use client";
 
+import { useState } from 'react';
 import { useReports } from '@/hooks/useReports';
 import { ReportChart } from '@/components/reports/ReportChart';
 import { CategorySummary } from '@/components/reports/CategorySummary';
 import { ClientRanking } from '@/components/reports/ClientRanking';
 import { SeniorFinancialReport } from '@/components/reports/SeniorFinancialReport';
+import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
+import { storageService } from '@/services/storage';
 import { emitirRelatorioPDF } from '@/services/pdf';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, Filter, Search } from 'lucide-react';
-import { IncomeTransaction } from '@/types/transaction';
+import { Download, Filter, Search, Edit2, Trash2 } from 'lucide-react';
+import { Transaction, IncomeTransaction } from '@/types/transaction';
 import { cn } from '@/utils/cn';
 import { formatDisplayDate } from '@/utils/dateUtils';
 
 export default function RelatoriosPage() {
-  const { loading, transactions, metrics, filters } = useReports();
+  const { loading, transactions, metrics, filters, fetchTransactions } = useReports();
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   if (loading) {
     return (
@@ -208,6 +212,7 @@ export default function RelatoriosPage() {
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Identificação</th>
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Valor Final</th>
+                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -246,6 +251,29 @@ export default function RelatoriosPage() {
                                <span className="text-brand-danger">-{formatBRL(t.amount)}</span>
                              )}
                           </td>
+                          <td className="py-3 px-6 text-center">
+                             <div className="flex items-center justify-center gap-2">
+                                <button 
+                                   onClick={() => setEditingTransaction(t)}
+                                   className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                   title="Editar"
+                                >
+                                   <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button 
+                                   onClick={async () => {
+                                      if (window.confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) {
+                                         const success = await storageService.deleteTransaction(t.id, t.type);
+                                         if (success) fetchTransactions();
+                                      }
+                                   }}
+                                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                   title="Excluir"
+                                >
+                                   <Trash2 className="w-4 h-4" />
+                                </button>
+                             </div>
+                          </td>
                        </tr>
                     )
                   })
@@ -254,6 +282,15 @@ export default function RelatoriosPage() {
             </table>
          </div>
       </div>
+
+      <EditTransactionModal 
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        onSuccess={() => {
+          fetchTransactions();
+        }}
+        transaction={editingTransaction}
+      />
     </div>
   );
 }
