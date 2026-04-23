@@ -200,7 +200,7 @@ export default function RelatoriosPage() {
       {/* Tabela de Resultados (Desktop > Table, Mobile > Cards) */}
       <div className="bg-white rounded-2xl border-detran overflow-hidden hover:shadow-lg transition-all duration-300">
          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-            <h3 className="font-bold text-slate-700">Listagem Resultante</h3>
+            <h3 className="font-bold text-slate-700">Listagem de Registros</h3>
             <span className="text-xs font-semibold px-2 py-1 bg-slate-200 text-slate-600 rounded-md">Total: {transactions.length}</span>
          </div>
          <div className="overflow-x-auto">
