@@ -17,7 +17,7 @@ import { cn } from '@/utils/cn';
 import { formatDisplayDate } from '@/utils/dateUtils';
 
 export default function RelatoriosPage() {
-  const { loading, transactions, metrics, filters, fetchTransactions } = useReports();
+  const { loading, transactions, metrics, filters, refresh } = useReports();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   if (loading) {
@@ -218,7 +218,7 @@ export default function RelatoriosPage() {
               <tbody className="divide-y divide-slate-100">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">Nenhum resultado filtrado.</td>
+                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">Nenhum resultado filtrado.</td>
                   </tr>
                 ) : (
                   transactions.map((t, i) => {
@@ -264,7 +264,7 @@ export default function RelatoriosPage() {
                                    onClick={async () => {
                                       if (window.confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) {
                                          const success = await storageService.deleteTransaction(t.id, t.type);
-                                         if (success) fetchTransactions();
+                                         if (success) refresh();
                                       }
                                    }}
                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -287,7 +287,7 @@ export default function RelatoriosPage() {
         isOpen={!!editingTransaction}
         onClose={() => setEditingTransaction(null)}
         onSuccess={() => {
-          fetchTransactions();
+          refresh();
         }}
         transaction={editingTransaction}
       />
