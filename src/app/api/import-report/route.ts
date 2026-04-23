@@ -14,13 +14,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
     }
 
+    if (!process.env.GOOGLE_GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'Chave GOOGLE_GEMINI_API_KEY não configurada no Vercel.' }, { status: 500 });
+    }
+
     // Converter arquivo para Base64 para o Gemini
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString('base64');
 
     const prompt = `
       Você é um especialista em extração de dados de relatórios financeiros de vistorias automotivas.
-      Analise a imagem/PDF do "Relatório de Conta Mensal" e extraia todos os veículos realizados na tabela.
+      Analise o arquivo do "Relatório de Conta Mensal" e extraia todos os veículos realizados na tabela.
       
       Regras de extração:
       1. Extraia APENAS as linhas que possuem placa e serviço.
@@ -31,8 +35,7 @@ export async function POST(req: NextRequest) {
       
       Retorne APENAS um array JSON puro, sem formatação markdown, seguindo este exemplo:
       [
-        { "data": "2025-11-04", "placa": "ABC1234", "cliente": "ORVEL", "categoria": "Transferência", "valorBruto": 198.13 },
-        ...
+        { "data": "2025-11-04", "placa": "ABC1234", "cliente": "ORVEL", "categoria": "Transferência", "valorBruto": 198.13 }
       ]
     `;
 
@@ -47,13 +50,23 @@ export async function POST(req: NextRequest) {
     ]);
 
     const responseText = result.response.text();
-    // Limpeza básica caso a IA coloque blocos de código markdown
-    const jsonString = responseText.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(jsonString);
+    if (!responseText) throw new Error('A IA não retornou nenhum dado. O arquivo pode estar ilegível.');
 
-    return NextResponse.json(data);
+    // Limpeza rigorosa do JSON
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+    const jsonString = jsonMatch ? jsonMatch[0] : responseText.replace(/```json|```/g, '').trim();
+    
+    try {
+      const data = JSON.parse(jsonString);
+      return NextResponse.json(data);
+    } catch (e) {
+      console.error('Erro ao converter JSON da IA:', responseText);
+      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido. Tente novamente.' }, { status: 500 });
+    }
   } catch (error: any) {
     console.error('Erro no processamento Gemini:', error);
-    return NextResponse.json({ error: error.message || 'Falha ao processar arquivo com IA' }, { status: 500 });
+    let msg = error.message || 'Falha ao processar arquivo com IA';
+    if (msg.includes('API key not valid')) msg = 'Sua chave do Gemini (API Key) está inválida ou expirou.';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
