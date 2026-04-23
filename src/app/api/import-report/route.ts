@@ -4,11 +4,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Configuração do Gemini
 export async function POST(req: NextRequest) {
   try {
-    // Chave definitiva validada pelo usuário
-    const apiKey = 'AIzaSyDdyNXR6Jw2O1xo7kZUrrZNU9uWHNucvW4';
+    // Chave definitiva com acesso a modelos de próxima geração
+    const apiKey = 'AIzaSyBprvxTiWQQp8Yjcq5Au4WMVA8IReeiWCc';
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Utilizando o motor 2.0 Flash disponível na conta do usuário
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
 
 
     const formData = await req.formData();
