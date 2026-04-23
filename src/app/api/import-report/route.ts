@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Usando o sufixo -latest para garantir que pegue a versão mais estável e disponível
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
