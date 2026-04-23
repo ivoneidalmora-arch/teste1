@@ -4,17 +4,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Configuração do Gemini
 export async function POST(req: NextRequest) {
   try {
-    // Usando variável de ambiente segura (obrigatório para evitar bloqueio do Google)
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    // 1. Tenta pegar do Header (enviada pelo front-end)
+    // 2. Tenta pegar da variável de ambiente do Vercel
+    const apiKey = req.headers.get('x-api-key') || process.env.GOOGLE_GEMINI_API_KEY;
     
     if (!apiKey) {
       return NextResponse.json({ 
-        error: 'Chave GOOGLE_GEMINI_API_KEY não configurada no painel do Vercel.' 
-      }, { status: 500 });
+        error: 'MISSING_KEY' 
+      }, { status: 401 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
 
 
 

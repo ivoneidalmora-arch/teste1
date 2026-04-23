@@ -22,13 +22,33 @@ export function ImportButton({ onSuccess, className }: Props) {
     formData.append('file', file);
 
     try {
-      // 1. Chamar a IA para extrair os dados
-      const response = await fetch('/api/import-report', {
-        method: 'POST',
-        body: formData,
-      });
+      // Pega a chave do localStorage se já tiver salvo antes
+      let savedKey = localStorage.getItem('gemini_api_key');
 
-      const responseData = await response.json();
+      const makeRequest = async (key?: string) => {
+        const headers: Record<string, string> = {};
+        if (key) headers['x-api-key'] = key;
+
+        return await fetch('/api/import-report', {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+      };
+
+      let response = await makeRequest(savedKey || undefined);
+      let responseData = await response.json();
+
+      // Se a chave estiver faltando, pede ao usuário
+      if (response.status === 401 && responseData.error === 'MISSING_KEY') {
+        const newKey = prompt('Chave Gemini não encontrada no servidor.\n\nPor favor, cole sua chave API (AIzaSy...) abaixo para continuar.\n(Ela será salva apenas no seu navegador)');
+        
+        if (!newKey) throw new Error('Operação cancelada: Chave não fornecida.');
+        
+        localStorage.setItem('gemini_api_key', newKey);
+        response = await makeRequest(newKey);
+        responseData = await response.json();
+      }
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Falha no processamento da IA');
@@ -49,13 +69,16 @@ export function ImportButton({ onSuccess, className }: Props) {
       console.error(err);
       if (err.message.includes('timeout')) {
         alert('O relatório é muito longo e a IA demorou demais para processar. Tente enviar apenas a página com a tabela.');
+      } else if (err.message.includes('MISSING_KEY')) {
+        // Já tratado pelo prompt
       } else {
-        alert(`Erro na IA: ${err.message || 'Verifique sua chave do Gemini no Vercel ou o formato do arquivo.'}`);
+        alert(`Erro na IA: ${err.message || 'Verifique sua chave do Gemini ou o formato do arquivo.'}`);
       }
     } finally {
       setImporting(false);
       e.target.value = '';
     }
+
   };
 
   return (
