@@ -46,7 +46,6 @@ export default function RelatoriosPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in pb-24">
-      <div className="bg-red-500 text-white p-4 rounded-xl text-center font-bold">VERSÃO 2.3 - TESTE DE DEPLOY</div>
       {/* Header Context */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
          <div>
@@ -203,7 +202,7 @@ export default function RelatoriosPage() {
       {/* Tabela de Resultados (Desktop > Table, Mobile > Cards) */}
       <div className="bg-white rounded-2xl border-detran overflow-hidden hover:shadow-lg transition-all duration-300">
          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-            <h3 className="font-bold text-slate-700">Listagem de Registros</h3>
+            <h3 className="font-bold text-slate-700">Listagem Resultante</h3>
             <span className="text-xs font-semibold px-2 py-1 bg-slate-200 text-slate-600 rounded-md">Total: {transactions.length}</span>
          </div>
          <div className="overflow-x-auto">
