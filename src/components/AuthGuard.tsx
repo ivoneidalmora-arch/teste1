@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { storageService } from '@/services/storage';
+import { authService } from '@/services/auth';
 import Navbar from './Navbar';
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -17,8 +17,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const session = storageService.getSession();
+    const session = authService.isAuthenticated();
     setIsAuthenticated(session);
+
     
     // Lógica para garantir que o sistema inicie SEMPRE no Dashboard (/)
     // quando o sistema é aberto pela primeira vez na sessão do navegador
