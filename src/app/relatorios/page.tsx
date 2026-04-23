@@ -44,6 +44,7 @@ export default function RelatoriosPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in pb-24">
+      <div className="bg-red-500 text-white p-4 rounded-xl text-center font-bold">VERSÃO 2.3 - TESTE DE DEPLOY</div>
       {/* Header Context */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
          <div>
