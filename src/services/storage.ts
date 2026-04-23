@@ -64,7 +64,7 @@ export const storageService = {
           type: 'income' as const,
           category: r.category || 'Vistoria',
           amount: parseFloat(r.amount) || parseFloat(r.amountBruto) || 0,
-          date: r.date || r.data || r.vencimento,
+          date: r.date,
           observacao: r.observacao,
           placa: r.placa,
           cliente: r.cliente,
@@ -105,8 +105,8 @@ export const storageService = {
   saveTransaction: async (transaction: Transaction): Promise<Transaction | null> => {
     try {
       if (transaction.type === 'income') {
-        const { id, type, ...payload } = transaction as IncomeTransaction;
-        const dbPayload = typeof id === 'string' ? { ...payload, data: payload.date } : { id, ...payload, data: payload.date };
+        // Se o ID for string (ex: loc_... ou inc_...), omitimos para o Supabase gerar o ID real
+        const dbPayload = typeof id === 'string' ? payload : { id, ...payload };
         
         const { data, error } = await supabase.from('Receitas').insert([dbPayload]).select().single();
         if (error) throw error;
@@ -129,8 +129,7 @@ export const storageService = {
     try {
       if (updatedTransaction.type === 'income') {
         const { type, id: _, createdAt, ...payload } = updatedTransaction as IncomeTransaction;
-        const dbPayload = { ...payload, data: payload.date };
-        const { error } = await supabase.from('Receitas').update(dbPayload).eq('id', id);
+        const { error } = await supabase.from('Receitas').update(payload).eq('id', id);
         if (error) throw error;
       } else {
         const { type, id: _, createdAt, ...payload } = updatedTransaction as ExpenseTransaction;
