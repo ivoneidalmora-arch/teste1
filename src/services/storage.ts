@@ -105,6 +105,7 @@ export const storageService = {
   saveTransaction: async (transaction: Transaction): Promise<Transaction | null> => {
     try {
       if (transaction.type === 'income') {
+        const { id, type, ...payload } = transaction as IncomeTransaction;
         // Se o ID for string (ex: loc_... ou inc_...), omitimos para o Supabase gerar o ID real
         const dbPayload = typeof id === 'string' ? payload : { id, ...payload };
         
