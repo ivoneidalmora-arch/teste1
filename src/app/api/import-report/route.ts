@@ -4,10 +4,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Configuração do Gemini
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY;
     
     if (!apiKey) {
-      return NextResponse.json({ error: 'Chave GOOGLE_GEMINI_API_KEY não encontrada no ambiente do servidor.' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Chave não encontrada. Verifique se configurou GOOGLE_GEMINI_API_KEY ou NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY no Vercel e fez o Redeploy.' 
+      }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
