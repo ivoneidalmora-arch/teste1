@@ -37,7 +37,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           data: t.date,
           valorBruto: t.amountBruto || t.amount,
           valorLiquido: t.amountLiquido || t.amount,
-          pagamento: t.pagamento || 'Dinheiro',
+          pagamento: t.pagamento || 'Pix',
           nf: t.nf || '',
           observacao: t.observacao || ''
         });

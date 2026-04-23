@@ -34,7 +34,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     data: storageService.getLastUsedDate() || format(defaultDate || new Date(), 'yyyy-MM-dd'),
     valorBruto: 198.13,
     valorLiquido: 147.41,
-    pagamento: 'Dinheiro',
+    pagamento: 'Pix',
     nf: '',
     observacao: ''
   });
@@ -205,13 +205,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
         {/* Row 4 Extras */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Forma de Pag.</label>
             <select name="pagamento" value={formData.pagamento} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="Cartão Débito">Cartão Débito</option>
-              <option value="Cartão Crédito">Cartão Crédito</option>
-              <option value="Boleto">Boleto/Pix</option>
-              <option value="Cortesia">Cortesia</option>
+              <option value="Pix">Pix</option>
             </select>
           </div>
           <div>
