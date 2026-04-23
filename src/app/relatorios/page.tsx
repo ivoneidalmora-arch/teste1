@@ -16,6 +16,8 @@ import { Transaction, IncomeTransaction } from '@/types/transaction';
 import { cn } from '@/utils/cn';
 import { formatDisplayDate } from '@/utils/dateUtils';
 
+export const dynamic = 'force-dynamic';
+
 export default function RelatoriosPage() {
   const { loading, transactions, metrics, filters, refresh } = useReports();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
