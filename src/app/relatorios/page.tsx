@@ -6,15 +6,14 @@ import { ReportChart } from '@/components/reports/ReportChart';
 import { CategorySummary } from '@/components/reports/CategorySummary';
 import { ClientRanking } from '@/components/reports/ClientRanking';
 import { SeniorFinancialReport } from '@/components/reports/SeniorFinancialReport';
+import { ReportFilters } from '@/components/reports/ReportFilters';
+import { TransactionTable } from '@/components/reports/TransactionTable';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
-import { storageService } from '@/services/storage';
 import { emitirRelatorioPDF } from '@/services/pdf';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Download, Filter, Search, Edit2, Trash2 } from 'lucide-react';
+import { Download, Filter } from 'lucide-react';
 import { Transaction, IncomeTransaction } from '@/types/transaction';
 import { cn } from '@/utils/cn';
-import { formatDisplayDate } from '@/utils/dateUtils';
+import { formatBRL, formatDisplayDate } from '@/utils/formatters';
 import { ImportButton } from '@/components/ImportButton';
 
 export const dynamic = 'force-dynamic';
@@ -30,8 +29,6 @@ export default function RelatoriosPage() {
       </div>
     );
   }
-
-  const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const handleExportPDF = () => {
     emitirRelatorioPDF(transactions, {
@@ -69,38 +66,7 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Caixa de Filtros */}
-      <div className="bg-white rounded-2xl p-6 border-detran hover:shadow-lg transition-all duration-300">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="w-full md:w-1/5">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Data Inicial</label>
-            <input type="date" value={filters.startDate} onChange={e => filters.setStartDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-          </div>
-          <div className="w-full md:w-1/5">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Data Final</label>
-            <input type="date" value={filters.endDate} onChange={e => filters.setEndDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-          </div>
-          <div className="w-full md:w-1/5">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Placa (Exata)</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" maxLength={7} value={filters.searchPlaca} onChange={e => filters.setSearchPlaca(e.target.value.toUpperCase())} placeholder="ABC1D23" className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" />
-            </div>
-          </div>
-          <div className="w-full md:w-1/5">
-             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Cliente (Nome)</label>
-             <input type="text" value={filters.searchCliente} onChange={e => filters.setSearchCliente(e.target.value)} placeholder="João Silva..." className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-          </div>
-          <div className="w-full md:w-1/5">
-             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tipo</label>
-             <select value={filters.filterType} onChange={e => filters.setFilterType(e.target.value as any)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                <option value="all">Todas</option>
-                <option value="income">Apenas Receitas</option>
-                <option value="expense">Apenas Despesas</option>
-             </select>
-          </div>
-        </div>
-      </div>
+      <ReportFilters filters={filters} />
 
       {/* Grid de Gráficos Superiores */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -176,7 +142,6 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Seção de Análise Financeira Sênior (DRE & Rosca) */}
       <SeniorFinancialReport metrics={metrics} />
 
       {/* Grid Inferior: Ranking de Clientes e Outras Métricas */}
@@ -197,98 +162,18 @@ export default function RelatoriosPage() {
                <div className="pt-4 border-t border-slate-50">
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Subtotal em Tela:</span>
                   <p className="text-2xl font-black text-brand-primary">
-                    {transactions.reduce((acc, t) => acc + (t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {formatBRL(transactions.reduce((acc, t) => acc + (t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount), 0))}
                   </p>
                </div>
             </div>
          </div>
       </div>
 
-      {/* Tabela de Resultados (Desktop > Table, Mobile > Cards) */}
-      <div className="bg-white rounded-2xl border-detran overflow-hidden hover:shadow-lg transition-all duration-300">
-         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-            <h3 className="font-bold text-slate-700">Listagem Resultante</h3>
-            <span className="text-xs font-semibold px-2 py-1 bg-slate-200 text-slate-600 rounded-md">Total: {transactions.length}</span>
-         </div>
-         <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100/50">
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</th>
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Identificação</th>
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Valor Final</th>
-                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">Nenhum resultado filtrado.</td>
-                  </tr>
-                ) : (
-                  transactions.map((t, i) => {
-                    const isInc = t.type === 'income';
-                    return (
-                       <tr key={`${t.id}-${i}`} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3 px-6 whitespace-nowrap">
-                             <div className="flex flex-col">
-                                <span className="text-sm text-slate-800 font-medium">{formatDisplayDate(t.date)}</span>
-                                <span className="text-[10px] text-slate-400 capitalize">{formatDisplayDate(t.date, 'eeee')}</span>
-                             </div>
-                          </td>
-                          <td className="py-3 px-6 text-sm text-slate-800 font-medium">{t.category}</td>
-                          <td className="py-3 px-6 text-sm text-slate-600">
-                             {isInc ? ((t as IncomeTransaction).cliente || 'S/N') : ((t as any).description || 'Despesa')}
-                             {isInc && (t as IncomeTransaction).placa && <span className="ml-2 px-2 py-0.5 bg-slate-200/50 text-[10px] rounded border border-slate-200 font-mono">{(t as IncomeTransaction).placa}</span>}
-                          </td>
-                          <td className="py-3 px-6 whitespace-nowrap">
-                             <div className={cn(
-                                "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                isInc ? "bg-brand-success/10 text-brand-success" : ((t as any).status === 'Pago' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")
-                             )}>
-                               {isInc ? 'Recebido' : (t as any).status}
-                             </div>
-                          </td>
-                          <td className="py-3 px-6 text-sm font-bold text-right whitespace-nowrap">
-                             {isInc ? (
-                               <span className="text-brand-success">+{formatBRL((t as IncomeTransaction).amountLiquido || t.amount)}</span>
-                             ) : (
-                               <span className="text-brand-danger">-{formatBRL(t.amount)}</span>
-                             )}
-                          </td>
-                          <td className="py-3 px-6 text-center">
-                             <div className="flex items-center justify-center gap-2">
-                                <button 
-                                   onClick={() => setEditingTransaction(t)}
-                                   className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                   title="Editar"
-                                >
-                                   <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button 
-                                   onClick={async () => {
-                                      if (window.confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) {
-                                         const success = await storageService.deleteTransaction(t.id, t.type);
-                                         if (success) refresh();
-                                      }
-                                   }}
-                                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                   title="Excluir"
-                                >
-                                   <Trash2 className="w-4 h-4" />
-                                </button>
-                             </div>
-                          </td>
-                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-         </div>
-      </div>
+      <TransactionTable 
+        transactions={transactions}
+        onEdit={(t) => setEditingTransaction(t)}
+        onRefresh={refresh}
+      />
 
       <EditTransactionModal 
         isOpen={!!editingTransaction}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { storageService } from '@/services/storage';
+import { authService } from '@/services/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function LoginPage() {
     setLoading(true);
     // Simulate auth logic
     setTimeout(() => {
-      storageService.setSession('active_session_token');
+      authService.setSession('active_session_token');
       router.push('/');
     }, 600);
   };

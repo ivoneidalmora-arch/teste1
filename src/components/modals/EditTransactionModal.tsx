@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { storageService } from '@/services/storage';
 import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/types/transaction';
-import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
-import { Save, Trash2, X } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { PlacaInput } from '@/components/ui/PlacaInput';
+import { MoneyInput } from '@/components/ui/MoneyInput';
+import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/utils/finance';
 
 interface Props {
   isOpen: boolean;
@@ -18,12 +20,6 @@ interface Props {
 export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }: Props) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<any>(null);
-
-  useEffect(() => {
-    if (formData?.categoria === 'Vistoria de Retorno') {
-      setFormData((prev: any) => ({ ...prev, valorBruto: 0, valorLiquido: 0 }));
-    }
-  }, [formData?.categoria]);
 
   useEffect(() => {
     if (transaction) {
@@ -57,17 +53,27 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
     }
   }, [transaction]);
 
+  // Recalcular líquido automaticamente se mudar o bruto em Receitas
+  useEffect(() => {
+    if (formData?.type === 'income') {
+      if (formData.categoria === 'Vistoria de Retorno') {
+        setFormData((prev: any) => ({ ...prev, valorBruto: 0, valorLiquido: 0 }));
+      } else if (formData.categoria !== 'Vistoria Cautelar') {
+        const liq = calculateLiquido(formData.valorBruto);
+        setFormData((prev: any) => ({ ...prev, valorLiquido: liq }));
+      }
+    }
+  }, [formData?.valorBruto, formData?.categoria, formData?.type]);
+
   if (!transaction || !formData) return null;
 
   const isIncome = formData.type === 'income';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    const v = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'date' ? value.toUpperCase() : value;
-    
     setFormData((prev: any) => ({
       ...prev,
-      [name]: name === 'valor' || name.startsWith('valor') ? parseFloat(v) || 0 : v
+      [name]: name === 'valor' || name.startsWith('valor') ? parseFloat(value) || 0 : value
     }));
   };
 
@@ -79,22 +85,22 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
       ...transaction,
       category: formData.categoria,
       date: formData.data,
-      observacao: formData.observacao,
+      observacao: formData.observacao.toUpperCase(),
     };
 
     if (isIncome) {
       Object.assign(updatedData, {
         placa: formData.placa,
-        cliente: formData.cliente,
+        cliente: formData.cliente.toUpperCase(),
         amountBruto: formData.valorBruto,
         amountLiquido: formData.valorLiquido,
         amount: formData.valorBruto,
         pagamento: formData.pagamento,
-        nf: formData.nf,
+        nf: formData.nf.toUpperCase(),
       });
     } else {
       Object.assign(updatedData, {
-        description: formData.descricao,
+        description: formData.descricao.toUpperCase(),
         amount: formData.valor,
         vencimento: formData.vencimento,
         status: formData.status,
@@ -111,6 +117,8 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
       alert('Erro ao atualizar lançamento.');
     }
   };
+
+  const isAutoLiquido = isIncome && formData.categoria !== 'Vistoria Cautelar' && !!CONVERSAO_VRTE_2025[formData.valorBruto];
 
   return (
     <BaseModal 
@@ -140,7 +148,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
               {isIncome ? (
                 <>
                   <option value="Transferência">Transferência</option>
-                  <option value="2ª Via Recibo">2ª Via Recibo</option>
+                  <option value="Vistoria Cautelar">Vistoria Cautelar</option>
                   <option value="Motor">Motor</option>
                   <option value="Especial">Especial</option>
                   <option value="Vistoria de Entrada">Vistoria de Entrada</option>
@@ -168,55 +176,33 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
         {isIncome ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Placa</label>
-                <input type="text" name="placa" maxLength={7} required value={formData.placa} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
-              </div>
+              <PlacaInput label="Placa" name="placa" required value={formData.placa} onChange={handleChange} />
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Cliente</label>
-                <input type="text" name="cliente" required value={formData.cliente} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" name="cliente" required value={formData.cliente} onChange={e => setFormData((p: any) => ({...p, cliente: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Valor Bruto (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  name="valorBruto" 
-                  required 
-                  value={formData.valorBruto} 
-                  onChange={handleChange} 
-                  disabled={formData.categoria === 'Vistoria de Retorno'}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-emerald-800 mb-1">Dedução Líquida (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  name="valorLiquido" 
-                  required 
-                  value={formData.valorLiquido} 
-                  onChange={handleChange} 
-                  disabled={formData.categoria === 'Vistoria de Retorno'}
-                  className="w-full bg-white border border-emerald-200 rounded-lg px-4 py-2.5 font-bold text-emerald-800" 
-                />
-              </div>
+              <MoneyInput label="Valor Bruto" name="valorBruto" required value={formData.valorBruto} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno'} />
+              <MoneyInput 
+                label="Dedução Líquida" 
+                name="valorLiquido" 
+                required 
+                value={formData.valorLiquido} 
+                onChange={handleChange} 
+                disabled={formData.categoria === 'Vistoria de Retorno' || isAutoLiquido}
+                className={cn(isAutoLiquido && "bg-emerald-100/50 border-emerald-200 text-emerald-800")}
+              />
             </div>
           </>
         ) : (
           <>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Descrição</label>
-              <input type="text" name="descricao" required value={formData.descricao} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="text" name="descricao" required value={formData.descricao} onChange={e => setFormData((p: any) => ({...p, descricao: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-rose-50/30 p-4 rounded-xl border border-rose-100">
-                <label className="block text-sm font-semibold text-rose-800 mb-1">Valor Total (R$)</label>
-                <input type="number" step="0.01" name="valor" required value={formData.valor} onChange={handleChange} className="w-full bg-white border border-rose-200 rounded-lg px-4 py-2.5 font-bold" />
-              </div>
+              <MoneyInput label="Valor Total" name="valor" required value={formData.valor} onChange={handleChange} prefix="R$" className="bg-rose-50/30 border-rose-100" />
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                 <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
@@ -230,17 +216,11 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Observações Privadas</label>
-          <textarea name="observacao" rows={2} value={formData.observacao} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+          <textarea name="observacao" rows={2} value={formData.observacao} onChange={e => setFormData((p: any) => ({...p, observacao: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button 
-            type="button" 
-            onClick={onClose}
-            className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
-          >
-            Cancelar
-          </button>
+          <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Cancelar</button>
           <button 
             disabled={loading} 
             type="submit" 

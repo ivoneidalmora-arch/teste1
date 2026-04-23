@@ -4,14 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, LayoutDashboard, FileText, Database } from 'lucide-react';
-import { storageService } from '@/services/storage';
+import { authService } from '@/services/auth';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = () => {
-    storageService.clearSession();
+    authService.logout();
     router.push('/login');
   };
 
