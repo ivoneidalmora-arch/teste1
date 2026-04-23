@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFinance } from '@/hooks/useFinance';
 import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
@@ -17,7 +17,10 @@ import { ClientRanking } from '@/components/reports/ClientRanking';
 import { InspectionTypeBalance } from '@/components/dashboard/InspectionTypeBalance';
 import { formatBRL } from '@/utils/formatters';
 
+export const dynamic = 'force-dynamic';
+
 export default function Dashboard() {
+  const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
@@ -25,7 +28,11 @@ export default function Dashboard() {
 
   const { metrics, transactions, loading, refresh } = useFinance(selectedDate);
 
-  if (loading) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || loading) {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-8 bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
