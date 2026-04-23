@@ -15,6 +15,7 @@ import { Transaction } from '@/types/transaction';
 
 import { ClientRanking } from '@/components/reports/ClientRanking';
 import { InspectionTypeBalance } from '@/components/dashboard/InspectionTypeBalance';
+import { ImportButton } from '@/components/ImportButton';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -73,6 +74,8 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <ImportButton onSuccess={refresh} className="flex-1 sm:flex-none" />
+          
           <button 
             onClick={() => setIsDespesaModalOpen(true)}
             className="flex-1 sm:flex-none h-11 flex items-center justify-center gap-2 px-4 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold rounded-xl transition-colors border border-rose-100"
