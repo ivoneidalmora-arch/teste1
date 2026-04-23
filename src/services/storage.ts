@@ -159,4 +159,70 @@ export const storageService = {
       return false;
     }
   },
+
+  // --- FERRAMENTAS DE DADOS (BACKUP / RESET) ---
+
+  resetDatabase: async (): Promise<boolean> => {
+    try {
+      // Deleta todos os registros onde ID != 0 (ou seja, tudo)
+      const { error: rErr } = await supabase.from('Receitas').delete().neq('id', 0);
+      if (rErr) throw rErr;
+      
+      const { error: dErr } = await supabase.from('Despesas').delete().neq('id', 0);
+      if (dErr) throw dErr;
+
+      return true;
+    } catch (e) {
+      console.error('Erro ao resetar banco', e);
+      return false;
+    }
+  },
+
+  exportData: async (): Promise<any> => {
+    try {
+      const { data: receitas } = await supabase.from('Receitas').select('*');
+      const { data: despesas } = await supabase.from('Despesas').select('*');
+      
+      return {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        data: {
+          receitas: receitas || [],
+          despesas: despesas || []
+        }
+      };
+    } catch (e) {
+      console.error('Erro ao exportar dados', e);
+      return null;
+    }
+  },
+
+  importData: async (json: any): Promise<{ success: boolean, count: number }> => {
+    try {
+      if (!json || !json.data) throw new Error('Formato de backup inválido');
+      
+      const { receitas, despesas } = json.data;
+      let count = 0;
+
+      if (receitas && receitas.length > 0) {
+        // Remove IDs para gerar novos no Supabase e evitar conflitos
+        const recs = receitas.map(({ id, ...rest }: any) => rest);
+        const { error } = await supabase.from('Receitas').insert(recs);
+        if (error) throw error;
+        count += receitas.length;
+      }
+
+      if (despesas && despesas.length > 0) {
+        const exps = despesas.map(({ id, ...rest }: any) => rest);
+        const { error } = await supabase.from('Despesas').insert(exps);
+        if (error) throw error;
+        count += despesas.length;
+      }
+
+      return { success: true, count };
+    } catch (e) {
+      console.error('Erro na importação', e);
+      return { success: false, count: 0 };
+    }
+  }
 };

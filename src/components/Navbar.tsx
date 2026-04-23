@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, LayoutDashboard, FileText } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Database } from 'lucide-react';
 import { storageService } from '@/services/storage';
 
 export default function Navbar() {
@@ -58,6 +58,17 @@ export default function Navbar() {
               >
                 <FileText className="w-4 h-4" />
                 Relatórios
+              </Link>
+              <Link
+                href="/configuracoes"
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                  pathname === '/configuracoes' 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Database className="w-4 h-4" />
+                Config
               </Link>
             </div>
           </div>
