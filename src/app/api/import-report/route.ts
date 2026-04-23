@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Configuração do Gemini
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Chave GOOGLE_GEMINI_API_KEY não encontrada no ambiente do servidor.' }, { status: 500 });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
