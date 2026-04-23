@@ -4,20 +4,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Configuração do Gemini
 export async function POST(req: NextRequest) {
   try {
-    // Usando a chave fornecida pelo usuário como principal para garantir funcionamento
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY || 
-                   process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY || 
-                   'AIzaSyDiXJ9wpfyycpjxw-OeZAJwlKgnqcR6uj0';
+    // Chave definitiva validada pelo usuário
+    const apiKey = 'AIzaSyDdyNXR6Jw2O1xo7kZUrrZNU9uWHNucvW4';
     
-    if (!apiKey) {
-      return NextResponse.json({ 
-        error: 'Chave não encontrada. Por favor, verifique as configurações.' 
-      }, { status: 500 });
-    }
-
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Usando gemini-pro que é o modelo mais compatível com todas as chaves
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
