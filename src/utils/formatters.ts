@@ -4,14 +4,16 @@ import { ptBR } from 'date-fns/locale';
 /**
  * Formata um número para Real Brasileiro (R$)
  */
-export const formatBRL = (val: number) => 
-  val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+export const formatBRL = (val: number) => {
+  if (val === undefined || val === null || isNaN(val)) return 'R$ 0,00';
+  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
 
 /**
  * Formata uma variação percentual (ex: +5.2% ou Mantido)
  */
 export const formatVar = (val: number) => {
-  if (val === 0) return "Mantido";
+  if (val === 0 || isNaN(val) || val === undefined) return "0.0%";
   return `${val > 0 ? '+' : ''}${val.toFixed(1)}%`;
 };
 
