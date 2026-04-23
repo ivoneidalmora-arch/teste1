@@ -40,11 +40,19 @@ export function DashboardHeader({
             {availableMonths.length === 0 ? (
               <option value="">Sem lançamentos</option>
             ) : (
-              availableMonths.map(m => (
-                <option key={m} value={m}>
-                  {format(parseISO(`${m}-01`), 'MMMM yyyy', { locale: ptBR })}
-                </option>
-              ))
+              availableMonths.map(m => {
+                let label = m;
+                try {
+                  label = format(parseISO(`${m}-01`), 'MMMM yyyy', { locale: ptBR });
+                } catch (e) {
+                  label = m;
+                }
+                return (
+                  <option key={m} value={m}>
+                    {label}
+                  </option>
+                );
+              })
             )}
           </select>
           <ChevronDown className="w-3 h-3 absolute right-0 pointer-events-none opacity-50" />

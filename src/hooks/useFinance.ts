@@ -33,8 +33,10 @@ export function useFinance(selectedDate: Date) {
     const currentMonthTransactions: Transaction[] = [];
 
     transactions.forEach((t) => {
-      const monthKey = t.date ? t.date.substring(0, 7) : '0000-00';
-      monthsSet.add(monthKey);
+      const monthKey = t.date && t.date.length >= 7 ? t.date.substring(0, 7) : null;
+      if (monthKey && /^\d{4}-\d{2}$/.test(monthKey)) {
+        monthsSet.add(monthKey);
+      }
 
       const tValue = t.type === 'income' 
           ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) 
