@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from '@/utils/cn';
+import { formatBRL } from '@/utils/formatters';
 import { Trophy, Star, Users } from 'lucide-react';
 
 interface ClientRankData {
@@ -97,13 +98,13 @@ export function ClientRanking({ data }: ClientRankingProps) {
                    <div className="text-right mb-2">
                      <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Líquido</p>
                      <p className="text-base font-black text-slate-950 leading-tight">
-                       {client.liquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
+                       {formatBRL(client.liquido)}
                      </p>
                    </div>
                    <div className="text-right opacity-0 group-hover:opacity-100 transition-opacity">
                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Faturamento Bruto</p>
                      <p className="text-xs font-bold text-slate-400 line-through decoration-slate-300">
-                       {client.bruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
+                       {formatBRL(client.bruto)}
                      </p>
                    </div>
                 </div>
