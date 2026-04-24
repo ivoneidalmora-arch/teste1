@@ -49,9 +49,11 @@ export async function POST(req: NextRequest) {
         headers: {
           'Authorization': `Bearer ${openRouterKey}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://teste1-woad-ten.vercel.app',
+          'X-Title': 'Sistema de Vistorias',
         },
         body: JSON.stringify({
-          model: 'google/gemini-flash-1.5',
+          model: 'anthropic/claude-3-sonnet',
           messages: [
             {
               role: 'user',
