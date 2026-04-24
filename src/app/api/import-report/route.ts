@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
     
     EXEMPLO:
     2025-10-01;SFQ3B51;ORVEL;VISTORIA COMPLETA;113.58
-    2025-10-02;RDL1C32;ORVEL;VISTORIA SIMPLIFICADA;89.90`;
+    2025-10-02;RDL1C32;ORVEL;VISTORIA SIMPLIFICADA;89.90
+    2025-10-03;ABC1D23;ORVEL;RETORNO;0.00`;
 
     let responseText = '';
     let openRouterError = '';
@@ -217,6 +218,7 @@ export async function POST(req: NextRequest) {
         if (catUpper.includes('COMPLETA')) normalized.categoria = 'Transferência';
         if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
         if (catUpper.includes('COMPLETA MÓVEL')) normalized.categoria = 'Transferência';
+        if (catUpper.includes('RETORNO')) normalized.categoria = 'Vistoria de Retorno';
         
         return normalized;
       }).filter(item => item !== null);
