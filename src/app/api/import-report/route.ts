@@ -90,9 +90,9 @@ export async function POST(req: NextRequest) {
           responseText = data.candidates[0].content.parts[0].text;
           addLog('Sucesso via Google (2.0)!');
         } else {
-          addLog(`Google 2.0 falhou: ${data.error?.message || 'Cota esgotada'}`);
+          addLog(`Google 2.0 falhou (${response.status})`);
           
-          // TENTATIVA 1.5: Fallback interno no Google (às vezes tem cota separada)
+          // TENTATIVA 1.5: Fallback interno no Google (Gemini 1.5 Flash)
           addLog('Tentando Google AI Studio (gemini-1.5-flash)...');
           const googleUrl15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
           const resp15 = await fetch(googleUrl15, {
@@ -119,46 +119,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: OPENROUTER (Modelo TOTALMENTE GRÁTIS) ---
+    // --- TENTATIVA 2: OPENROUTER (Multi-Model Fallback) ---
     if (!responseText && openRouterKey) {
-      try {
-        addLog('Tentando OpenRouter (Gemini 2.0 Flash Lite - FREE)...');
-        const response = await fetch(`${openRouterUrl}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openRouterKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://teste1-woad-ten.vercel.app',
-            'X-Title': 'Sistema de Vistorias',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-lite-preview:free',
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                { 
-                  type: 'image_url', 
-                  image_url: { url: `data:${file.type};base64,${base64Data}` } 
-                }
-              ]
-            }]
-          })
-        });
+      const models = [
+        'google/gemini-2.0-flash-lite-preview:free',
+        'mistralai/pixtral-12b:free',
+        'microsoft/phi-3-vision-128k-instruct:free'
+      ];
 
-        const data = await response.json();
-        if (response.ok && data.choices?.[0]?.message?.content) {
-          responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter (FREE)!');
-        } else {
-          openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          addLog(`OpenRouter falhou: ${openRouterError}`);
-          throw new Error(openRouterError);
+      for (const model of models) {
+        if (responseText) break;
+        try {
+          addLog(`Tentando OpenRouter (${model})...`);
+          const response = await fetch(`${openRouterUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openRouterKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://teste1-woad-ten.vercel.app',
+              'X-Title': 'Sistema de Vistorias',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{
+                role: 'user',
+                content: [
+                  { type: 'text', text: prompt },
+                  { 
+                    type: 'image_url', 
+                    image_url: { url: `data:${file.type};base64,${base64Data}` } 
+                  }
+                ]
+              }]
+            })
+          });
+
+          const data = await response.json();
+          if (response.ok && data.choices?.[0]?.message?.content) {
+            responseText = data.choices[0].message.content;
+            addLog(`Sucesso via OpenRouter (${model})!`);
+          } else {
+            addLog(`${model} falhou: ${data.error?.message || response.statusText}`);
+          }
+        } catch (err: any) {
+          addLog(`${model} erro: ${err.message}`);
         }
-      } catch (err: any) {
-        addLog(`Erro final: ${err.message}`);
-        throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${err.message}`);
       }
+    }
+
+    if (!responseText) {
+      throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: Todas as tentativas de IA falharam (Cotas ou Indisponibilidade).`);
     }
 
     if (!responseText) {
