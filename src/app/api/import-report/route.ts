@@ -1,36 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Configuração do Gemini
 export async function POST(req: NextRequest) {
   try {
-    // 1. Tenta pegar do Header (enviada pelo front-end)
-    // 2. Tenta pegar da variável de ambiente do Vercel
-    const apiKey = req.headers.get('x-api-key') || process.env.GOOGLE_GEMINI_API_KEY;
+    const openRouterKey = process.env.OPENAI_API_KEY;
+    const openRouterUrl = process.env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1';
+    const geminiKey = req.headers.get('x-api-key') || process.env.GOOGLE_GEMINI_API_KEY;
     
-    if (!apiKey) {
-      return NextResponse.json({ 
-        error: 'MISSING_KEY' 
-      }, { status: 401 });
+    if (!openRouterKey && !geminiKey) {
+      return NextResponse.json({ error: 'MISSING_KEY' }, { status: 401 });
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-
-
-
-
-
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-
     if (!file) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
     }
 
-    // Converter arquivo para Base64 para o Gemini
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString('base64');
 
@@ -53,20 +39,51 @@ export async function POST(req: NextRequest) {
       ]
     `;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Data,
-          mimeType: file.type
-        }
-      }
-    ]);
+    let responseText = '';
 
-    const responseText = result.response.text();
-    if (!responseText) throw new Error('A IA não retornou nenhum dado. O arquivo pode estar ilegível.');
+    if (openRouterKey) {
+      // --- LÓGICA OPENROUTER ---
+      console.log('[IA] Utilizando OpenRouter...');
+      const response = await fetch(`${openRouterUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openRouterKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-001',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { 
+                  type: 'image_url', 
+                  image_url: { url: `data:${file.type};base64,${base64Data}` } 
+                }
+              ]
+            }
+          ]
+        })
+      });
 
-    // Limpeza rigorosa do JSON
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Erro no OpenRouter');
+      responseText = data.choices?.[0]?.message?.content;
+    } else {
+      // --- LÓGICA GEMINI DIRETO ---
+      console.log('[IA] Utilizando Google AI Studio...');
+      const genAI = new GoogleGenerativeAI(geminiKey!);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { data: base64Data, mimeType: file.type } }
+      ]);
+      responseText = result.response.text();
+    }
+
+    if (!responseText) throw new Error('A IA não retornou nenhum dado.');
+
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
     const jsonString = jsonMatch ? jsonMatch[0] : responseText.replace(/```json|```/g, '').trim();
     
@@ -75,27 +92,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data);
     } catch (e) {
       console.error('Erro ao converter JSON da IA:', responseText);
-      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido. Tente novamente.' }, { status: 500 });
+      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido.' }, { status: 500 });
     }
   } catch (error: any) {
-    console.error('Erro no processamento Gemini:', error);
-    let msg = error.message || 'Falha ao processar arquivo com IA';
-    
-    if (msg.includes('API key not valid')) msg = 'Sua chave do Gemini (API Key) está inválida ou expirou.';
-    
-    // Se for erro de modelo não encontrado, tenta listar os modelos disponíveis para ajudar no debug
-    if (msg.includes('not found') || msg.includes('404')) {
-      try {
-        const apiKey = req.headers.get('x-api-key') || process.env.GOOGLE_GEMINI_API_KEY;
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const data = await response.json();
-        const models = data.models?.map((m: any) => m.name).join(', ');
-        msg = `Modelo não encontrado. Modelos disponíveis para sua chave: ${models || 'nenhum'}`;
-      } catch (e) {
-        msg = 'Modelo não encontrado e não foi possível listar os modelos disponíveis.';
-      }
-    }
-
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('Erro no processamento IA:', error);
+    return NextResponse.json({ error: error.message || 'Falha ao processar com IA' }, { status: 500 });
   }
 }
