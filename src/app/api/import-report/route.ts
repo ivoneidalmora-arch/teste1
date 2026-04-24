@@ -29,8 +29,11 @@ export async function POST(req: NextRequest) {
     const openRouterUrl = process.env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1';
 
     const bytes = await file.arrayBuffer();
-    const base64Data = Buffer.from(bytes).toString('base64');
-    addLog('Base64 gerado.');
+    const base64Data = btoa(
+      new Uint8Array(bytes)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+    addLog('Base64 gerado via btoa (Edge compatível).');
 
     const prompt = `Você é um robô de extração de dados especializado no "Relatório de Conta Mensal - Veículos Realizados".
     
