@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     if (!responseText && geminiKey) {
       try {
         addLog('Tentando Google AI Studio (Direct Fetch - gemini-1.5-flash)...');
-        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
           method: 'POST',
