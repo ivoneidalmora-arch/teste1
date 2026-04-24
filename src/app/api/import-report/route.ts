@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
                 { inline_data: { mime_type: file.type, data: base64Data } }
               ]
             }],
-            generationConfig: {
+            generation_config: {
               temperature: 0.1,
               topK: 1,
               topP: 1,
