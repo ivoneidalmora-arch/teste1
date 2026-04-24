@@ -90,13 +90,10 @@ export async function POST(req: NextRequest) {
     if (!responseText && geminiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiKey);
-        // Usando o nome mais estável para o Flash e ativando JSON mode
-        const model = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash',
-          generationConfig: { responseMimeType: "application/json" }
-        }); 
+        // Voltando para o Pro que é mais garantido de ser encontrado
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); 
 
-        console.log('[IA] Tentando Google AI Studio (Fallback)...');
+        console.log('[IA] Tentando Google AI Studio (Fallback: gemini-1.5-pro)...');
         const result = await model.generateContent([
           prompt,
           {
