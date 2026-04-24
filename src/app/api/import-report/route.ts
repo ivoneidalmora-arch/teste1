@@ -156,18 +156,40 @@ export async function POST(req: NextRequest) {
 
     try {
       addLog('Iniciando parsing do JSON...');
-      const cleanText = responseText.replace(/```json|```/g, '').trim();
-      const jsonMatch = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+      let cleanText = responseText.replace(/```json|```/g, '').trim();
+      
+      // Remove possíveis reticências se a resposta foi truncada
+      cleanText = cleanText.replace(/\.\.\.\s*$/, '').trim();
+      if (cleanText.endsWith(',') || cleanText.endsWith(',]')) {
+        cleanText = cleanText.replace(/,\]?$/, ']');
+      }
+      if (!cleanText.endsWith(']')) cleanText += ']';
+
+      const jsonMatch = cleanText.match(/(\[[\s\S]*\])/);
       const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
       
-      let data = JSON.parse(jsonString);
-      
-      if (!Array.isArray(data) && typeof data === 'object') {
-        const potentialArray = Object.values(data).find(val => Array.isArray(val));
-        data = potentialArray || [data];
-      }
+      let rawData = JSON.parse(jsonString);
+      if (!Array.isArray(rawData)) rawData = [rawData];
 
-      addLog(`Parsing concluído. ${Array.isArray(data) ? data.length : 1} itens encontrados.`);
+      // NORMALIZAÇÃO DE CAMPOS (IA às vezes capitaliza ou muda nomes)
+      const data = rawData.map((item: any) => {
+        const normalized: any = {
+          data: item.data || item.Data || new Date().toISOString().split('T')[0],
+          placa: item.placa || item.Placa || '',
+          cliente: item.cliente || item.Cliente || '',
+          categoria: item.categoria || item.Categoria || item.serviço || item.Serviço || 'Transferência',
+          valorBruto: parseFloat(String(item.valorBruto || item.ValorBruto || item.preço || item.Preço || '0').replace(',', '.')),
+          valorLiquido: parseFloat(String(item.valorLiquido || item.ValorLiquido || '0').replace(',', '.'))
+        };
+
+        // Mapeamento extra de categorias com base no serviço lido
+        if (normalized.categoria.toUpperCase().includes('COMPLETA')) normalized.categoria = 'Transferência';
+        if (normalized.categoria.toUpperCase().includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
+        
+        return normalized;
+      });
+
+      addLog(`Parsing concluído. ${data.length} itens normalizados.`);
       return NextResponse.json(data);
     } catch (e: any) {
       addLog(`ERRO no parsing: ${e.message}`);
