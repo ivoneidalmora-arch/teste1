@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3-haiku',
+          model: 'google/gemini-pro-1.5',
           messages: [
             {
               role: 'user',
@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
       const data = await response.json();
       if (!response.ok) {
         console.error('[OpenRouter Error]:', JSON.stringify(data, null, 2));
-        throw new Error(data.error?.message || `Erro no Provedor (Status ${response.status})`);
+        // Retorna o JSON do erro para vermos os detalhes no alert do navegador
+        throw new Error(data.error ? JSON.stringify(data.error) : `Erro do Provedor (Status ${response.status})`);
       }
       responseText = data.choices?.[0]?.message?.content;
     } else {
