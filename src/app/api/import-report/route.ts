@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     if (!responseText && geminiKey) {
       try {
         console.log('[IA] Tentando Google AI Studio via API direta (v1)...');
-        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
           method: 'POST',
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (err: any) {
         console.error('[IA] Fallback também falhou:', err.message);
-        throw new Error(`Ambos falharam. \nOpenRouter: ${openRouterError} \nGoogle: ${err.message}`);
+        throw new Error(`[V5.0] Ambos falharam. \nOpenRouter: ${openRouterError} \nGoogle: ${err.message}`);
       }
     }
 
