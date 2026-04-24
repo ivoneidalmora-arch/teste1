@@ -18,8 +18,13 @@ interface ImportPreviewModalProps {
 }
 
 export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfirm }: ImportPreviewModalProps) {
-  const [items, setItems] = useState<ExtractedData[]>(initialData);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [items, setItems] = React.useState<ExtractedData[]>(initialData);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setItems(initialData);
+    }
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
