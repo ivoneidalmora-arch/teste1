@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
     let responseText = '';
     let openRouterError = '';
 
-    // --- TENTATIVA 1: OPENROUTER (Gemini 2.0 Flash - Nome exato) ---
+    // --- TENTATIVA 1: OPENROUTER (GPT-4o Mini - Ultra Estável) ---
     if (openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (Gemini 2.0 Flash)...');
+        addLog('Tentando OpenRouter (GPT-4o Mini)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
+            model: 'openai/gpt-4o-mini',
             messages: [{
               role: 'user',
               content: [
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         if (response.ok && data.choices?.[0]?.message?.content) {
           responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter (Gemini 2.0).');
+          addLog('Sucesso via OpenRouter (GPT-4o Mini).');
         } else {
           openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
           addLog(`OpenRouter falhou: ${openRouterError}`);
@@ -99,11 +99,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (Direct Fetch - v1) ---
+    // --- TENTATIVA 2: GOOGLE AI STUDIO (Direct Fetch - gemini-1.5-flash) ---
     if (!responseText && geminiKey) {
       try {
-        addLog('Tentando Google AI Studio (Direct Fetch - gemini-1.5-flash)...');
-        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        addLog('Tentando Google AI Studio (gemini-1.5-flash)...');
+        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
           method: 'POST',
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           responseText = data.candidates[0].content.parts[0].text;
-          addLog('Sucesso via Google (v1)!');
+          addLog('Sucesso via Google!');
         } else {
           const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
           addLog(`Google falhou: ${googleErr}`);
