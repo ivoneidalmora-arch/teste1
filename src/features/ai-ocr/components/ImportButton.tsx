@@ -12,11 +12,13 @@ interface Props {
 
 export function ImportButton({ onSuccess, className }: Props) {
   const [importing, setImporting] = useState(false);
+  const [statusText, setStatusText] = useState('Processando IA...');
 
   const handleImportPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setStatusText('Processando IA...');
     setImporting(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -35,8 +37,15 @@ export function ImportButton({ onSuccess, className }: Props) {
         });
       };
 
-      let response = await makeRequest(savedKey || undefined);
-      let responseData = await response.json();
+      let currentKey = savedKey;
+
+      const attemptRequest = async (key: string | null) => {
+        const r = await makeRequest(key || undefined);
+        const d = await r.json();
+        return { r, d };
+      };
+
+      let { r: response, d: responseData } = await attemptRequest(currentKey);
 
       if (response.status === 401 && responseData.error === 'MISSING_KEY') {
         const newKey = prompt('Chave Gemini não encontrada no servidor.\n\nPor favor, cole sua chave API (AIzaSy...) abaixo para continuar.\n(Ela será salva apenas no seu navegador)');
@@ -44,8 +53,27 @@ export function ImportButton({ onSuccess, className }: Props) {
         if (!newKey) throw new Error('Operação cancelada: Chave não fornecida.');
         
         localStorage.setItem('gemini_api_key', newKey);
-        response = await makeRequest(newKey);
-        responseData = await response.json();
+        currentKey = newKey;
+        
+        const retryAuth = await attemptRequest(currentKey);
+        response = retryAuth.r;
+        responseData = retryAuth.d;
+      }
+
+      // Sistema de Fila Automática (Retry para erro 503)
+      let retries = 0;
+      const maxRetries = 6; // Tenta até 6 vezes (cerca de 30 segundos)
+      while (
+        (response.status === 503 || (responseData.error && String(responseData.error).includes('503'))) 
+        && retries < maxRetries
+      ) {
+        setStatusText(`Fila de espera do servidor... (${retries + 1}/${maxRetries})`);
+        await new Promise(res => setTimeout(res, 5000)); // Espera 5 segundos antes de tentar de novo
+        
+        const retryServer = await attemptRequest(currentKey);
+        response = retryServer.r;
+        responseData = retryServer.d;
+        retries++;
       }
 
       if (!response.ok) {
@@ -124,7 +152,7 @@ export function ImportButton({ onSuccess, className }: Props) {
       ) : (
         <Sparkles className="w-4 h-4 text-amber-400" />
       )}
-      <span className="text-sm">{importing ? 'Processando IA...' : 'Importar PDF'}</span>
+      <span className="text-sm">{importing ? statusText : 'Importar PDF'}</span>
       <input 
         type="file" 
         className="hidden" 
