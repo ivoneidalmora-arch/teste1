@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     // --- TENTATIVA 1: OPENROUTER ---
     if (openRouterKey) {
       try {
-        console.log('[IA] Tentando OpenRouter com google/gemini-flash-1.5...');
+        console.log('[IA] Tentando OpenRouter...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-flash-1.5',
+            model: 'google/gemini-2.0-flash-001',
             messages: [
               {
                 role: 'user',
@@ -75,30 +75,39 @@ export async function POST(req: NextRequest) {
           responseText = data.choices[0].message.content;
           console.log('[IA] Sucesso via OpenRouter!');
         } else {
-          console.warn('[OpenRouter] Falhou, tentando Google AI Studio...', data.error?.message || response.statusText);
+          const errMsg = data.error?.message || JSON.stringify(data.error) || response.statusText;
+          console.warn('[OpenRouter] Falhou:', errMsg);
+          // Se for erro de saldo ou algo do tipo, guardamos para mostrar se o fallback também falhar
+          console.log('[OpenRouter Error Context]:', errMsg);
         }
-      } catch (err) {
-        console.warn('[OpenRouter] Erro de rede, tentando Google AI Studio...');
+      } catch (err: any) {
+        console.warn('[OpenRouter] Erro de rede:', err.message);
       }
     }
 
     // --- TENTATIVA 2: GOOGLE AI STUDIO (FALLBACK) ---
     if (!responseText && geminiKey) {
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); // Pro é mais estável no Studio AI
+      try {
+        const genAI = new GoogleGenerativeAI(geminiKey);
+        // Usando o nome mais estável para o Flash
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
 
-      console.log('[IA] Tentando Google AI Studio (Fallback)...');
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: file.type
+        console.log('[IA] Tentando Google AI Studio (Fallback)...');
+        const result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: file.type
+            }
           }
-        }
-      ]);
-      responseText = result.response.text();
-      console.log('[IA] Sucesso via Fallback!');
+        ]);
+        responseText = result.response.text();
+        console.log('[IA] Sucesso via Fallback!');
+      } catch (err: any) {
+        console.error('[IA] Fallback também falhou:', err.message);
+        throw new Error(`Ambos os provedores falharam. Erro Fallback: ${err.message}`);
+      }
     }
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
