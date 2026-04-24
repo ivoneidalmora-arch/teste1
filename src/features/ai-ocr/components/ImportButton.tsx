@@ -81,7 +81,20 @@ export function ImportButton({ onSuccess, className }: Props) {
       }
     } catch (err: any) {
       console.error(err);
-      alert(`Erro: ${err.message}`);
+      const isLeaked = err.message?.includes('leaked') || err.message?.includes('403');
+      
+      if (isLeaked) {
+        const confirmReset = confirm(
+          `Sua chave do Gemini foi bloqueada pelo Google por ter sido exposta publicamente.\n\n` +
+          `Deseja apagar a chave salva no seu navegador para poder inserir uma nova?`
+        );
+        if (confirmReset) {
+          localStorage.removeItem('gemini_api_key');
+          alert('Chave removida. Tente importar novamente para inserir uma nova chave.');
+        }
+      } else {
+        alert(`Erro: ${err.message}`);
+      }
     } finally {
       setImporting(false);
       if (e.target) e.target.value = '';
