@@ -19,7 +19,9 @@ const COLORS_EXPENSE = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'];
 const COLORS_ALL = ['#10b981', '#ef4444']; 
 
 export function ReportChart({ data, type }: Props) {
-  if (!data || data.length === 0) {
+  const safeData = data || [];
+  
+  if (safeData.length === 0) {
     return (
       <Card className="h-72 flex items-center justify-center">
         <p className="text-slate-400 text-sm">Sem dados para o gráfico</p>
@@ -38,14 +40,15 @@ export function ReportChart({ data, type }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={data}
+              data={safeData}
               innerRadius={60}
               outerRadius={80}
               paddingAngle={5}
               dataKey="value"
+              animationDuration={700}
             >
-              {data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.colors.length] || colors[0]} />
+              {safeData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length] || colors[0]} />
               ))}
             </Pie>
             <Tooltip 

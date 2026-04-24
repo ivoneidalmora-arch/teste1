@@ -15,7 +15,7 @@ import { ReportFilters } from '@/features/reports/components/ReportFilters';
 import { TransactionTable } from '@/features/reports/components/TransactionTable';
 import { ImportButton } from '@/features/ai-ocr/components/ImportButton';
 
-// Modals (Legacy Path for now)
+// Modals
 import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
 
 // Shared / Core
@@ -35,7 +35,9 @@ export default function RelatoriosPage() {
     setMounted(true);
   }, []);
 
-  if (!mounted || loading) {
+  if (!mounted) return null;
+
+  if (loading && transactions.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
@@ -43,12 +45,23 @@ export default function RelatoriosPage() {
     );
   }
 
+  const safeMetrics = metrics || {
+    totalIncome: 0,
+    totalExpense: 0,
+    netBalance: 0,
+    ticketMedio: 0,
+    incomeChart: [],
+    expenseChart: [],
+    clientRanking: [],
+    validIncomesCount: 0
+  };
+
   const handleExportPDF = () => {
     pdfService.exportToPDF(transactions, {
-      totalIncome: metrics.totalIncome,
-      totalExpense: metrics.totalExpense,
-      netBalance: metrics.netBalance,
-      ticketMedio: metrics.ticketMedio,
+      totalIncome: safeMetrics.totalIncome,
+      totalExpense: safeMetrics.totalExpense,
+      netBalance: safeMetrics.netBalance,
+      ticketMedio: safeMetrics.ticketMedio,
       dateRange: (filters.startDate || filters.endDate) 
         ? `${filters.startDate ? formatDisplayDate(filters.startDate) : 'Início'} Até ${filters.endDate ? formatDisplayDate(filters.endDate) : 'Hoje'}`
         : 'Todos os Lançamentos'
@@ -88,10 +101,10 @@ export default function RelatoriosPage() {
             data={
               filters.filterType === 'all' 
                 ? [
-                    { name: 'Receitas', value: metrics.totalIncome },
-                    { name: 'Despesas', value: metrics.totalExpense }
+                    { name: 'Receitas', value: safeMetrics.totalIncome },
+                    { name: 'Despesas', value: safeMetrics.totalExpense }
                   ]
-                : (filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart)
+                : (filters.filterType === 'expense' ? safeMetrics.expenseChart : safeMetrics.incomeChart)
             } 
             type={filters.filterType} 
           />
@@ -101,16 +114,16 @@ export default function RelatoriosPage() {
             data={
               filters.filterType === 'all'
                 ? [
-                    { name: 'Receitas', value: metrics.totalIncome },
-                    { name: 'Despesas', value: metrics.totalExpense }
+                    { name: 'Receitas', value: safeMetrics.totalIncome },
+                    { name: 'Despesas', value: safeMetrics.totalExpense }
                   ]
-                : (filters.filterType === 'expense' ? metrics.expenseChart : metrics.incomeChart)
+                : (filters.filterType === 'expense' ? safeMetrics.expenseChart : safeMetrics.incomeChart)
             } 
             type={filters.filterType}
             totalValue={
               filters.filterType === 'all' 
-                ? (metrics.totalIncome + metrics.totalExpense) 
-                : (filters.filterType === 'expense' ? metrics.totalExpense : metrics.totalIncome)
+                ? (safeMetrics.totalIncome + safeMetrics.totalExpense) 
+                : (filters.filterType === 'expense' ? safeMetrics.totalExpense : safeMetrics.totalIncome)
             }
           />
         </div>
@@ -119,29 +132,21 @@ export default function RelatoriosPage() {
            {/* Card Balanço Geral do Período */}
            <div className={cn(
              "flex-1 rounded-2xl p-6 border flex flex-col justify-center transition-all duration-500 hover:shadow-md",
-             metrics.netBalance >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"
+             safeMetrics.netBalance >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"
            )}>
               <span className={cn(
                 "text-xs font-bold mb-2 uppercase tracking-widest",
-                metrics.netBalance >= 0 ? "text-emerald-600" : "text-rose-600"
+                safeMetrics.netBalance >= 0 ? "text-emerald-600" : "text-rose-600"
               )}>
                 Saldo Líquido no Período
               </span>
               <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                {formatBRL(metrics.netBalance)}
+                {formatBRL(safeMetrics.netBalance)}
               </span>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Receitas: {formatBRL(metrics.totalIncome)}</span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Despesas: {formatBRL(metrics.totalExpense)}</span>
-                </div>
-                <div className="ml-auto">
-                   <span className={cn(
-                     "text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider",
-                     metrics.netBalance >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                   )}>
-                     {metrics.netBalance >= 0 ? 'Lucro' : 'Déficit'}
-                   </span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Receitas: {formatBRL(safeMetrics.totalIncome)}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Despesas: {formatBRL(safeMetrics.totalExpense)}</span>
                 </div>
               </div>
            </div>
@@ -149,16 +154,16 @@ export default function RelatoriosPage() {
            <div className="h-28 bg-slate-900 border-none rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center text-white">
               <div className="absolute top-0 right-0 p-4 font-black text-6xl text-white/5 pointer-events-none">TM</div>
               <span className="text-sm font-medium text-slate-400">Poder de Venda (Ticket Médio)</span>
-              <span className="text-2xl font-bold text-white tracking-tight">{formatBRL(metrics.ticketMedio)}/laudo</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{formatBRL(safeMetrics.ticketMedio)}/laudo</span>
            </div>
         </div>
       </div>
 
-      <SeniorFinancialReport metrics={metrics} />
+      <SeniorFinancialReport metrics={safeMetrics as any} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2">
-            <ClientRanking data={metrics.clientRanking} />
+            <ClientRanking data={safeMetrics.clientRanking || []} />
          </div>
          <div className="lg:col-span-1 bg-white border border-slate-100 rounded-2xl p-8 flex flex-col justify-center shadow-sm">
             <h3 className="text-slate-700 font-bold mb-4 opacity-50 flex items-center gap-2 uppercase text-xs tracking-widest">
@@ -173,7 +178,7 @@ export default function RelatoriosPage() {
                <div className="pt-6 border-t border-slate-50">
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Subtotal em Tela:</span>
                   <p className="text-2xl font-black text-brand-primary">
-                    {formatBRL(metrics.totalIncome)}
+                    {formatBRL(safeMetrics.totalIncome)}
                   </p>
                </div>
             </div>
