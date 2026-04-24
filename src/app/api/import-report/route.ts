@@ -32,18 +32,29 @@ export async function POST(req: NextRequest) {
     const base64Data = Buffer.from(bytes).toString('base64');
     addLog('Base64 gerado.');
 
-    const prompt = `Analise este documento (imagem ou PDF de vistoria/relatório financeiro). 
-    Extraia as informações de cada vistoria/transação em formato JSON.
-    Retorne APENAS um array JSON de objetos com estes campos EXATOS:
-    - data (formato YYYY-MM-DD)
-    - placa (se houver)
+    const prompt = `Você é um robô de extração de dados especializado em "Relatórios de Conta Mensal" de vistorias veiculares.
+    
+    INSTRUÇÕES CRÍTICAS:
+    1. Analise a TABELA do documento. Procure por colunas como "Placa", "Serviço", "Cliente", "Data" e "Preço".
+    2. Extraia APENAS dados REAIS que estão no documento. 
+    3. SE NÃO ENCONTRAR NENHUMA LINHA COM PLACA, RETORNE UM ARRAY VAZIO: [].
+    4. JAMAIS invente nomes como "João da Silva" ou "José Ferreira" se eles não estiverem no papel.
+    
+    MAPEAMENTO DE CATEGORIAS:
+    - Se o serviço for "COMPLETA FIXA" ou "COMPLETA", use: "Transferência"
+    - Se o serviço for "SIMPLIFICADA", use: "Vistoria de Entrada"
+    - Para outros, use o nome que estiver no campo serviço.
+    
+    FORMATO DE SAÍDA:
+    Retorne APENAS um array JSON de objetos com estes campos:
+    - data (YYYY-MM-DD)
+    - placa
     - cliente
-    - categoria (ex: "Vistoria de Entrada", "Vistoria de Saída", "Transferência")
+    - categoria
     - valorBruto (número)
     - valorLiquido (número)
     
-    Se houver múltiplas vistorias no mesmo documento, retorne todas no array.
-    NÃO inclua markdown ou explicações. Apenas o JSON puro.`;
+    NÃO inclua nenhuma explicação, apenas o array JSON.`;
 
     let responseText = '';
     let openRouterError = '';
