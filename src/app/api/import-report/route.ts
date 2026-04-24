@@ -65,6 +65,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    let retryMessage = '';
+
     // --- TENTATIVA 1: GOOGLE AI STUDIO (Gemini 2.0) ---
     if (geminiKey) {
       try {
@@ -90,7 +92,11 @@ export async function POST(req: NextRequest) {
           responseText = data.candidates[0].content.parts[0].text;
           addLog('Sucesso via Google (2.0)!');
         } else {
-          addLog(`Google 2.0 falhou (${response.status})`);
+          const errMsg = data.error?.message || '';
+          if (errMsg.includes('Please retry in')) {
+            retryMessage = errMsg.match(/Please retry in [\d.]+s/)?.[0] || errMsg;
+          }
+          addLog(`Google 2.0 falhou (${response.status}): ${retryMessage || errMsg}`);
           
           // TENTATIVA 1.5: Fallback interno no Google (Gemini 1.5 Flash)
           addLog('Tentando Google AI Studio (gemini-1.5-flash)...');
@@ -112,6 +118,9 @@ export async function POST(req: NextRequest) {
           if (resp15.ok && data15.candidates?.[0]?.content?.parts?.[0]?.text) {
             responseText = data15.candidates[0].content.parts[0].text;
             addLog('Sucesso via Google (1.5)!');
+          } else if (data15.error?.message?.includes('Please retry in')) {
+            const m = data15.error.message.match(/Please retry in [\d.]+s/)?.[0];
+            if (m) retryMessage = m;
           }
         }
       } catch (err: any) {
@@ -122,9 +131,9 @@ export async function POST(req: NextRequest) {
     // --- TENTATIVA 2: OPENROUTER (Multi-Model Fallback) ---
     if (!responseText && openRouterKey) {
       const models = [
-        'google/gemini-2.0-flash-lite-preview:free',
-        'mistralai/pixtral-12b:free',
-        'microsoft/phi-3-vision-128k-instruct:free'
+        'google/gemini-2.0-flash-lite-001',
+        'mistralai/pixtral-12b',
+        'google/gemini-flash-1.5-8b'
       ];
 
       for (const model of models) {
@@ -168,7 +177,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!responseText) {
-      throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: Todas as tentativas de IA falharam (Cotas ou Indisponibilidade).`);
+      const finalMsg = retryMessage 
+        ? `COTAS ESGOTADAS. ${retryMessage}. Por favor, aguarde este tempo e tente novamente.`
+        : 'Todas as tentativas de IA falharam (Cotas ou Indisponibilidade).';
+      throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${finalMsg}`);
     }
 
     if (!responseText) {
