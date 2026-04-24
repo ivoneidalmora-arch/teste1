@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     2. NÃO inclua cabeçalho. 
     3. NÃO inclua nenhum texto explicativo, apenas as linhas de dados.
     4. Campos por linha: data;placa;cliente;serviço;preço
+    5. VERIFICAÇÃO DE SOMA: Antes de entregar o resultado final, verifique se a soma dos valores extraídos bate EXATAMENTE com o total indicado no final do documento. Se houver discrepância, revise a extração para garantir que nenhum item foi esquecido ou lido incorretamente.
     
     FORMATO DE CADA LINHA:
     YYYY-MM-DD;PLACA;CLIENTE;SERVIÇO;VALOR
