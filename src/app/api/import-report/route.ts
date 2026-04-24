@@ -86,24 +86,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (FALLBACK) ---
+    // --- TENTATIVA 2: GOOGLE AI STUDIO (FALLBACK VIA FETCH DIRETO) ---
     if (!responseText && geminiKey) {
       try {
-        const genAI = new GoogleGenerativeAI(geminiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); 
-
-        console.log('[IA] Tentando Google AI Studio (Fallback: gemini-1.5-pro)...');
-        const result = await model.generateContent([
-          prompt,
-          {
-            inlineData: {
-              data: base64Data,
-              mimeType: file.type
+        console.log('[IA] Tentando Google AI Studio via API direta (v1)...');
+        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        
+        const response = await fetch(googleUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: file.type, data: base64Data } }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              topK: 1,
+              topP: 1,
+              maxOutputTokens: 2048,
+              responseMimeType: "application/json"
             }
-          }
-        ]);
-        responseText = result.response.text();
-        console.log('[IA] Sucesso via Fallback!');
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          responseText = data.candidates[0].content.parts[0].text;
+          console.log('[IA] Sucesso via Google API Direta!');
+        } else {
+          const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
+          throw new Error(googleErr);
+        }
       } catch (err: any) {
         console.error('[IA] Fallback também falhou:', err.message);
         throw new Error(`Ambos falharam. \nOpenRouter: ${openRouterError} \nGoogle: ${err.message}`);
