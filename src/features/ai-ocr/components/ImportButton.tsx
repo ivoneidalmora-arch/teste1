@@ -87,6 +87,8 @@ export function ImportButton({ onSuccess, className }: Props) {
         err.message?.includes('403') || 
         err.message?.includes('400');
       
+      const isNotFoundError = err.message?.includes('404') || err.message?.includes('not found');
+
       if (isKeyError) {
         const confirmReset = confirm(
           `Sua chave do Gemini parece estar inválida, expirada ou bloqueada.\n\n` +
@@ -96,6 +98,11 @@ export function ImportButton({ onSuccess, className }: Props) {
           localStorage.removeItem('gemini_api_key');
           alert('Chave removida. Tente importar novamente para inserir uma nova chave.');
         }
+      } else if (isNotFoundError) {
+        alert(
+          'Erro: O modelo da IA não foi encontrado ou não está disponível na sua região.\n\n' +
+          'Tente novamente em alguns instantes ou verifique se sua chave API tem as permissões corretas.'
+        );
       } else {
         alert(`Erro: ${err.message}`);
       }
