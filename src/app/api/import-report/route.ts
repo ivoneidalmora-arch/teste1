@@ -72,10 +72,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 1: OPENROUTER (Gemini 2.0 Flash - Nome exato da lista) ---
+    // --- TENTATIVA 1: OPENROUTER ---
     if (openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (google/gemini-2.0-flash-001)...');
+        addLog('Tentando OpenRouter (Gemini 2.0 Flash)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
           },
           body: JSON.stringify({
             model: 'google/gemini-2.0-flash-001',
+            max_tokens: 8192,
             messages: [{
               role: 'user',
               content: [
@@ -114,10 +115,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (Gemini 2.0 Flash - Confirmado na lista) ---
+    // --- TENTATIVA 2: GOOGLE AI STUDIO ---
     if (!responseText && geminiKey) {
       try {
-        addLog('Tentando Google AI Studio (gemini-2.0-flash-001)...');
+        addLog('Tentando Google AI Studio (Gemini 2.0 Flash)...');
         const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
@@ -129,7 +130,11 @@ export async function POST(req: NextRequest) {
                 { text: prompt },
                 { inline_data: { mime_type: file.type, data: base64Data } }
               ]
-            }]
+            }],
+            generationConfig: {
+              maxOutputTokens: 8192,
+              temperature: 0.1
+            }
           })
         });
 
