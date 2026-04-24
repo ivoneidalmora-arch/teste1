@@ -29,11 +29,8 @@ export async function POST(req: NextRequest) {
     const openRouterUrl = process.env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1';
 
     const bytes = await file.arrayBuffer();
-    const base64Data = btoa(
-      new Uint8Array(bytes)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    addLog('Base64 gerado via btoa (Edge compatível).');
+    const base64Data = Buffer.from(bytes).toString('base64');
+    addLog('Base64 gerado com Buffer.');
 
     const prompt = `Você é um robô de extração de dados especializado no "Relatório de Conta Mensal - Veículos Realizados".
     
@@ -64,7 +61,7 @@ export async function POST(req: NextRequest) {
     // --- TENTATIVA 1: OPENROUTER ---
     if (openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (Claude 3 Haiku)...');
+        addLog('Tentando OpenRouter (Gemini 2.0 Flash)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -74,7 +71,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'anthropic/claude-3-haiku',
+            model: 'google/gemini-2.0-flash-001',
             messages: [{
               role: 'user',
               content: [
