@@ -58,10 +58,37 @@ export async function POST(req: NextRequest) {
     let responseText = '';
     let openRouterError = '';
 
-    // --- TENTATIVA 1: OPENROUTER ---
-    if (openRouterKey) {
+    // --- TENTATIVA 1: GOOGLE AI STUDIO (SDK - MAIS ROBUSTO PARA PDF/IMAGEM) ---
+    if (geminiKey) {
       try {
-        addLog('Tentando OpenRouter (Gemini 2.0 Flash)...');
+        addLog('Tentando Google AI Studio (SDK - Gemini 1.5 Flash)...');
+        const genAI = new GoogleGenerativeAI(geminiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        
+        const result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: file.type
+            }
+          }
+        ]);
+        
+        responseText = result.response.text();
+        if (responseText) {
+          addLog('Sucesso via Google SDK!');
+        }
+      } catch (err: any) {
+        addLog(`Google SDK falhou: ${err.message}`);
+        openRouterError = err.message;
+      }
+    }
+
+    // --- TENTATIVA 2: OPENROUTER (FALLBACK) ---
+    if (!responseText && openRouterKey) {
+      try {
+        addLog('Tentando OpenRouter (Fallback: gemini-pro-1.5)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -71,12 +98,15 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
+            model: 'google/gemini-pro-1.5',
             messages: [{
               role: 'user',
               content: [
                 { type: 'text', text: prompt },
-                { image_url: { url: `data:${file.type};base64,${base64Data}` } }
+                { 
+                  type: 'image_url', 
+                  image_url: { url: `data:${file.type};base64,${base64Data}` } 
+                }
               ]
             }]
           })
@@ -85,47 +115,14 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         if (response.ok && data.choices?.[0]?.message?.content) {
           responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter.');
+          addLog('Sucesso via OpenRouter (Fallback).');
         } else {
-          openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          addLog(`OpenRouter falhou: ${openRouterError}`);
+          const errMsg = data.error?.message || JSON.stringify(data.error) || response.statusText;
+          addLog(`OpenRouter Fallback falhou: ${errMsg}`);
+          throw new Error(errMsg);
         }
       } catch (err: any) {
-        openRouterError = err.message;
-        addLog(`OpenRouter erro de rede: ${err.message}`);
-      }
-    }
-
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (FALLBACK) ---
-    if (!responseText && geminiKey) {
-      try {
-        addLog('Tentando Google AI Studio (Gemini 1.5 Flash - v1beta)...');
-        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-        
-        const response = await fetch(googleUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: file.type, data: base64Data } }
-              ]
-            }]
-          })
-        });
-
-        const data = await response.json();
-        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          responseText = data.candidates[0].content.parts[0].text;
-          addLog('Sucesso via Google (v1beta).');
-        } else {
-          const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          addLog(`Google falhou: ${googleErr}`);
-          throw new Error(googleErr);
-        }
-      } catch (err: any) {
-        addLog(`Google erro: ${err.message}`);
+        addLog(`Erro final: ${err.message}`);
         throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${err.message}`);
       }
     }
