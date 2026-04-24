@@ -96,7 +96,15 @@ export async function POST(req: NextRequest) {
         } else {
           const errMsg = data.error?.message || '';
           if (errMsg.includes('Please retry in')) {
-            retryMessage = errMsg.match(/Please retry in [\d.]+s/)?.[0] || errMsg;
+            const match = errMsg.match(/Please retry in ([\d.]+)s/);
+            if (match) {
+              const s = parseFloat(match[1]);
+              retryMessage = s < 60 
+                ? `Tente novamente em ${Math.ceil(s)} segundos`
+                : `Tente novamente em ${Math.floor(s / 60)} min e ${Math.ceil(s % 60)} seg`;
+            } else {
+              retryMessage = errMsg;
+            }
           }
           addLog(`Google 2.0 falhou (${response.status}): ${retryMessage || errMsg}`);
           
@@ -121,8 +129,13 @@ export async function POST(req: NextRequest) {
             responseText = data15.candidates[0].content.parts[0].text;
             addLog('Sucesso via Google (1.5)!');
           } else if (data15.error?.message?.includes('Please retry in')) {
-            const m = data15.error.message.match(/Please retry in [\d.]+s/)?.[0];
-            if (m) retryMessage = m;
+            const match = data15.error.message.match(/Please retry in ([\d.]+)s/);
+            if (match) {
+              const s = parseFloat(match[1]);
+              retryMessage = s < 60 
+                ? `Tente novamente em ${Math.ceil(s)} segundos`
+                : `Tente novamente em ${Math.floor(s / 60)} min e ${Math.ceil(s % 60)} seg`;
+            }
           }
         }
       } catch (err: any) {
