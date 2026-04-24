@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import AuthGuard from "@/components/AuthGuard";
+import { AuthGuard } from "@/features/auth/components/AuthGuard";
 
 const outfit = Outfit({
   variable: "--font-outfit",

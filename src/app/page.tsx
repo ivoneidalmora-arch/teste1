@@ -1,139 +1,127 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useFinance } from '@/hooks/useFinance';
-import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
-import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { MetricsSummary } from '@/components/dashboard/MetricsSummary';
-import { NovaVistoriaModal } from '@/components/modals/NovaVistoriaModal';
-import { NovaDespesaModal } from '@/components/modals/NovaDespesaModal';
-import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
-import { Globe } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Transaction } from '@/types/transaction';
-import { ClientRanking } from '@/components/reports/ClientRanking';
-import { InspectionTypeBalance } from '@/components/dashboard/InspectionTypeBalance';
-import { formatBRL } from '@/utils/formatters';
+
+// Hooks
+import { useFinance } from '@/features/finance/hooks/useFinance';
+
+// Feature Components
+import { DashboardHeader } from '@/features/finance/components/DashboardHeader';
+import { MetricsSummary } from '@/features/finance/components/MetricsSummary';
+import { InspectionTypeBalance } from '@/features/finance/components/InspectionTypeBalance';
+import { RecentActivity } from '@/features/finance/components/RecentActivity';
+import { DashboardCalendar } from '@/features/finance/components/DashboardCalendar';
+import { ClientRanking } from '@/features/reports/components/ClientRanking';
+import { ImportButton } from '@/features/ai-ocr/components/ImportButton';
+
+// Modals
+import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
+import { NovaDespesaModal } from '@/features/finance/components/modals/NovaDespesaModal';
+import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
+
+// Shared
+import { Transaction } from '@/core/types/finance';
 
 export const dynamic = 'force-dynamic';
 
-export default function Dashboard() {
-  const [mounted, setMounted] = useState(false);
+export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const { metrics, transactions, loading, refresh } = useFinance(selectedDate);
+  const { transactions, metrics, loading, refresh } = useFinance(selectedDate);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted || loading) {
-    return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-8 bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
-      </div>
-    );
-  }
+  if (!mounted) return null;
 
-  const handleModalSuccess = (date?: Date) => {
-    if (date) setSelectedDate(date);
-    refresh();
+  // Garantia de que metrics nunca seja nulo para os componentes filhos
+  const safeMetrics = metrics || {
+    availableMonths: [],
+    inspectionSummary: [],
+    clientRanking: [],
+    totalGlobalBalance: 0,
+    currentIncome: 0,
+    incomeVariation: 0,
+    currentExpense: 0,
+    expenseVariation: 0,
+    currentBalance: 0,
+    balanceVariation: 0,
+    ticketMedio: 0
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in pb-24">
+    <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
       
+      {/* Cabeçalho */}
       <DashboardHeader 
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
-        availableMonths={metrics.availableMonths}
+        availableMonths={safeMetrics.availableMonths || []}
         onNewVistoria={() => setIsVistoriaModalOpen(true)}
         onNewDespesa={() => setIsDespesaModalOpen(true)}
         onRefresh={refresh}
       />
 
-      {/* Seção Balanço Global */}
-      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10">
-          <Globe className="w-20 md:w-32 h-20 md:h-32" />
-        </div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h2 className="text-slate-400 font-semibold uppercase tracking-wider text-sm mb-2 flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              Balanço Global
-            </h2>
-            <p className="text-5xl font-black text-white tracking-tight leading-none">
-              {formatBRL(metrics.totalGlobalBalance)}
-            </p>
-            <p className="text-slate-400 mt-2 text-sm">Patrimônio líquido acumulado no sistema</p>
-          </div>
+      {/* Resumo de Métricas */}
+      <MetricsSummary metrics={safeMetrics as any} />
+
+      {/* Grid de Conteúdo Principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Coluna da Esquerda: Balanço e IA */}
+        <div className="lg:col-span-1 space-y-8">
+          <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
           
-          <div className="hidden md:block h-12 w-px bg-white/10"></div>
-          
-          <div className="flex items-center gap-4 text-sm font-medium text-slate-300">
-             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-               Sistema Online & Sincronizado
-             </div>
+          <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+             <h4 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-tight">Ações Rápidas</h4>
+             <ImportButton onSuccess={refresh} className="w-full" />
           </div>
         </div>
-      </div>
 
-      <div className="pt-4">
-        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          Análise Mensal: <span className="text-brand-primary capitalize">{format(selectedDate, 'MMMM yyyy', { locale: ptBR })}</span>
-        </h2>
-      </div>
-
-      <MetricsSummary metrics={metrics} />
-
-      {/* Seção Estratégica: Ranking e Balanço de Tipos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-        <ClientRanking data={metrics.clientRanking} />
-        <InspectionTypeBalance data={metrics.inspectionSummary} />
-      </div>
-
-      {/* Grid Inferior (Calendário e Atividades) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
-        <div className="lg:col-span-2">
-          <DashboardCalendar currentDate={selectedDate} transactions={metrics.currentMonthTransactions} />
-        </div>
-        <div className="lg:col-span-1">
+        {/* Coluna Central/Direita: Atividade e Ranking */}
+        <div className="lg:col-span-2 space-y-8">
           <RecentActivity 
-            transactions={transactions} 
-            onEdit={(t) => setEditingTransaction(t)}
+            transactions={transactions || []} 
+            onEdit={setEditingTransaction} 
             onRefresh={refresh}
           />
+          
+          <div className="grid grid-cols-1 gap-8">
+            <ClientRanking data={safeMetrics.clientRanking || []} />
+          </div>
         </div>
       </div>
 
-      <EditTransactionModal 
-        isOpen={!!editingTransaction}
-        onClose={() => setEditingTransaction(null)}
-        onSuccess={handleModalSuccess}
-        transaction={editingTransaction}
-      />
+      {/* Seção de Calendário */}
+      <div className="grid grid-cols-1 gap-8 pb-24">
+        <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
+      </div>
 
+      {/* Modais */}
       <NovaVistoriaModal 
         isOpen={isVistoriaModalOpen} 
         onClose={() => setIsVistoriaModalOpen(false)} 
-        onSuccess={handleModalSuccess}
-        existingTransactions={transactions}
-        defaultDate={selectedDate}
+        onSuccess={refresh}
+        existingTransactions={transactions || []}
       />
-      
       <NovaDespesaModal 
         isOpen={isDespesaModalOpen} 
         onClose={() => setIsDespesaModalOpen(false)} 
-        onSuccess={handleModalSuccess}
-        defaultDate={selectedDate}
+        onSuccess={refresh} 
       />
+      {editingTransaction && (
+        <EditTransactionModal 
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          transaction={editingTransaction}
+          onSuccess={refresh}
+        />
+      )}
     </div>
   );
 }

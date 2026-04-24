@@ -1,37 +1,50 @@
 "use client";
 
-import { useState } from 'react';
-import { useReports } from '@/hooks/useReports';
-import { ReportChart } from '@/components/reports/ReportChart';
-import { CategorySummary } from '@/components/reports/CategorySummary';
-import { ClientRanking } from '@/components/reports/ClientRanking';
-import { SeniorFinancialReport } from '@/components/reports/SeniorFinancialReport';
-import { ReportFilters } from '@/components/reports/ReportFilters';
-import { TransactionTable } from '@/components/reports/TransactionTable';
-import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
-import { emitirRelatorioPDF } from '@/services/pdf';
+import { useState, useEffect } from 'react';
+
+// Hooks & Services
+import { useReports } from '@/features/reports/hooks/useReports';
+import { pdfService } from '@/features/reports/services/pdf.service';
+
+// Feature Components
+import { ReportChart } from '@/features/reports/components/ReportChart';
+import { CategorySummary } from '@/features/reports/components/CategorySummary';
+import { ClientRanking } from '@/features/reports/components/ClientRanking';
+import { SeniorFinancialReport } from '@/features/reports/components/SeniorFinancialReport';
+import { ReportFilters } from '@/features/reports/components/ReportFilters';
+import { TransactionTable } from '@/features/reports/components/TransactionTable';
+import { ImportButton } from '@/features/ai-ocr/components/ImportButton';
+
+// Modals (Legacy Path for now)
+import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
+
+// Shared / Core
 import { Download, Filter } from 'lucide-react';
-import { Transaction, IncomeTransaction } from '@/types/transaction';
-import { cn } from '@/utils/cn';
-import { formatBRL, formatDisplayDate } from '@/utils/formatters';
-import { ImportButton } from '@/components/ImportButton';
+import { cn, formatBRL } from '@/core/utils/formatters';
+import { formatDisplayDate } from '@/core/utils/date';
+import { Transaction } from '@/core/types/finance';
 
 export const dynamic = 'force-dynamic';
 
 export default function RelatoriosPage() {
   const { loading, transactions, metrics, filters, refresh } = useReports();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-8 bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
       </div>
     );
   }
 
   const handleExportPDF = () => {
-    emitirRelatorioPDF(transactions, {
+    pdfService.exportToPDF(transactions, {
       totalIncome: metrics.totalIncome,
       totalExpense: metrics.totalExpense,
       netBalance: metrics.netBalance,
@@ -43,7 +56,8 @@ export default function RelatoriosPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in pb-24">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-700 pb-24">
+      
       {/* Header Context */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
          <div>
@@ -54,7 +68,6 @@ export default function RelatoriosPage() {
         </div>
         <div className="flex items-center gap-3">
           <ImportButton onSuccess={refresh} />
-
           <button 
             onClick={handleExportPDF}
             disabled={transactions.length === 0}
@@ -69,7 +82,7 @@ export default function RelatoriosPage() {
       <ReportFilters filters={filters} />
 
       {/* Grid de Gráficos Superiores */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <ReportChart 
             data={
@@ -133,8 +146,7 @@ export default function RelatoriosPage() {
               </div>
            </div>
            
-           {/* Box Ticket Medio */}
-           <div className="h-28 bg-slate-900 border-none rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center">
+           <div className="h-28 bg-slate-900 border-none rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center text-white">
               <div className="absolute top-0 right-0 p-4 font-black text-6xl text-white/5 pointer-events-none">TM</div>
               <span className="text-sm font-medium text-slate-400">Poder de Venda (Ticket Médio)</span>
               <span className="text-2xl font-bold text-white tracking-tight">{formatBRL(metrics.ticketMedio)}/laudo</span>
@@ -144,25 +156,24 @@ export default function RelatoriosPage() {
 
       <SeniorFinancialReport metrics={metrics} />
 
-      {/* Grid Inferior: Ranking de Clientes e Outras Métricas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2">
             <ClientRanking data={metrics.clientRanking} />
          </div>
-         <div className="lg:col-span-1 bg-white border border-slate-100 rounded-2xl p-6 flex flex-col justify-center shadow-sm">
-            <h3 className="text-slate-700 font-bold mb-4 opacity-50 flex items-center gap-2">
+         <div className="lg:col-span-1 bg-white border border-slate-100 rounded-2xl p-8 flex flex-col justify-center shadow-sm">
+            <h3 className="text-slate-700 font-bold mb-4 opacity-50 flex items-center gap-2 uppercase text-xs tracking-widest">
               <Filter className="w-4 h-4" />
               Estado da Visualização
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
                <div>
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Registros Filtrados:</span>
                   <p className="text-2xl font-black text-slate-800">{transactions.length}</p>
                </div>
-               <div className="pt-4 border-t border-slate-50">
+               <div className="pt-6 border-t border-slate-50">
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-tighter">Subtotal em Tela:</span>
                   <p className="text-2xl font-black text-brand-primary">
-                    {formatBRL(transactions.reduce((acc, t) => acc + (t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount), 0))}
+                    {formatBRL(metrics.totalIncome)}
                   </p>
                </div>
             </div>
@@ -175,14 +186,14 @@ export default function RelatoriosPage() {
         onRefresh={refresh}
       />
 
-      <EditTransactionModal 
-        isOpen={!!editingTransaction}
-        onClose={() => setEditingTransaction(null)}
-        onSuccess={() => {
-          refresh();
-        }}
-        transaction={editingTransaction}
-      />
+      {editingTransaction && (
+        <EditTransactionModal 
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSuccess={refresh}
+          transaction={editingTransaction}
+        />
+      )}
     </div>
   );
 }
