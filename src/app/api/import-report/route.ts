@@ -41,52 +41,24 @@ export async function POST(req: NextRequest) {
 
     let responseText = '';
 
-    if (openRouterKey) {
-      // --- LÓGICA OPENROUTER ---
-      console.log('[IA] Utilizando OpenRouter...');
-      const response = await fetch(`${openRouterUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openRouterKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://teste1-woad-ten.vercel.app',
-          'X-Title': 'Sistema de Vistorias',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-001',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                { 
-                  type: 'image_url', 
-                  image_url: { url: `data:${file.type};base64,${base64Data}` } 
-                }
-              ]
-            }
-          ]
-        })
-      });
+    // --- LÓGICA GEMINI DIRETO (PRIORIDADE AGORA) ---
+    const genAI = new GoogleGenerativeAI(geminiKey || '');
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      const data = await response.json();
-      if (!response.ok) {
-        console.error('[OpenRouter Error]:', JSON.stringify(data, null, 2));
-        // Retorna o JSON do erro para vermos os detalhes no alert do navegador
-        throw new Error(data.error ? JSON.stringify(data.error) : `Erro do Provedor (Status ${response.status})`);
+    console.log('[IA] Iniciando processamento com Gemini 1.5 Flash...');
+    
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType: file.type
+        }
       }
-      responseText = data.choices?.[0]?.message?.content;
-    } else {
-      // --- LÓGICA GEMINI DIRETO ---
-      console.log('[IA] Utilizando Google AI Studio...');
-      const genAI = new GoogleGenerativeAI(geminiKey!);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { data: base64Data, mimeType: file.type } }
-      ]);
-      responseText = result.response.text();
-    }
+    ]);
+
+    responseText = result.response.text();
+    console.log('[IA] Sucesso!');
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
 
