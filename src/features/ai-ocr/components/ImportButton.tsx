@@ -100,8 +100,9 @@ export function ImportButton({ onSuccess, className }: Props) {
         }
       } else if (isNotFoundError) {
         alert(
-          'Erro: O modelo da IA não foi encontrado ou não está disponível na sua região.\n\n' +
-          'Tente novamente em alguns instantes ou verifique se sua chave API tem as permissões corretas.'
+          'O modelo da IA não foi encontrado na sua conta.\n\n' +
+          `Detalhes: ${err.message}\n\n` +
+          'Verifique se sua chave possui acesso aos modelos acima.'
         );
       } else {
         alert(`Erro: ${err.message}`);

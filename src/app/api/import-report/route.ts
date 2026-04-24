@@ -80,7 +80,22 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Erro no processamento Gemini:', error);
     let msg = error.message || 'Falha ao processar arquivo com IA';
+    
     if (msg.includes('API key not valid')) msg = 'Sua chave do Gemini (API Key) está inválida ou expirou.';
+    
+    // Se for erro de modelo não encontrado, tenta listar os modelos disponíveis para ajudar no debug
+    if (msg.includes('not found') || msg.includes('404')) {
+      try {
+        const apiKey = req.headers.get('x-api-key') || process.env.GOOGLE_GEMINI_API_KEY;
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const data = await response.json();
+        const models = data.models?.map((m: any) => m.name).join(', ');
+        msg = `Modelo não encontrado. Modelos disponíveis para sua chave: ${models || 'nenhum'}`;
+      } catch (e) {
+        msg = 'Modelo não encontrado e não foi possível listar os modelos disponíveis.';
+      }
+    }
+
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
