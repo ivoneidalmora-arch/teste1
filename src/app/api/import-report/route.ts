@@ -54,8 +54,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
-            response_format: { type: 'json_object' },
+            model: 'anthropic/claude-3-haiku',
             messages: [
               {
                 role: 'user',
