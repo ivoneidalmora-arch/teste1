@@ -41,10 +41,12 @@ export async function POST(req: NextRequest) {
 
     let responseText = '';
 
+    let openRouterError = '';
+
     // --- TENTATIVA 1: OPENROUTER ---
     if (openRouterKey) {
       try {
-        console.log('[IA] Tentando OpenRouter...');
+        console.log('[IA] Tentando OpenRouter com anthropic/claude-3-haiku...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -75,12 +77,11 @@ export async function POST(req: NextRequest) {
           responseText = data.choices[0].message.content;
           console.log('[IA] Sucesso via OpenRouter!');
         } else {
-          const errMsg = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          console.warn('[OpenRouter] Falhou:', errMsg);
-          // Se for erro de saldo ou algo do tipo, guardamos para mostrar se o fallback também falhar
-          console.log('[OpenRouter Error Context]:', errMsg);
+          openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
+          console.warn('[OpenRouter] Falhou:', openRouterError);
         }
       } catch (err: any) {
+        openRouterError = `Erro de rede: ${err.message}`;
         console.warn('[OpenRouter] Erro de rede:', err.message);
       }
     }
@@ -89,7 +90,6 @@ export async function POST(req: NextRequest) {
     if (!responseText && geminiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiKey);
-        // Voltando para o Pro que é mais garantido de ser encontrado
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); 
 
         console.log('[IA] Tentando Google AI Studio (Fallback: gemini-1.5-pro)...');
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         console.log('[IA] Sucesso via Fallback!');
       } catch (err: any) {
         console.error('[IA] Fallback também falhou:', err.message);
-        throw new Error(`Ambos os provedores falharam. Erro Fallback: ${err.message}`);
+        throw new Error(`Ambos falharam. \nOpenRouter: ${openRouterError} \nGoogle: ${err.message}`);
       }
     }
 
