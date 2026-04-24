@@ -65,10 +65,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 1: OPENROUTER ---
-    if (openRouterKey) {
+    // --- TENTATIVA 1: GOOGLE AI STUDIO (Prioridade se disponível) ---
+    if (geminiKey) {
       try {
-        addLog('Tentando OpenRouter (Gemini 2.0 Flash)...');
+        addLog('Tentando Google AI Studio (gemini-2.0-flash-001)...');
+        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${geminiKey}`;
+        
+        const response = await fetch(googleUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: file.type, data: base64Data } }
+              ]
+            }],
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          responseText = data.candidates[0].content.parts[0].text;
+          addLog('Sucesso via Google!');
+        } else {
+          const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
+          addLog(`Google falhou (Cota ou Erro): ${googleErr}`);
+        }
+      } catch (err: any) {
+        addLog(`Google erro de rede: ${err.message}`);
+      }
+    }
+
+    // --- TENTATIVA 2: OPENROUTER (Fallback robusto com GPT-4o Mini) ---
+    if (!responseText && openRouterKey) {
+      try {
+        addLog('Tentando OpenRouter (GPT-4o Mini - Fallback)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -78,8 +111,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
-            max_tokens: 8192,
+            model: 'openai/gpt-4o-mini',
             messages: [{
               role: 'user',
               content: [
@@ -94,55 +126,16 @@ export async function POST(req: NextRequest) {
         });
 
         const data = await response.json();
-        addLog(`OpenRouter Status: ${response.status}`);
         if (response.ok && data.choices?.[0]?.message?.content) {
           responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter!');
+          addLog('Sucesso via OpenRouter (GPT-4o Mini)!');
         } else {
           openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
           addLog(`OpenRouter falhou: ${openRouterError}`);
+          throw new Error(openRouterError);
         }
       } catch (err: any) {
-        openRouterError = err.message;
-        addLog(`OpenRouter erro de rede: ${err.message}`);
-      }
-    }
-
-    // --- TENTATIVA 2: GOOGLE AI STUDIO ---
-    if (!responseText && geminiKey) {
-      try {
-        addLog('Tentando Google AI Studio (Gemini 2.0 Flash)...');
-        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${geminiKey}`;
-        
-        const response = await fetch(googleUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: file.type, data: base64Data } }
-              ]
-            }],
-            generationConfig: {
-              maxOutputTokens: 8192,
-              temperature: 0.1
-            }
-          })
-        });
-
-        const data = await response.json();
-        addLog(`Google Status: ${response.status}`);
-        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          responseText = data.candidates[0].content.parts[0].text;
-          addLog('Sucesso via Google!');
-        } else {
-          const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          addLog(`Google falhou: ${googleErr}`);
-          throw new Error(googleErr);
-        }
-      } catch (err: any) {
-        addLog(`Erro final: ${err.message}`);
+        addLog(`Erro final no pipeline: ${err.message}`);
         throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${err.message}`);
       }
     }
