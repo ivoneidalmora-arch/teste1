@@ -113,35 +113,32 @@ export async function POST(req: NextRequest) {
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
 
-    const cleanText = responseText.replace(/```json|```/g, '').trim();
-    // Tenta encontrar o padrão de um array [ ... ] ou objeto { ... }
-    const jsonMatch = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-    const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
-    
     try {
+      const cleanText = responseText.replace(/```json|```/g, '').trim();
+      const jsonMatch = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+      const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
+      
       let data = JSON.parse(jsonString);
       
-      // Normalização: se vier um objeto, tenta encontrar o array de dados dentro dele
       if (!Array.isArray(data) && typeof data === 'object') {
         const potentialArray = Object.values(data).find(val => Array.isArray(val));
         if (potentialArray) {
           data = potentialArray;
         } else {
-          data = [data]; // Transforma objeto único em array de 1 item
+          data = [data];
         }
       }
 
-      if (!Array.isArray(data)) {
-        throw new Error('O formato extraído não é um array.');
-      }
+      if (!Array.isArray(data)) throw new Error('O formato extraído não é um array.');
 
       return NextResponse.json(data);
     } catch (e: any) {
       console.error('Erro ao converter JSON da IA:', responseText);
       return NextResponse.json({ 
         error: 'A IA gerou um formato de dados inválido.', 
-        details: responseText.substring(0, 300), // Mostra o começo da resposta para debug
-        parseError: e.message 
+        details: responseText, // Envia o texto completo para o front depurar
+        parseError: e.message,
+        length: responseText.length
       }, { status: 500 });
     }
   } catch (error: any) {

@@ -78,8 +78,9 @@ export function ImportButton({ onSuccess, className }: Props) {
 
       if (!response.ok) {
         const errorMsg = responseData.error || 'Falha no processamento da IA';
-        const details = responseData.details ? `\n\nDetalhes: ${responseData.details}` : '';
-        throw new Error(errorMsg + details);
+        const parseErr = responseData.parseError ? `\n\nErro de Parse: ${responseData.parseError}` : '';
+        const details = responseData.details ? `\n\nResposta da IA:\n${responseData.details.substring(0, 1000)}${responseData.details.length > 1000 ? '...' : ''}` : '';
+        throw new Error(`${errorMsg}${parseErr}${details}`);
       }
       
       // Adaptado para o novo transactionService
