@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
               topK: 1,
               topP: 1,
               maxOutputTokens: 2048,
-              responseMimeType: "application/json"
+              response_mime_type: "application/json"
             }
           })
         });
