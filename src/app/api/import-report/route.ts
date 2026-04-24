@@ -192,16 +192,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (!responseText) {
+      const isQuota = !!retryMessage;
       const finalMsg = retryMessage 
-        ? `COTAS ESGOTADAS. ${retryMessage}. Por favor, aguarde este tempo e tente novamente.`
+        ? `COTAS ESGOTADAS. ${retryMessage}`
         : 'Todas as tentativas de IA falharam (Cotas ou Indisponibilidade).';
-      throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${finalMsg}`);
+      
+      return NextResponse.json({ 
+        error: finalMsg,
+        isQuota,
+        retryAfter: retryMessage ? parseInt(retryMessage.match(/\d+/)?.[0] || '10') : 0,
+        logs: logs 
+      }, { status: isQuota ? 429 : 500 });
     }
 
-    if (!responseText) {
-      addLog('ERRO: Nenhum provedor disponível.');
-      throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nNenhum provedor disponível.`);
-    }
+
 
     try {
       addLog('Iniciando parsing do formato compactado (CSV)...');

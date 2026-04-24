@@ -63,15 +63,23 @@ export function ImportButton({ onSuccess, className }: Props) {
         responseData = retryAuth.d;
       }
 
-      // Sistema de Fila Automática (Retry para erro 503)
+      // Sistema de Fila Automática (Retry para 503 ou 429)
       let retries = 0;
-      const maxRetries = 10;
+      const maxRetries = 5;
       while (
-        (response.status === 503 || (responseData.error && String(responseData.error).includes('503'))) 
+        (response.status === 503 || response.status === 429 || (responseData.error && String(responseData.error).includes('503'))) 
         && retries < maxRetries
       ) {
-        setStatusText(`Fila de espera... (${retries + 1}/${maxRetries})`);
-        await new Promise(res => setTimeout(res, 5000));
+        const waitTime = responseData.retryAfter || 10;
+        console.log(`Aguardando na fila por ${waitTime}s...`);
+        
+        // Countdown visual
+        for (let i = waitTime; i > 0; i--) {
+          setStatusText(`Fila: Aguardando ${i}s...`);
+          await new Promise(res => setTimeout(res, 1000));
+        }
+
+        setStatusText(`Retentando agora... (${retries + 1}/${maxRetries})`);
         
         const retryServer = await attemptRequest(currentKey);
         response = retryServer.r;
