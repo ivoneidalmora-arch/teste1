@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
           },
           body: JSON.stringify({
             model: 'google/gemini-2.0-flash-001',
+            response_format: { type: 'json_object' },
             messages: [
               {
                 role: 'user',
@@ -89,8 +90,11 @@ export async function POST(req: NextRequest) {
     if (!responseText && geminiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiKey);
-        // Usando o nome mais estável para o Flash
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
+        // Usando o nome mais estável para o Flash e ativando JSON mode
+        const model = genAI.getGenerativeModel({ 
+          model: 'gemini-1.5-flash',
+          generationConfig: { responseMimeType: "application/json" }
+        }); 
 
         console.log('[IA] Tentando Google AI Studio (Fallback)...');
         const result = await model.generateContent([
@@ -112,15 +116,26 @@ export async function POST(req: NextRequest) {
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
 
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-    const jsonString = jsonMatch ? jsonMatch[0] : responseText.replace(/```json|```/g, '').trim();
+    const cleanText = responseText.replace(/```json|```/g, '').trim();
+    const jsonMatch = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+    const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
     
     try {
-      const data = JSON.parse(jsonString);
-      return NextResponse.json(data);
+      let data = JSON.parse(jsonString);
+      // Se a IA retornar um objeto com uma propriedade (ex: { "vistorias": [...] }), extraímos o array
+      if (!Array.isArray(data) && typeof data === 'object') {
+        const firstKey = Object.keys(data)[0];
+        if (Array.isArray(data[firstKey])) {
+          data = data[firstKey];
+        } else {
+          // Se não for um array, transforma em array para compatibilidade com o front
+          data = [data];
+        }
+      }
+      return NextResponse.json(Array.isArray(data) ? data : [data]);
     } catch (e) {
       console.error('Erro ao converter JSON da IA:', responseText);
-      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido.' }, { status: 500 });
+      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido.', details: responseText.substring(0, 200) }, { status: 500 });
     }
   } catch (error: any) {
     console.error('Erro no processamento IA:', error);
