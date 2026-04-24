@@ -32,28 +32,26 @@ export async function POST(req: NextRequest) {
     const base64Data = Buffer.from(bytes).toString('base64');
     addLog('Base64 gerado com Buffer.');
 
-    const prompt = `Você é um robô de extração de dados especializado no "Relatório de Conta Mensal - Veículos Realizados".
+    const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO e EXAUSTIVIDADE.
+    Sua missão é extrair ABSOLUTAMENTE TODAS as vistorias do "Relatório de Conta Mensal - Veículos Realizados".
     
-    ESTRUTURA DO DOCUMENTO:
-    O documento contém uma tabela com as colunas: Nrº, Data, Modelo, Ano Fab., Cor, Chassi, Placa, Cliente, Serviço, Perito, Digitador, FP, Preço, Preço Sug.
+    REGRAS CRÍTICAS (NÃO NEGOCIÁVEIS):
+    1. EXAUSTIVIDADE TOTAL: Se o relatório tiver 100, 200 ou 500 vistorias, você deve extrair TODAS. 
+    2. NÃO PULE NENHUMA LINHA. Não resuma. Não pare na metade.
+    3. Percorra TODAS as páginas do documento.
+    4. Ignore cabeçalhos, mas leia todas as linhas numeradas da tabela.
     
-    REGRAS DE EXTRAÇÃO (SIGA À RISCA):
-    1. Localize a tabela de veículos. Cada linha numerada é uma vistoria.
-    2. Coluna "Data": Converta do formato DD/MM/YYYY para YYYY-MM-DD.
-    3. Coluna "Placa": Extraia exatamente o texto da coluna Placa (ex: RDL1C32).
-    4. Coluna "Cliente": Extraia o nome do cliente (ex: ORVEL).
-    5. Coluna "Serviço": Extraia o texto (ex: COMPLETA FIXA MÉDIO).
-    6. Coluna "Preço": Extraia o valor numérico antes do "Preço Sug.". Converta vírgula para ponto (ex: 177,79 -> 177.79). Ignore o "R$".
-    
-    MAPEAMENTO DE CATEGORIAS:
-    - Se o Serviço contiver "COMPLETA", use: "Transferência"
-    - Se o Serviço contiver "SIMPLIFICADA", use: "Vistoria de Entrada"
-    - Para outros, use o nome que estiver no campo serviço.
+    MAPEAMENTO:
+    - Data: Coluna "Data" (converter para YYYY-MM-DD).
+    - Placa: Coluna "Placa".
+    - Cliente: Coluna "Cliente".
+    - Serviço: Coluna "Serviço".
+    - Preço: Coluna "Preço" (valor numérico).
     
     RETORNO:
-    - Retorne APENAS um array JSON de objetos.
-    - Se não houver dados reais, retorne [].
-    - NUNCA invente dados.`;
+    - Retorne APENAS o array JSON. 
+    - Sem textos explicativos. 
+    - Formato: [{"data":"...","placa":"...","cliente":"...","categoria":"...","valorBruto":0.0}]`;
 
     let responseText = '';
     let openRouterError = '';
