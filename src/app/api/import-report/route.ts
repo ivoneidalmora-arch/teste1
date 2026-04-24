@@ -114,25 +114,35 @@ export async function POST(req: NextRequest) {
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
 
     const cleanText = responseText.replace(/```json|```/g, '').trim();
+    // Tenta encontrar o padrão de um array [ ... ] ou objeto { ... }
     const jsonMatch = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
     const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
     
     try {
       let data = JSON.parse(jsonString);
-      // Se a IA retornar um objeto com uma propriedade (ex: { "vistorias": [...] }), extraímos o array
+      
+      // Normalização: se vier um objeto, tenta encontrar o array de dados dentro dele
       if (!Array.isArray(data) && typeof data === 'object') {
-        const firstKey = Object.keys(data)[0];
-        if (Array.isArray(data[firstKey])) {
-          data = data[firstKey];
+        const potentialArray = Object.values(data).find(val => Array.isArray(val));
+        if (potentialArray) {
+          data = potentialArray;
         } else {
-          // Se não for um array, transforma em array para compatibilidade com o front
-          data = [data];
+          data = [data]; // Transforma objeto único em array de 1 item
         }
       }
-      return NextResponse.json(Array.isArray(data) ? data : [data]);
-    } catch (e) {
+
+      if (!Array.isArray(data)) {
+        throw new Error('O formato extraído não é um array.');
+      }
+
+      return NextResponse.json(data);
+    } catch (e: any) {
       console.error('Erro ao converter JSON da IA:', responseText);
-      return NextResponse.json({ error: 'A IA gerou um formato de dados inválido.', details: responseText.substring(0, 200) }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'A IA gerou um formato de dados inválido.', 
+        details: responseText.substring(0, 300), // Mostra o começo da resposta para debug
+        parseError: e.message 
+      }, { status: 500 });
     }
   } catch (error: any) {
     console.error('Erro no processamento IA:', error);
