@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-001',
+          model: 'google/gemini-flash-1.5',
           messages: [
             {
               role: 'user',
@@ -68,7 +68,10 @@ export async function POST(req: NextRequest) {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || 'Erro no OpenRouter');
+      if (!response.ok) {
+        console.error('[OpenRouter Error]:', JSON.stringify(data, null, 2));
+        throw new Error(data.error?.message || `Erro no Provedor (Status ${response.status})`);
+      }
       responseText = data.choices?.[0]?.message?.content;
     } else {
       // --- LÓGICA GEMINI DIRETO ---
