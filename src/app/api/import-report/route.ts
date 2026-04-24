@@ -72,10 +72,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 1: OPENROUTER (Gemini Flash 1.5 - Via OpenRouter) ---
+    // --- TENTATIVA 1: OPENROUTER (Gemini 2.0 Flash - Nome exato da lista) ---
     if (openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (google/gemini-flash-1.5)...');
+        addLog('Tentando OpenRouter (google/gemini-2.0-flash-001)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'google/gemini-flash-1.5',
+            model: 'google/gemini-2.0-flash-001',
             messages: [{
               role: 'user',
               content: [
@@ -114,12 +114,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (Direct Fetch) ---
+    // --- TENTATIVA 2: GOOGLE AI STUDIO (Gemini 2.0 Flash - Confirmado na lista) ---
     if (!responseText && geminiKey) {
       try {
-        addLog('Tentando Google AI Studio (Direct Fetch)...');
-        // Tenta gemini-1.5-flash ou o primeiro disponível se houver erro
-        const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        addLog('Tentando Google AI Studio (gemini-2.0-flash-001)...');
+        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
           method: 'POST',
