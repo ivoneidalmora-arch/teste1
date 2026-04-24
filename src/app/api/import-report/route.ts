@@ -131,9 +131,9 @@ export async function POST(req: NextRequest) {
     // --- TENTATIVA 2: OPENROUTER (Multi-Model Fallback) ---
     if (!responseText && openRouterKey) {
       const models = [
-        'google/gemini-2.0-flash-lite-001',
+        'google/gemini-2.0-flash-lite-preview:free',
         'mistralai/pixtral-12b',
-        'google/gemini-flash-1.5-8b'
+        'google/gemini-flash-1.5'
       ];
 
       for (const model of models) {
