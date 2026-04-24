@@ -62,7 +62,7 @@ export function ImportButton({ onSuccess, className }: Props) {
 
       // Sistema de Fila Automática (Retry para erro 503)
       let retries = 0;
-      const maxRetries = 6; // Tenta até 6 vezes (cerca de 30 segundos)
+      const maxRetries = 10; // Tenta até 10 vezes (cerca de 50 segundos)
       while (
         (response.status === 503 || (responseData.error && String(responseData.error).includes('503'))) 
         && retries < maxRetries
