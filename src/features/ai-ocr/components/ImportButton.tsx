@@ -81,11 +81,15 @@ export function ImportButton({ onSuccess, className }: Props) {
       }
     } catch (err: any) {
       console.error(err);
-      const isLeaked = err.message?.includes('leaked') || err.message?.includes('403');
+      const isKeyError = 
+        err.message?.includes('leaked') || 
+        err.message?.includes('expired') || 
+        err.message?.includes('403') || 
+        err.message?.includes('400');
       
-      if (isLeaked) {
+      if (isKeyError) {
         const confirmReset = confirm(
-          `Sua chave do Gemini foi bloqueada pelo Google por ter sido exposta publicamente.\n\n` +
+          `Sua chave do Gemini parece estar inválida, expirada ou bloqueada.\n\n` +
           `Deseja apagar a chave salva no seu navegador para poder inserir uma nova?`
         );
         if (confirmReset) {
