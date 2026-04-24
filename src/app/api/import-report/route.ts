@@ -41,24 +41,40 @@ export async function POST(req: NextRequest) {
 
     let responseText = '';
 
-    // --- LÓGICA GEMINI DIRETO (PRIORIDADE AGORA) ---
+    // --- LÓGICA GEMINI DIRETO com RETRY ---
     const genAI = new GoogleGenerativeAI(geminiKey || '');
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    console.log('[IA] Iniciando processamento com Gemini 1.5 Flash...');
-    
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Data,
-          mimeType: file.type
-        }
-      }
-    ]);
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    responseText = result.response.text();
-    console.log('[IA] Sucesso!');
+    while (attempts < maxAttempts) {
+      try {
+        console.log(`[IA] Tentativa ${attempts + 1} com Gemini 1.5 Flash...`);
+        const result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: file.type
+            }
+          }
+        ]);
+        responseText = result.response.text();
+        console.log('[IA] Sucesso!');
+        break; // Sai do loop se der certo
+      } catch (err: any) {
+        attempts++;
+        console.error(`[IA] Erro na tentativa ${attempts}:`, err.message);
+        
+        if (attempts >= maxAttempts) {
+          throw err; // Lança o erro se acabarem as tentativas
+        }
+        
+        // Espera um pouco antes de tentar novamente (backoff simples)
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+      }
+    }
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
 
