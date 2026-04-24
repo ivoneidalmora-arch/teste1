@@ -33,25 +33,20 @@ export async function POST(req: NextRequest) {
     addLog('Base64 gerado com Buffer.');
 
     const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO e EXAUSTIVIDADE.
-    Sua missão é extrair ABSOLUTAMENTE TODAS as vistorias do "Relatório de Conta Mensal - Veículos Realizados".
+    Extraia ABSOLUTAMENTE TODAS as vistorias do relatório.
     
-    REGRAS CRÍTICAS (NÃO NEGOCIÁVEIS):
-    1. EXAUSTIVIDADE TOTAL: Se o relatório tiver 100, 200 ou 500 vistorias, você deve extrair TODAS. 
-    2. NÃO PULE NENHUMA LINHA. Não resuma. Não pare na metade.
-    3. Percorra TODAS as páginas do documento.
-    4. Ignore cabeçalhos, mas leia todas as linhas numeradas da tabela.
+    REGRAS:
+    1. Retorne os dados no formato CSV usando ponto-e-vírgula (;) como separador.
+    2. NÃO inclua cabeçalho. 
+    3. NÃO inclua nenhum texto explicativo, apenas as linhas de dados.
+    4. Campos por linha: data;placa;cliente;serviço;preço
     
-    MAPEAMENTO:
-    - Data: Coluna "Data" (converter para YYYY-MM-DD).
-    - Placa: Coluna "Placa".
-    - Cliente: Coluna "Cliente".
-    - Serviço: Coluna "Serviço".
-    - Preço: Coluna "Preço" (valor numérico).
+    FORMATO DE CADA LINHA:
+    YYYY-MM-DD;PLACA;CLIENTE;SERVIÇO;VALOR
     
-    RETORNO:
-    - Retorne APENAS o array JSON. 
-    - Sem textos explicativos. 
-    - Formato: [{"data":"...","placa":"...","cliente":"...","categoria":"...","valorBruto":0.0}]`;
+    EXEMPLO:
+    2025-10-01;SFQ3B51;ORVEL;VISTORIA COMPLETA;113.58
+    2025-10-02;RDL1C32;ORVEL;VISTORIA SIMPLIFICADA;89.90`;
 
     let responseText = '';
     let openRouterError = '';
@@ -158,46 +153,42 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      addLog('Iniciando parsing do JSON...');
-      let cleanText = responseText.replace(/```json|```/g, '').trim();
+      addLog('Iniciando parsing do formato compactado (CSV)...');
       
-      // Remove possíveis reticências se a resposta foi truncada
-      cleanText = cleanText.replace(/\.\.\.\s*$/, '').trim();
-      if (cleanText.endsWith(',') || cleanText.endsWith(',]')) {
-        cleanText = cleanText.replace(/,\]?$/, ']');
-      }
-      if (!cleanText.endsWith(']')) cleanText += ']';
+      const lines = responseText
+        .replace(/```csv|```/g, '')
+        .trim()
+        .split('\n')
+        .filter(line => line.includes(';'));
 
-      const jsonMatch = cleanText.match(/(\[[\s\S]*\])/);
-      const jsonString = jsonMatch ? jsonMatch[0] : cleanText;
-      
-      let rawData = JSON.parse(jsonString);
-      if (!Array.isArray(rawData)) rawData = [rawData];
+      const data = lines.map(line => {
+        const [data, placa, cliente, servico, preco] = line.split(';').map(s => s?.trim());
+        
+        // Se a linha estiver incompleta (provável corte de token), o map filtrará depois
+        if (!placa || !data) return null;
 
-      // NORMALIZAÇÃO DE CAMPOS (IA às vezes capitaliza ou muda nomes)
-      const data = rawData.map((item: any) => {
         const normalized: any = {
-          data: item.data || item.Data || new Date().toISOString().split('T')[0],
-          placa: item.placa || item.Placa || '',
-          cliente: item.cliente || item.Cliente || '',
-          categoria: item.categoria || item.Categoria || item.serviço || item.Serviço || 'Transferência',
-          valorBruto: parseFloat(String(item.valorBruto || item.ValorBruto || item.preço || item.Preço || '0').replace(',', '.')),
-          valorLiquido: parseFloat(String(item.valorLiquido || item.ValorLiquido || '0').replace(',', '.'))
+          data: data.match(/^\d{4}-\d{2}-\d{2}$/) ? data : new Date().toISOString().split('T')[0],
+          placa: placa.toUpperCase(),
+          cliente: cliente || 'DESCONHECIDO',
+          categoria: servico || 'Transferência',
+          valorBruto: parseFloat(String(preco || '0').replace(',', '.')),
+          valorLiquido: 0
         };
 
-        // Mapeamento extra de categorias com base no serviço lido
+        // Mapeamento de categorias
         if (normalized.categoria.toUpperCase().includes('COMPLETA')) normalized.categoria = 'Transferência';
         if (normalized.categoria.toUpperCase().includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
         
         return normalized;
-      });
+      }).filter(item => item !== null);
 
-      addLog(`Parsing concluído. ${data.length} itens normalizados.`);
+      addLog(`Parsing concluído. ${data.length} itens extraídos.`);
       return NextResponse.json(data);
     } catch (e: any) {
-      addLog(`ERRO no parsing: ${e.message}`);
+      addLog(`ERRO no parsing CSV: ${e.message}`);
       return NextResponse.json({ 
-        error: 'Erro ao processar JSON da IA.', 
+        error: 'Erro ao processar dados da IA.', 
         details: responseText,
         logs: logs,
         parseError: e.message 
