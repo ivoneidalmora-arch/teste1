@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
       Regras de extração:
       1. Extraia APENAS as linhas que possuem placa e serviço.
       2. Mapeie o campo "Serviço" para uma das seguintes categorias: "Transferência", "Vistoria de Entrada", "Vistoria de Retorno" ou "Vistoria Cautelar".
+         - Se o serviço for "COMPLETA FIXA", mapeie obrigatoriamente para "Transferência".
+         - Se o serviço for "SIMPLIFICADA", mapeie obrigatoriamente para "Vistoria de Entrada".
       3. Extraia o campo "Data" no formato YYYY-MM-DD.
       4. Extraia o campo "Preço" (que é o valor bruto) como um número decimal. Ignore o "Preço Sugerido".
       5. Extraia a "Placa" e o "Cliente".
