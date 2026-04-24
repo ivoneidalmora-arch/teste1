@@ -41,39 +41,64 @@ export async function POST(req: NextRequest) {
 
     let responseText = '';
 
-    // --- LÓGICA GEMINI DIRETO com RETRY ---
-    const genAI = new GoogleGenerativeAI(geminiKey || '');
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    let attempts = 0;
-    const maxAttempts = 3;
-
-    while (attempts < maxAttempts) {
+    // --- TENTATIVA 1: OPENROUTER ---
+    if (openRouterKey) {
       try {
-        console.log(`[IA] Tentativa ${attempts + 1} com Gemini 1.5 Flash...`);
-        const result = await model.generateContent([
-          prompt,
-          {
-            inlineData: {
-              data: base64Data,
-              mimeType: file.type
-            }
-          }
-        ]);
-        responseText = result.response.text();
-        console.log('[IA] Sucesso!');
-        break; // Sai do loop se der certo
-      } catch (err: any) {
-        attempts++;
-        console.error(`[IA] Erro na tentativa ${attempts}:`, err.message);
-        
-        if (attempts >= maxAttempts) {
-          throw err; // Lança o erro se acabarem as tentativas
+        console.log('[IA] Tentando OpenRouter com google/gemini-flash-1.5...');
+        const response = await fetch(`${openRouterUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openRouterKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://teste1-woad-ten.vercel.app',
+            'X-Title': 'Sistema de Vistorias',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-flash-1.5',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: prompt },
+                  { 
+                    type: 'image_url', 
+                    image_url: { url: `data:${file.type};base64,${base64Data}` } 
+                  }
+                ]
+              }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.choices?.[0]?.message?.content) {
+          responseText = data.choices[0].message.content;
+          console.log('[IA] Sucesso via OpenRouter!');
+        } else {
+          console.warn('[OpenRouter] Falhou, tentando Google AI Studio...', data.error?.message || response.statusText);
         }
-        
-        // Espera um pouco antes de tentar novamente (backoff simples)
-        await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+      } catch (err) {
+        console.warn('[OpenRouter] Erro de rede, tentando Google AI Studio...');
       }
+    }
+
+    // --- TENTATIVA 2: GOOGLE AI STUDIO (FALLBACK) ---
+    if (!responseText && geminiKey) {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); // Pro é mais estável no Studio AI
+
+      console.log('[IA] Tentando Google AI Studio (Fallback)...');
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: file.type
+          }
+        }
+      ]);
+      responseText = result.response.text();
+      console.log('[IA] Sucesso via Fallback!');
     }
 
     if (!responseText) throw new Error('A IA não retornou nenhum dado.');
