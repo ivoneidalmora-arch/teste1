@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 1: GOOGLE AI STUDIO (Prioridade se disponível) ---
+    // --- TENTATIVA 1: GOOGLE AI STUDIO (Gemini 2.0) ---
     if (geminiKey) {
       try {
         addLog('Tentando Google AI Studio (gemini-2.0-flash-001)...');
@@ -88,20 +88,41 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           responseText = data.candidates[0].content.parts[0].text;
-          addLog('Sucesso via Google!');
+          addLog('Sucesso via Google (2.0)!');
         } else {
-          const googleErr = data.error?.message || JSON.stringify(data.error) || response.statusText;
-          addLog(`Google falhou (Cota ou Erro): ${googleErr}`);
+          addLog(`Google 2.0 falhou: ${data.error?.message || 'Cota esgotada'}`);
+          
+          // TENTATIVA 1.5: Fallback interno no Google (às vezes tem cota separada)
+          addLog('Tentando Google AI Studio (gemini-1.5-flash)...');
+          const googleUrl15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+          const resp15 = await fetch(googleUrl15, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: file.type, data: base64Data } }
+                ]
+              }],
+              generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
+            })
+          });
+          const data15 = await resp15.json();
+          if (resp15.ok && data15.candidates?.[0]?.content?.parts?.[0]?.text) {
+            responseText = data15.candidates[0].content.parts[0].text;
+            addLog('Sucesso via Google (1.5)!');
+          }
         }
       } catch (err: any) {
-        addLog(`Google erro de rede: ${err.message}`);
+        addLog(`Google erro: ${err.message}`);
       }
     }
 
-    // --- TENTATIVA 2: OPENROUTER (Fallback robusto com GPT-4o Mini) ---
+    // --- TENTATIVA 2: OPENROUTER (Modelo TOTALMENTE GRÁTIS) ---
     if (!responseText && openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (GPT-4o Mini - Fallback)...');
+        addLog('Tentando OpenRouter (Gemini 2.0 Flash Lite - FREE)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -111,7 +132,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'openai/gpt-4o-mini',
+            model: 'google/gemini-2.0-flash-lite-preview:free',
             messages: [{
               role: 'user',
               content: [
@@ -128,14 +149,14 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         if (response.ok && data.choices?.[0]?.message?.content) {
           responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter (GPT-4o Mini)!');
+          addLog('Sucesso via OpenRouter (FREE)!');
         } else {
           openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
           addLog(`OpenRouter falhou: ${openRouterError}`);
           throw new Error(openRouterError);
         }
       } catch (err: any) {
-        addLog(`Erro final no pipeline: ${err.message}`);
+        addLog(`Erro final: ${err.message}`);
         throw new Error(`[RASTREAMENTO]\n${logs.join('\n')}\n\nErro Final: ${err.message}`);
       }
     }
