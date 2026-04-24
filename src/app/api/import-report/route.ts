@@ -58,10 +58,24 @@ export async function POST(req: NextRequest) {
     let responseText = '';
     let openRouterError = '';
 
-    // --- TENTATIVA 1: OPENROUTER (GPT-4o Mini - Ultra Estável) ---
+    // --- DIAGNÓSTICO: LISTAR MODELOS DISPONÍVEIS (GOOGLE) ---
+    if (geminiKey) {
+      try {
+        addLog('Consultando permissões da chave Google (ListModels)...');
+        const listUrl = `https://generativelanguage.googleapis.com/v1/models?key=${geminiKey}`;
+        const listRes = await fetch(listUrl);
+        const listData = await listRes.json();
+        const availableModels = listData.models?.map((m: any) => m.name.split('/').pop()) || [];
+        addLog(`Modelos disponíveis na sua chave: ${availableModels.join(', ') || 'NENHUM'}`);
+      } catch (e) {
+        addLog('Falha ao listar modelos do Google.');
+      }
+    }
+
+    // --- TENTATIVA 1: OPENROUTER (Gemini Flash 1.5 - Via OpenRouter) ---
     if (openRouterKey) {
       try {
-        addLog('Tentando OpenRouter (GPT-4o Mini)...');
+        addLog('Tentando OpenRouter (google/gemini-flash-1.5)...');
         const response = await fetch(`${openRouterUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -71,7 +85,7 @@ export async function POST(req: NextRequest) {
             'X-Title': 'Sistema de Vistorias',
           },
           body: JSON.stringify({
-            model: 'openai/gpt-4o-mini',
+            model: 'google/gemini-flash-1.5',
             messages: [{
               role: 'user',
               content: [
@@ -86,9 +100,10 @@ export async function POST(req: NextRequest) {
         });
 
         const data = await response.json();
+        addLog(`OpenRouter Status: ${response.status}`);
         if (response.ok && data.choices?.[0]?.message?.content) {
           responseText = data.choices[0].message.content;
-          addLog('Sucesso via OpenRouter (GPT-4o Mini).');
+          addLog('Sucesso via OpenRouter!');
         } else {
           openRouterError = data.error?.message || JSON.stringify(data.error) || response.statusText;
           addLog(`OpenRouter falhou: ${openRouterError}`);
@@ -99,10 +114,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- TENTATIVA 2: GOOGLE AI STUDIO (Direct Fetch - gemini-1.5-flash) ---
+    // --- TENTATIVA 2: GOOGLE AI STUDIO (Direct Fetch) ---
     if (!responseText && geminiKey) {
       try {
-        addLog('Tentando Google AI Studio (gemini-1.5-flash)...');
+        addLog('Tentando Google AI Studio (Direct Fetch)...');
+        // Tenta gemini-1.5-flash ou o primeiro disponível se houver erro
         const googleUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
         
         const response = await fetch(googleUrl, {
@@ -119,6 +135,7 @@ export async function POST(req: NextRequest) {
         });
 
         const data = await response.json();
+        addLog(`Google Status: ${response.status}`);
         if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           responseText = data.candidates[0].content.parts[0].text;
           addLog('Sucesso via Google!');
