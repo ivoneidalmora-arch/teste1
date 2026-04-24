@@ -177,8 +177,10 @@ export async function POST(req: NextRequest) {
         };
 
         // Mapeamento de categorias
-        if (normalized.categoria.toUpperCase().includes('COMPLETA')) normalized.categoria = 'Transferência';
-        if (normalized.categoria.toUpperCase().includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
+        const catUpper = normalized.categoria.toUpperCase();
+        if (catUpper.includes('COMPLETA')) normalized.categoria = 'Transferência';
+        if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
+        if (catUpper.includes('COMPLETA MÓVEL')) normalized.categoria = 'Transferência';
         
         return normalized;
       }).filter(item => item !== null);
