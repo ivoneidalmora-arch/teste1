@@ -58,7 +58,7 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
   if (days.length === 0) return null;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-4 hover:shadow-xl transition-all duration-300">
+    <div className="bg-white border border-slate-100 rounded-2xl p-2.5 hover:shadow-xl transition-all duration-300">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
         <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 flex items-center flex-wrap gap-x-3">
           Calendário de Fluxo 

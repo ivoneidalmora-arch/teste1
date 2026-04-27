@@ -33,13 +33,13 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
   };
 
   return (
-    <Card className="h-auto flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="h-auto flex flex-col p-2.5">
+      <div className="flex items-center justify-between mb-3">
         <CardHeader 
           title="Atividade Recente" 
           icon={Clock}
         />
-        <span className="flex items-center justify-center bg-blue-100 text-blue-700 text-[10px] w-5 h-5 rounded-full ml-1">
+        <span className="flex items-center justify-center bg-blue-100 text-blue-700 text-[8px] w-4 h-4 rounded-full ml-1">
           {recent.length}
         </span>
       </div>
@@ -51,55 +51,55 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
             const isIncome = t.type === 'income';
             
             return (
-              <div key={`${t.id}-${index}`} className="flex items-center justify-between py-2 px-1 hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div key={`${t.id}-${index}`} className="flex items-center justify-between py-1 px-1 hover:bg-slate-50 transition-colors group">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
+                    "w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
                     isIncome ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
                   )}>
-                    {isIncome ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                    {isIncome ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                   </div>
                   
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-800 truncate">
+                      <span className="text-[11px] font-bold text-slate-800 truncate">
                         {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tight">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[8px] font-bold text-brand-primary uppercase tracking-tight">
                         {formatDisplayDate(t.date)}
                       </span>
-                      <span className="text-slate-300 text-[9px]">•</span>
-                      <span className="text-[9px] font-semibold text-slate-400 uppercase truncate">
+                      <span className="text-slate-300 text-[8px]">•</span>
+                      <span className="text-[8px] font-semibold text-slate-400 uppercase truncate">
                         {t.category || 'Outros'}
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col items-end mr-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col items-end mr-0.5">
                     <span className={cn(
-                      "text-xs font-bold",
+                      "text-[11px] font-bold",
                       isIncome ? "text-emerald-600" : "text-rose-600"
                     )}>
                       {isIncome ? '+' : '-'} {formatBRL(t.amount)}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={() => onEdit(t)}
-                      className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3 h-3" />
                     </button>
                     <button 
                       onClick={() => handleDelete(t)}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                      className="p-0.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>

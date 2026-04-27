@@ -36,16 +36,16 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Saldo Geral - Destaque */}
-      <div className="bg-slate-900 rounded-xl p-3 shadow-md border border-slate-800 overflow-hidden group">
-        <div className="flex justify-between items-start mb-1">
-          <div className="p-1.5 bg-slate-800 rounded-lg text-white group-hover:bg-slate-700 transition-colors">
-            <Activity className="w-3.5 h-3.5" />
+      <div className="bg-slate-900 rounded-xl p-2.5 shadow-md border border-slate-800 overflow-hidden group">
+        <div className="flex justify-between items-start mb-0.5">
+          <div className="p-1 bg-slate-800 rounded text-white group-hover:bg-slate-700 transition-colors">
+            <Activity className="w-3 h-3" />
           </div>
-          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Patrimônio</span>
+          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Patrimônio</span>
         </div>
         <div>
-          <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mb-0">Saldo Geral</p>
-          <h3 className="text-lg font-black text-white tracking-tighter">
+          <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest mb-0">Saldo Geral</p>
+          <h3 className="text-base font-black text-white tracking-tighter">
             {formatBRL(m.totalGlobalBalance)}
           </h3>
         </div>
@@ -84,18 +84,18 @@ function MetricCard({ title, value, variation, icon: Icon, color, inverse = fals
   const isGood = inverse ? !isPositive : isPositive;
 
   return (
-    <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group">
-      <div className="flex justify-between items-start mb-2">
+    <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group">
+      <div className="flex justify-between items-start mb-1">
         <div className={cn(
-          "p-1.5 rounded-lg transition-colors",
+          "p-1 rounded transition-colors",
           color === 'emerald' ? "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100" :
           color === 'rose' ? "bg-rose-50 text-rose-600 group-hover:bg-rose-100" :
           "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
         )}>
-          <Icon className="w-3.5 h-3.5" />
+          <Icon className="w-3 h-3" />
         </div>
         <div className={cn(
-          "flex items-center gap-1 px-1 py-0.5 rounded text-[8px] font-black",
+          "flex items-center gap-1 px-1 py-0.5 rounded text-[7px] font-black",
           variation === 0 ? "bg-slate-50 text-slate-400" :
           isGood ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
         )}>
@@ -105,8 +105,8 @@ function MetricCard({ title, value, variation, icon: Icon, color, inverse = fals
       </div>
       
       <div>
-        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mb-0">{title}</p>
-        <p className="text-lg font-black text-slate-900 tracking-tighter">{formatBRL(value)}</p>
+        <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest mb-0">{title}</p>
+        <p className="text-base font-black text-slate-900 tracking-tighter">{formatBRL(value)}</p>
       </div>
     </div>
   );

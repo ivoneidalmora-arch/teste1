@@ -28,16 +28,16 @@ export function InspectionTypeBalance({ data = [] }: Props) {
   const grandTotal = safeData.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
   return (
-    <Card className="h-auto flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="h-auto flex flex-col p-2.5">
+      <div className="flex items-center justify-between mb-3">
         <CardHeader 
           title="Balanço por Tipo" 
-          subtitle="Distribuição de Vistorias"
+          subtitle="Vistorias"
           icon={ClipboardCheck}
         />
         <div className="flex flex-col items-end">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Líquido</span>
-          <span className="text-sm font-black text-slate-800">{formatBRL(grandTotal)}</span>
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Líquido</span>
+          <span className="text-xs font-black text-slate-800">{formatBRL(grandTotal)}</span>
         </div>
       </div>
       

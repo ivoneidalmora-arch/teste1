@@ -30,11 +30,11 @@ export function ClientRanking({ data }: ClientRankingProps) {
   const maxTotal = data.length > 0 ? Math.max(...data.map(d => d.total)) : 0;
 
   return (
-    <Card className="h-auto w-full flex flex-col">
-      <div className="flex items-center justify-between mb-6 bg-white pb-4 border-b border-slate-50">
+    <Card className="h-auto w-full flex flex-col p-2.5">
+      <div className="flex items-center justify-between mb-3 bg-white pb-2 border-b border-slate-50">
         <CardHeader 
           title="Ranking de Clientes" 
-          subtitle="Performance por Volume Financeiro"
+          subtitle="Top Performance"
           icon={Trophy}
         />
         <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
@@ -46,11 +46,11 @@ export function ClientRanking({ data }: ClientRankingProps) {
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">#</th>
-              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
-              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Volume</th>
-              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden lg:table-cell">Categorias</th>
-              <th className="text-right py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Líquido</th>
+              <th className="text-left py-1 px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest w-6">#</th>
+              <th className="text-left py-1 px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
+              <th className="text-left py-1 px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Vol</th>
+              <th className="text-left py-1 px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest hidden lg:table-cell">Cats</th>
+              <th className="text-right py-1 px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Líquido</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -61,24 +61,24 @@ export function ClientRanking({ data }: ClientRankingProps) {
               
               return (
                 <tr key={client.name} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="py-2 px-1 align-top">
+                  <td className="py-1 px-1 align-middle">
                     <span className={cn(
-                      "w-5 h-5 flex items-center justify-center rounded text-[9px] font-black",
+                      "w-4 h-4 flex items-center justify-center rounded text-[8px] font-black",
                       isWinner ? "bg-brand-primary text-white" : "bg-slate-100 text-slate-500"
                     )}>
                       {index + 1}
                     </span>
                   </td>
-                  <td className="py-2 px-1 align-top">
+                  <td className="py-1 px-1 align-middle">
                     <div className="flex flex-col">
                       <span className={cn(
-                        "font-bold text-xs uppercase tracking-tight flex items-center gap-1",
+                        "font-bold text-[11px] uppercase tracking-tight flex items-center gap-1",
                         isWinner ? "text-slate-900" : "text-slate-700"
                       )}>
                         {client.name}
-                        {isWinner && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
+                        {isWinner && <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />}
                       </span>
-                      <div className="h-1 w-24 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                      <div className="h-0.5 w-16 bg-slate-100 rounded-full mt-0.5 overflow-hidden">
                         <div 
                           className={cn(
                             "h-full rounded-full transition-all duration-1000",
@@ -89,27 +89,24 @@ export function ClientRanking({ data }: ClientRankingProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2 px-1 align-top hidden md:table-cell">
-                    <span className="text-[10px] text-slate-500 font-bold">
-                      {client.count} <span className="text-slate-400 font-normal">vistorias</span>
+                  <td className="py-1 px-1 align-middle hidden md:table-cell">
+                    <span className="text-[9px] text-slate-500 font-bold">
+                      {client.count}
                     </span>
                   </td>
-                  <td className="py-2 px-1 align-top hidden lg:table-cell">
-                    <div className="flex flex-wrap gap-1">
-                      {categories.slice(0, 3).map(([name, count]) => (
-                        <span key={name} className="px-1.5 py-0.5 bg-white border border-slate-100 rounded text-[8px] font-medium text-slate-500">
+                  <td className="py-1 px-1 align-middle hidden lg:table-cell">
+                    <div className="flex flex-wrap gap-0.5">
+                      {categories.slice(0, 2).map(([name, count]) => (
+                        <span key={name} className="px-1 py-0 text-[7px] font-medium text-slate-400">
                           {count}x {name}
                         </span>
                       ))}
-                      {categories.length > 3 && (
-                        <span className="text-[8px] text-slate-400 pt-0.5">+{categories.length - 3}</span>
-                      )}
                     </div>
                   </td>
-                  <td className="py-2 px-1 align-top text-right">
+                  <td className="py-1 px-1 align-middle text-right">
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-900">{formatBRL(client.liquido)}</span>
-                      <span className="text-[8px] text-slate-400 font-bold line-through opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-[11px] font-black text-slate-900">{formatBRL(client.liquido)}</span>
+                      <span className="text-[7px] text-slate-300 font-bold line-through opacity-0 group-hover:opacity-100 transition-opacity">
                         {formatBRL(client.bruto)}
                       </span>
                     </div>
