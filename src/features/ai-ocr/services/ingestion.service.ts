@@ -140,7 +140,22 @@ export const ingestionService = {
     const rawPlaca = getVal(['placa', 'veiculo', 'carro']) ?? '';
     const rawData = getVal(['data', 'vistoria', 'dia', 'periodo']) ?? '';
     const rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
-    const rawServico = getVal(['categoria', 'servico', 'tipo', 'item']) ?? 'Transferência';
+    let rawServico = getVal(['categoria', 'servico', 'tipo', 'item', 'descricao', 'produto', 'laudo', 'vistoria']);
+    
+    // Fallback para serviço: se não achou a coluna pelo título, procura em todas as colunas de texto da linha
+    // as palavras exatas que o usuário pediu ("completo", "simplificada", "retorno")
+    if (!rawServico) {
+      for (const key of keys) {
+        const val = String(row[key] || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (val.includes('completo') || val.includes('simplificada') || val.includes('retorno')) {
+          rawServico = row[key];
+          break;
+        }
+      }
+    }
+    
+    if (!rawServico) rawServico = 'Transferência';
+
     
     // Padroniza os nomes dos serviços conforme a regra de negócios
     const standardizeService = (raw: string) => {
