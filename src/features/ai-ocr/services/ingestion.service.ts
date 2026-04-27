@@ -43,21 +43,22 @@ export const ingestionService = {
           // Extraímos como array de arrays para encontrar o cabeçalho dinamicamente
           const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
           
-          // Encontrar a linha que parece ser o cabeçalho (contém 'placa', 'preco', 'data', etc)
-          let headerIndex = -1;
-          for (let i = 0; i < Math.min(rows.length, 20); i++) {
+          // Busca a linha de cabeçalho de forma mais robusta (contando matches)
+          let headerIndex = 0;
+          let maxMatches = 0;
+          const headerKeywords = ['placa', 'data', 'cliente', 'preco', 'valor', 'servico', 'tipo', 'veiculo'];
+
+          for (let i = 0; i < Math.min(rows.length, 30); i++) {
             const row = rows[i];
             if (!row || !Array.isArray(row)) continue;
-            const rowStr = row.join('|').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            if (rowStr.includes('placa') || rowStr.includes('preco') || rowStr.includes('valor')) {
+            
+            const rowStr = row.map(c => String(c || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")).join('|');
+            const matches = headerKeywords.filter(kw => rowStr.includes(kw)).length;
+            
+            if (matches > maxMatches) {
+              maxMatches = matches;
               headerIndex = i;
-              break;
             }
-          }
-
-          if (headerIndex === -1) {
-             // Fallback: assume a primeira linha se não encontrar nada óbvio
-             headerIndex = 0;
           }
 
           // Pegamos os nomes das colunas da linha de cabeçalho
@@ -126,10 +127,10 @@ export const ingestionService = {
       const foundKey = keys.find(k => {
         const lowerK = k.toLowerCase().trim();
         // Remove acentos manualmente para ser mais robusto
-        const cleanK = lowerK.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const cleanK = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         return keywords.some(kw => {
-          const cleanKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          return cleanK.includes(cleanKw) || cleanKw.includes(cleanK);
+          const cleanKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+          return cleanK === cleanKw || cleanK.includes(cleanKw);
         });
       });
       return foundKey ? row[foundKey] : undefined;
@@ -141,21 +142,12 @@ export const ingestionService = {
     const rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
     const rawServico = getVal(['categoria', 'servico', 'tipo', 'item']) ?? 'Transferência';
     
-    // Busca exaustiva por preço/valor
-    let rawValor = getVal(['preco', 'preço', 'valor', 'total', 'bruto', 'montante', 'r$', 'amount']);
+    // Busca específica por preço/valor
+    let rawValor = getVal(['preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount']);
     
-    // Se ainda não encontrou, tenta pegar qualquer coluna que tenha um número e não seja a placa
-    if (rawValor === undefined || rawValor === null || rawValor === 0 || rawValor === '') {
-      for (const key of keys) {
-        const val = row[key];
-        if (typeof val === 'number' && val > 0 && !key.toLowerCase().includes('data') && !key.toLowerCase().includes('placa')) {
-          rawValor = val;
-          break;
-        }
-      }
+    if (rawValor === undefined || rawValor === null) {
+      rawValor = 0;
     }
-
-    if (rawValor === undefined) rawValor = 0;
 
     const parseCurrency = (val: any) => {
       if (typeof val === 'number') return val;
