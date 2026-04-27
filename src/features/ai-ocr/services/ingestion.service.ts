@@ -87,20 +87,33 @@ export const ingestionService = {
    * Mapper Central: Normaliza qualquer objeto para o formato IngestionResult.
    */
   mapToStandard(row: any): IngestionResult {
-    // Tenta encontrar campos por nomes comuns em planilhas
-    const rawPlaca = row.placa || row.Placa || row.VEICULO || row.Veículo || '';
-    const rawData = row.data || row.Data || row.VISTORIA || row.DATA || '';
-    const rawCliente = row.cliente || row.Cliente || row.PROPRIETARIO || row.Proprietário || '';
-    const rawServico = row.categoria || row.servico || row.Serviço || row.TIPO || 'Transferência';
-    const rawValor = row.valorBruto || row.valor || row.VALOR || row.Preço || row.preco || 0;
+    const keys = Object.keys(row);
+    const getVal = (keywords: string[]) => {
+      const foundKey = keys.find(k => {
+        const lowerK = k.toLowerCase();
+        return keywords.some(kw => lowerK.includes(kw.toLowerCase()));
+      });
+      return foundKey ? row[foundKey] : null;
+    };
+
+    // Tenta encontrar campos por palavras-chave
+    const rawPlaca = getVal(['placa', 'veiculo', 'veículo']) || '';
+    const rawData = getVal(['data', 'vistoria', 'periodo', 'período']) || '';
+    const rawCliente = getVal(['cliente', 'proprietario', 'proprietário', 'nome', 'solicitante']) || '';
+    const rawServico = getVal(['categoria', 'servico', 'serviço', 'tipo']) || 'Transferência';
+    
+    // Para o valor, tentamos ser mais específicos para evitar pegar campos errados
+    const rawValor = getVal(['valorbruto', 'valor_bruto', 'valor total', 'total']) 
+                  || getVal(['valor', 'preço', 'preco', 'amount']) 
+                  || 0;
 
     return {
       data: normalizeDate(rawData),
-      placa: normalizePlaca(rawPlaca),
-      cliente: capitalizeName(rawCliente),
-      categoria: rawServico,
-      valorBruto: typeof rawValor === 'number' ? rawValor : parseFloat(String(rawValor).replace(',', '.')),
-      valorLiquido: 0, // Será calculado no salvamento ou via utilitário se necessário
+      placa: normalizePlaca(String(rawPlaca)),
+      cliente: capitalizeName(String(rawCliente)),
+      categoria: String(rawServico),
+      valorBruto: typeof rawValor === 'number' ? rawValor : parseFloat(String(rawValor).replace(/[R$\s]/g, '').replace(',', '.')),
+      valorLiquido: 0,
       observacao: 'IMPORTADO VIA INGESTÃO INTELIGENTE'
     };
   }
