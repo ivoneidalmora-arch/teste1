@@ -40,13 +40,45 @@ export const ingestionService = {
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
-          // Converte para JSON
-          const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+          // Extraímos como array de arrays para encontrar o cabeçalho dinamicamente
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+          
+          // Encontrar a linha que parece ser o cabeçalho (contém 'placa', 'preco', 'data', etc)
+          let headerIndex = -1;
+          for (let i = 0; i < Math.min(rows.length, 20); i++) {
+            const row = rows[i];
+            if (!row || !Array.isArray(row)) continue;
+            const rowStr = row.join('|').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (rowStr.includes('placa') || rowStr.includes('preco') || rowStr.includes('valor')) {
+              headerIndex = i;
+              break;
+            }
+          }
+
+          if (headerIndex === -1) {
+             // Fallback: assume a primeira linha se não encontrar nada óbvio
+             headerIndex = 0;
+          }
+
+          // Pegamos os nomes das colunas da linha de cabeçalho
+          const headers = rows[headerIndex].map(h => String(h || '').trim());
+          
+          // Processamos o restante das linhas transformando em objetos
+          const jsonData = rows.slice(headerIndex + 1)
+            .filter(row => row.length > 0)
+            .map(row => {
+               const obj: any = {};
+               headers.forEach((header, index) => {
+                 if (header) obj[header] = row[index];
+               });
+               return obj;
+            });
           
           // Mapeia para o formato padrão
           const normalized = jsonData.map(row => this.mapToStandard(row));
-          resolve(normalized.filter(item => !!item.placa));
+          resolve(normalized.filter(item => !!item.placa && item.placa !== 'undefined'));
         } catch (err) {
+          console.error(err);
           reject(new Error('Falha ao ler o arquivo Excel/CSV.'));
         }
       };
