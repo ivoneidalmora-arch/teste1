@@ -139,7 +139,13 @@ export const ingestionService = {
     // Tenta encontrar campos por palavras-chave
     const rawPlaca = getVal(['placa', 'veiculo', 'carro']) ?? '';
     const rawData = getVal(['data', 'vistoria', 'dia', 'periodo']) ?? '';
-    const rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
+    let rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
+    
+    // Padroniza cliente específico
+    if (typeof rawCliente === 'string' && rawCliente.toUpperCase().includes('PARTICULAR S')) {
+       rawCliente = 'PARTICULAR';
+    }
+
     let rawServico = getVal(['categoria', 'servico', 'tipo', 'item', 'descricao', 'produto', 'laudo', 'vistoria']);
     
     // Fallback para serviço: se não achou a coluna pelo título, procura em todas as colunas de texto da linha
