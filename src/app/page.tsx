@@ -69,16 +69,16 @@ export default function DashboardPage() {
       {/* Resumo de Métricas */}
       <MetricsSummary metrics={safeMetrics as any} />
 
-      {/* Flexbox de Conteúdo Principal */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      {/* Estrutura Principal: Grid de 12 colunas */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
         
-        {/* Coluna da Esquerda: Balanço e IA */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-6">
+        {/* Bloco Analítico (4 colunas) */}
+        <section className="lg:col-span-4 flex flex-col gap-6">
           <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
-        </div>
+        </section>
 
-        {/* Coluna Central/Direita: Atividade e Ranking */}
-        <div className="w-full lg:w-2/3 flex flex-col gap-6">
+        {/* Bloco Operacional e Desempenho (8 colunas) */}
+        <section className="lg:col-span-8 flex flex-col gap-6">
           <RecentActivity 
             transactions={transactions || []} 
             onEdit={setEditingTransaction} 
@@ -86,7 +86,7 @@ export default function DashboardPage() {
           />
           
           <ClientRanking data={safeMetrics.clientRanking || []} />
-        </div>
+        </section>
       </div>
 
       {/* Seção de Calendário */}
