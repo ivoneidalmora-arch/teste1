@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { transactionService } from '@/features/finance/services/transaction.service';
+import { ingestionService } from '../services/ingestion.service';
 import { ImportPreviewModal } from './ImportPreviewModal';
 
 interface Props {
@@ -21,84 +22,17 @@ export function ImportButton({ onSuccess, className }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setStatusText('Processando IA...');
+    setStatusText('Processando...');
     setImporting(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
     try {
-      let savedKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
-
-      const makeRequest = async (key?: string) => {
-        const headers: Record<string, string> = {};
-        if (key) headers['x-api-key'] = key;
-
-        return await fetch('/api/import-report', {
-          method: 'POST',
-          headers,
-          body: formData,
-        });
-      };
-
-      let currentKey = savedKey;
-
-      const attemptRequest = async (key: string | null) => {
-        const r = await makeRequest(key || undefined);
-        const d = await r.json();
-        return { r, d };
-      };
-
-      let { r: response, d: responseData } = await attemptRequest(currentKey);
-
-      if (response.status === 401 && responseData.error === 'MISSING_KEY') {
-        const newKey = prompt('Chave Gemini não encontrada no servidor.\n\nPor favor, cole sua chave API (AIzaSy...) abaixo para continuar.\n(Ela será salva apenas no seu navegador)');
-        
-        if (!newKey) throw new Error('Operação cancelada: Chave não fornecida.');
-        
-        localStorage.setItem('gemini_api_key', newKey);
-        currentKey = newKey;
-        
-        const retryAuth = await attemptRequest(currentKey);
-        response = retryAuth.r;
-        responseData = retryAuth.d;
-      }
-
-      // Sistema de Fila Automática (Retry para 503 ou 429)
-      let retries = 0;
-      const maxRetries = 5;
-      while (
-        (response.status === 503 || response.status === 429 || (responseData.error && String(responseData.error).includes('503'))) 
-        && retries < maxRetries
-      ) {
-        const waitTime = responseData.retryAfter || 10;
-        console.log(`Aguardando na fila por ${waitTime}s...`);
-        
-        // Countdown visual
-        for (let i = waitTime; i > 0; i--) {
-          setStatusText(`Fila: Aguardando ${i}s...`);
-          await new Promise(res => setTimeout(res, 1000));
-        }
-
-        setStatusText(`Retentando agora... (${retries + 1}/${maxRetries})`);
-        
-        const retryServer = await attemptRequest(currentKey);
-        response = retryServer.r;
-        responseData = retryServer.d;
-        retries++;
-      }
-
-      if (!response.ok) {
-        const errorMsg = responseData.error || 'Falha no processamento da IA';
-        const parseErr = responseData.parseError ? `\n\nErro de Parse: ${responseData.parseError}` : '';
-        const details = responseData.details ? `\n\nResposta da IA:\n${responseData.details.substring(0, 1000)}${responseData.details.length > 1000 ? '...' : ''}` : '';
-        throw new Error(`${errorMsg}${parseErr}${details}`);
-      }
+      const data = await ingestionService.processDocument(file);
       
-      if (Array.isArray(responseData) && responseData.length > 0) {
-        setPreviewData(responseData);
+      if (data.length > 0) {
+        setPreviewData(data);
         setShowPreview(true);
       } else {
-        alert('A IA não conseguiu encontrar nenhuma vistoria válida neste documento.');
+        alert('Nenhuma vistoria válida foi encontrada neste documento.');
       }
     } catch (err: any) {
       console.error(err);
@@ -115,28 +49,26 @@ export function ImportButton({ onSuccess, className }: Props) {
     setShowPreview(false);
 
     try {
-      let successCount = 0;
-      for (const item of finalData) {
-        const success = await transactionService.save({
-          type: 'income',
-          category: item.categoria || 'Transferência',
-          placa: item.placa || '',
-          cliente: item.cliente || '',
-          amountBruto: item.valorBruto || 0,
-          amountLiquido: item.valorLiquido || 0,
-          amount: item.valorBruto || 0,
-          date: item.data || new Date().toISOString().split('T')[0],
-          pagamento: 'Pix',
-          observacao: 'IMPORTADO VIA IA'
-        });
-        if (success) successCount++;
-      }
+      const transactions = finalData.map(item => ({
+        type: 'income',
+        category: item.categoria || 'Transferência',
+        placa: item.placa || '',
+        cliente: item.cliente || '',
+        amountBruto: item.valorBruto || 0,
+        amountLiquido: item.valorLiquido || 0,
+        amount: item.valorBruto || 0,
+        date: item.data || new Date().toISOString().split('T')[0],
+        pagamento: 'Pix',
+        observacao: item.observacao || 'IMPORTADO VIA IA'
+      }));
 
-      if (successCount > 0) {
-        alert(`Sucesso! ${successCount} registros foram importados.`);
+      const success = await transactionService.bulkUpsert(transactions as any);
+
+      if (success) {
+        alert('Sucesso! Os registros foram importados.');
         onSuccess();
       } else {
-        alert('Nenhum dado foi salvo.');
+        alert('Ocorreu um erro ao salvar alguns registros no banco de dados.');
       }
     } catch (err: any) {
       alert(`Erro ao salvar: ${err.message}`);
@@ -161,7 +93,7 @@ export function ImportButton({ onSuccess, className }: Props) {
         <input 
           type="file" 
           className="hidden" 
-          accept=".pdf,image/*" 
+          accept=".pdf,.xlsx,.xls,.csv,image/*" 
           onChange={handleImportPDF} 
           disabled={importing} 
         />

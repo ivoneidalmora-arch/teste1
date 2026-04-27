@@ -54,5 +54,33 @@ export const transactionService = {
     const { error: err1 } = await supabase.from('Receitas').delete().neq('id', '0');
     const { error: err2 } = await supabase.from('Despesas').delete().neq('id', '0');
     return !err1 && !err2;
+  },
+
+  /**
+   * Realiza o upsert em lote seguindo a sugestão do usuário.
+   */
+  async bulkUpsert(transactions: NewTransaction[]): Promise<boolean> {
+    const incomes = transactions.filter(t => t.type === 'income').map(({type, ...p}) => p);
+    const expenses = transactions.filter(t => t.type === 'expense').map(({type, ...p}) => p);
+
+    let success = true;
+
+    if (incomes.length > 0) {
+      const { error } = await supabase.from('Receitas').upsert(incomes, { onConflict: 'placa' });
+      if (error) {
+        console.error('Erro no upsert de receitas:', error);
+        success = false;
+      }
+    }
+
+    if (expenses.length > 0) {
+      const { error } = await supabase.from('Despesas').upsert(expenses, { onConflict: 'id' });
+      if (error) {
+        console.error('Erro no upsert de despesas:', error);
+        success = false;
+      }
+    }
+
+    return success;
   }
 };
