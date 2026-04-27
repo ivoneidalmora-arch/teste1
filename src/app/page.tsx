@@ -69,30 +69,49 @@ export default function DashboardPage() {
       {/* Resumo de Métricas */}
       <MetricsSummary metrics={safeMetrics as any} />
 
-      {/* Estrutura Principal: Grid de 12 colunas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+      {/* Seção de Gestão de Vistorias (Operacional) */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+          <div className="w-1 h-4 bg-brand-primary rounded-full"></div>
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Gestão Operacional de Vistorias</h2>
+        </div>
         
-        {/* Bloco Analítico (4 colunas) */}
-        <section className="lg:col-span-4 flex flex-col gap-6">
-          <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
-        </section>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8">
+            <RecentActivity 
+              transactions={transactions || []} 
+              onEdit={setEditingTransaction} 
+              onRefresh={refresh}
+            />
+          </div>
+          <div className="lg:col-span-4">
+            <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
+          </div>
+        </div>
+      </section>
 
-        {/* Bloco Operacional e Desempenho (8 colunas) */}
-        <section className="lg:col-span-8 flex flex-col gap-6">
-          <RecentActivity 
-            transactions={transactions || []} 
-            onEdit={setEditingTransaction} 
-            onRefresh={refresh}
-          />
-          
-          <ClientRanking data={safeMetrics.clientRanking || []} />
-        </section>
-      </div>
+      {/* Seção de Inteligência e Performance (Estratégico) */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+          <div className="w-1 h-4 bg-amber-400 rounded-full"></div>
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Inteligência e Performance</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-12">
+            <ClientRanking data={safeMetrics.clientRanking || []} />
+          </div>
+        </div>
+      </section>
 
-      {/* Seção de Calendário */}
-      <div className="flex flex-col gap-6 pb-24">
+      {/* Seção de Planejamento (Calendário) */}
+      <section className="space-y-4 pb-24">
+        <div className="flex items-center gap-2 px-2">
+          <div className="w-1 h-4 bg-slate-400 rounded-full"></div>
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Planejamento Mensal</h2>
+        </div>
         <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
-      </div>
+      </section>
 
       {/* Modais */}
       <NovaVistoriaModal 

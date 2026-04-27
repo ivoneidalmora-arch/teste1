@@ -36,18 +36,18 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {/* Saldo Geral - Destaque */}
-      <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-          <Activity className="w-12 h-12 text-white" />
+      <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 overflow-hidden group">
+        <div className="flex justify-between items-start mb-4">
+          <div className="p-2.5 bg-slate-800 rounded-xl text-white group-hover:bg-slate-700 transition-colors">
+            <Activity className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Patrimônio Líquido</span>
         </div>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Saldo Geral Acumulado</p>
-        <div className="flex items-end gap-2">
+        <div>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Saldo Geral Acumulado</p>
           <h3 className="text-2xl font-black text-white tracking-tighter">
             {formatBRL(m.totalGlobalBalance)}
           </h3>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase">Patrimônio Líquido Atual</span>
         </div>
       </div>
 
