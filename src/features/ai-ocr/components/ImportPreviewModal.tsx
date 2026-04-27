@@ -103,6 +103,7 @@ export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfi
                       <option value="Vistoria de Entrada">Vistoria de Entrada</option>
                       <option value="Vistoria de Saída">Vistoria de Saída</option>
                       <option value="Vistoria Cautelar">Vistoria Cautelar</option>
+                      <option value="Vistoria de Retorno">Vistoria de Retorno</option>
                     </select>
                   </td>
                   <td className="py-3 px-4">

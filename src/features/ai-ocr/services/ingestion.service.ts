@@ -142,6 +142,18 @@ export const ingestionService = {
     const rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
     const rawServico = getVal(['categoria', 'servico', 'tipo', 'item']) ?? 'Transferência';
     
+    // Padroniza os nomes dos serviços conforme a regra de negócios
+    const standardizeService = (raw: string) => {
+      const s = String(raw).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (s.includes('completo') || s.includes('transferencia')) return 'Transferência';
+      if (s.includes('simplificada') || s.includes('entrada')) return 'Vistoria de Entrada';
+      if (s.includes('retorno')) return 'Vistoria de Retorno';
+      if (s.includes('saida')) return 'Vistoria de Saída';
+      if (s.includes('cautelar')) return 'Vistoria Cautelar';
+      return 'Transferência'; // Default seguro
+    };
+
+    
     // Busca específica por preço/valor
     let rawValor = getVal(['preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount', 'r$', 'custo', 'pagamento', 'tarifa', 'receita']);
     
@@ -191,7 +203,7 @@ export const ingestionService = {
       data: normalizeDate(rawData),
       placa: normalizePlaca(String(rawPlaca)),
       cliente: capitalizeName(String(rawCliente)),
-      categoria: String(rawServico),
+      categoria: standardizeService(String(rawServico)),
       valorBruto: isNaN(valorNumerico) ? 0 : valorNumerico,
       valorLiquido: 0,
       observacao: 'IMPORTADO VIA INGESTÃO INTELIGENTE'
