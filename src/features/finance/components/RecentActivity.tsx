@@ -51,53 +51,55 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
             const isIncome = t.type === 'income';
             
             return (
-              <div key={`${t.id}-${index}`} className="flex items-center justify-between py-1 px-1 hover:bg-slate-50 transition-colors group">
+              <div key={`${t.id}-${index}`} className="flex items-center justify-between py-1.5 px-1 hover:bg-slate-50/80 transition-all group">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
-                    isIncome ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
+                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all group-hover:shadow-sm",
+                    isIncome 
+                      ? "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 group-hover:scale-105" 
+                      : "bg-rose-50 text-rose-600 group-hover:bg-rose-100 group-hover:scale-105"
                   )}>
-                    {isIncome ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {isIncome ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                   </div>
                   
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-800 truncate">
+                      <span className="text-[11px] font-bold text-slate-800 truncate group-hover:text-brand-primary transition-colors">
                         {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[8px] font-bold text-brand-primary uppercase tracking-tight">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
                         {formatDisplayDate(t.date)}
                       </span>
-                      <span className="text-slate-300 text-[8px]">•</span>
-                      <span className="text-[8px] font-semibold text-slate-400 uppercase truncate">
+                      <div className="w-0.5 h-0.5 rounded-full bg-slate-300" />
+                      <span className="text-[8px] font-bold text-brand-primary/60 uppercase tracking-tighter truncate">
                         {t.category || 'Outros'}
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end mr-0.5">
                     <span className={cn(
-                      "text-[11px] font-bold",
+                      "text-[11px] font-black tracking-tight",
                       isIncome ? "text-emerald-600" : "text-rose-600"
                     )}>
                       {isIncome ? '+' : '-'} {formatBRL(t.amount)}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                     <button 
                       onClick={() => onEdit(t)}
-                      className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                     >
                       <Edit2 className="w-3 h-3" />
                     </button>
                     <button 
                       onClick={() => handleDelete(t)}
-                      className="p-0.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

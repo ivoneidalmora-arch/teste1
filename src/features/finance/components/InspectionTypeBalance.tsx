@@ -61,11 +61,11 @@ export function InspectionTypeBalance({ data = [] }: Props) {
                 </span>
               </div>
               
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+              <div className="h-2 w-full bg-slate-100/50 rounded-full overflow-hidden shadow-inner border border-slate-50">
                 <div 
                   className={cn(
                     "h-full rounded-full transition-all duration-1000 ease-out shadow-sm",
-                    percentage > 50 ? "bg-blue-600" : "bg-blue-400"
+                    percentage > 50 ? "bg-gradient-to-r from-blue-500 to-blue-700" : "bg-gradient-to-r from-blue-300 to-blue-500"
                   )}
                   style={{ width: `${percentage}%` }}
                 />
