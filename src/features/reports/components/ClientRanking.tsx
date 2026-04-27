@@ -42,82 +42,83 @@ export function ClientRanking({ data }: ClientRankingProps) {
         </span>
       </div>
       
-      <div className="space-y-6">
-        {data.map((client, index) => {
-          const percentage = maxTotal > 0 ? (client.total / maxTotal) * 100 : 0;
-          const isWinner = index === 0;
-          const categories = Object.entries(client.categories || {}).sort((a, b) => b[1] - a[1]);
-          
-          return (
-            <div key={client.name} className="space-y-3 group bg-slate-50/30 p-4 rounded-2xl hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 border border-transparent hover:border-slate-100 animate-in fade-in slide-in-from-bottom-2">
-              <div className="flex justify-between items-start">
-                <div className="flex flex-col gap-1.5 flex-1 mr-4">
-                  <div className="flex items-center gap-2">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-slate-100">
+              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">#</th>
+              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
+              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Volume</th>
+              <th className="text-left py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden lg:table-cell">Categorias</th>
+              <th className="text-right py-2 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Líquido</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {data.map((client, index) => {
+              const percentage = maxTotal > 0 ? (client.total / maxTotal) * 100 : 0;
+              const isWinner = index === 0;
+              const categories = Object.entries(client.categories || {}).sort((a, b) => b[1] - a[1]);
+              
+              return (
+                <tr key={client.name} className="group hover:bg-slate-50/50 transition-colors">
+                  <td className="py-2 px-1 align-top">
                     <span className={cn(
-                      "w-6 h-6 flex items-center justify-center rounded-lg text-[10px] font-black transition-colors",
-                      isWinner 
-                        ? "bg-brand-primary text-white shadow-lg shadow-blue-200" 
-                        : "bg-white border border-slate-200 text-slate-500"
+                      "w-5 h-5 flex items-center justify-center rounded text-[9px] font-black",
+                      isWinner ? "bg-brand-primary text-white" : "bg-slate-100 text-slate-500"
                     )}>
                       {index + 1}
                     </span>
-                    <span className={cn(
-                      "font-bold text-sm uppercase tracking-tight flex items-center gap-2",
-                      isWinner ? "text-slate-900" : "text-slate-700"
-                    )}>
-                      {client.name}
-                      {isWinner && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />}
+                  </td>
+                  <td className="py-2 px-1 align-top">
+                    <div className="flex flex-col">
+                      <span className={cn(
+                        "font-bold text-xs uppercase tracking-tight flex items-center gap-1",
+                        isWinner ? "text-slate-900" : "text-slate-700"
+                      )}>
+                        {client.name}
+                        {isWinner && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
+                      </span>
+                      <div className="h-1 w-24 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all duration-1000",
+                            isWinner ? "bg-blue-600" : "bg-slate-400"
+                          )}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-2 px-1 align-top hidden md:table-cell">
+                    <span className="text-[10px] text-slate-500 font-bold">
+                      {client.count} <span className="text-slate-400 font-normal">vistorias</span>
                     </span>
-                  </div>
-                  
-                  <div className="ml-8 space-y-2">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                      <Users className="w-3 h-3" />
-                      {client.count} {client.count === 1 ? 'Vistoria' : 'Vistorias'}
-                    </span>
-                    
-                    <div className="flex flex-wrap gap-1.5">
-                      {categories.map(([name, count]) => (
-                        <span key={name} className="px-2 py-0.5 bg-white border border-slate-100 rounded text-[9px] font-semibold text-slate-500 shadow-sm">
-                          {count}x <span className="text-slate-400 font-normal">{name}</span>
+                  </td>
+                  <td className="py-2 px-1 align-top hidden lg:table-cell">
+                    <div className="flex flex-wrap gap-1">
+                      {categories.slice(0, 3).map(([name, count]) => (
+                        <span key={name} className="px-1.5 py-0.5 bg-white border border-slate-100 rounded text-[8px] font-medium text-slate-500">
+                          {count}x {name}
                         </span>
                       ))}
+                      {categories.length > 3 && (
+                        <span className="text-[8px] text-slate-400 pt-0.5">+{categories.length - 3}</span>
+                      )}
                     </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-end pt-1">
-                   <div className="text-right mb-2">
-                     <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Líquido</p>
-                     <p className="text-base font-black text-slate-950 leading-tight">
-                       {formatBRL(client.liquido)}
-                     </p>
-                   </div>
-                   <div className="text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Faturamento Bruto</p>
-                     <p className="text-xs font-bold text-slate-400 line-through decoration-slate-300">
-                       {formatBRL(client.bruto)}
-                     </p>
-                   </div>
-                </div>
-              </div>
-              
-              <div className="ml-8">
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className={cn(
-                      "h-full rounded-full transition-all duration-1000 ease-out",
-                      isWinner 
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-500 shadow-[2px_0_10px_rgba(37,99,235,0.4)]" 
-                        : "bg-gradient-to-r from-slate-400 to-slate-600"
-                    )}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                  </td>
+                  <td className="py-2 px-1 align-top text-right">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-900">{formatBRL(client.liquido)}</span>
+                      <span className="text-[8px] text-slate-400 font-bold line-through opacity-0 group-hover:opacity-100 transition-opacity">
+                        {formatBRL(client.bruto)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </Card>
   );

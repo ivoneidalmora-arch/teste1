@@ -58,16 +58,18 @@ export const DashboardCalendar = memo(function DashboardCalendar({ currentDate, 
   if (days.length === 0) return null;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-6 lg:p-8 hover:shadow-xl transition-all duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900">
-          Calendário de Fluxo <span className="text-sm font-normal text-slate-400 block sm:inline sm:ml-2">{format(safeDate, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+    <div className="bg-white border border-slate-100 rounded-2xl p-4 hover:shadow-xl transition-all duration-300">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+        <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 flex items-center flex-wrap gap-x-3">
+          Calendário de Fluxo 
+          <span className="text-xs font-normal text-slate-400">{format(safeDate, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+          
+          <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-tight mt-1 md:mt-0 md:ml-4">
+            <div className="flex items-center gap-1 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">Feriado</div>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">Recebimentos</div>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">Saídas</div>
+          </div>
         </h3>
-        <div className="hidden sm:flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1 text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded">Feriado</div>
-          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-success"></span> Recebimentos</div>
-          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-danger"></span> Saídas</div>
-        </div>
       </div>
       
       <div className="grid grid-cols-7 gap-1 md:gap-2">

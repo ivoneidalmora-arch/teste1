@@ -54,7 +54,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-4 space-y-4 animate-in fade-in duration-700">
+    <div className="container mx-auto px-2 py-2 space-y-2 animate-in fade-in duration-700">
       
       {/* Cabeçalho */}
       <DashboardHeader 
@@ -70,9 +70,9 @@ export default function DashboardPage() {
       <MetricsSummary metrics={m as any} />
 
       {/* Seção Operacional e Inteligência */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Lado Esquerdo (Vistorias) */}
-        <div className="lg:col-span-8 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+        {/* Lado Esquerdo (Vistorias) - Mais largo */}
+        <div className="lg:col-span-9">
           <RecentActivity 
             transactions={transactions || []} 
             onEdit={setEditingTransaction} 
@@ -80,8 +80,8 @@ export default function DashboardPage() {
           />
         </div>
         
-        {/* Lado Direito (Balanço) */}
-        <div className="lg:col-span-4">
+        {/* Lado Direito (Balanço) - Mais estreito */}
+        <div className="lg:col-span-3">
           <InspectionTypeBalance data={m.inspectionSummary || []} />
         </div>
 
@@ -91,7 +91,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Planejamento (Calendário) */}
-        <div className="lg:col-span-12 pb-12">
+        <div className="lg:col-span-12">
           <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
         </div>
       </div>

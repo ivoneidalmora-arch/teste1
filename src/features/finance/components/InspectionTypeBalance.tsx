@@ -41,18 +41,18 @@ export function InspectionTypeBalance({ data = [] }: Props) {
         </div>
       </div>
       
-      <div className="flex-1 space-y-5">
+      <div className="flex-1 space-y-3">
         {safeData.map((item) => {
           const percentage = grandTotal > 0 ? (item.total / grandTotal) * 100 : 0;
           
           return (
-            <div key={item.name} className="space-y-2 group">
+            <div key={item.name} className="space-y-1.5 group">
               <div className="flex justify-between items-end">
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-tight group-hover:text-brand-primary transition-colors">
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight group-hover:text-brand-primary transition-colors">
                     {item.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[9px] text-slate-400 font-medium">
                     {item.count} {item.count === 1 ? 'Vistoria' : 'Vistorias'}
                   </span>
                 </div>
@@ -61,10 +61,10 @@ export function InspectionTypeBalance({ data = [] }: Props) {
                 </span>
               </div>
               
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                 <div 
                   className={cn(
-                    "h-full bg-brand-primary rounded-full transition-all duration-1000 ease-out",
+                    "h-full rounded-full transition-all duration-1000 ease-out shadow-sm",
                     percentage > 50 ? "bg-blue-600" : "bg-blue-400"
                   )}
                   style={{ width: `${percentage}%` }}

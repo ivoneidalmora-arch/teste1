@@ -44,67 +44,69 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
         </span>
       </div>
       
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin">
-        {recent.map((t, index) => {
-          if (!t) return null;
-          const isIncome = t.type === 'income';
-          
-          return (
-            <div key={`${t.id}-${index}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
-                  isIncome ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
-                )}>
-                  {isIncome ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
-                </div>
-                
-                <div className="flex flex-col flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-bold text-slate-800 truncate">
-                      {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-brand-primary uppercase tracking-tight">
-                      {formatDisplayDate(t.date)}
-                    </span>
-                    <span className="text-slate-300 text-[10px]">•</span>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase truncate">
-                      {t.category || 'Outros'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="flex flex-col items-end mr-2">
-                  <span className={cn(
-                    "text-sm font-bold",
-                    isIncome ? "text-emerald-600" : "text-rose-600"
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
+        <div className="divide-y divide-slate-100">
+          {recent.map((t, index) => {
+            if (!t) return null;
+            const isIncome = t.type === 'income';
+            
+            return (
+              <div key={`${t.id}-${index}`} className="flex items-center justify-between py-2 px-1 hover:bg-slate-50 transition-colors group">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
+                    isIncome ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
                   )}>
-                    {isIncome ? '+' : '-'} {formatBRL(t.amount)}
-                  </span>
+                    {isIncome ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                  </div>
+                  
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-800 truncate">
+                        {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tight">
+                        {formatDisplayDate(t.date)}
+                      </span>
+                      <span className="text-slate-300 text-[9px]">•</span>
+                      <span className="text-[9px] font-semibold text-slate-400 uppercase truncate">
+                        {t.category || 'Outros'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => onEdit(t)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(t)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end mr-1">
+                    <span className={cn(
+                      "text-xs font-bold",
+                      isIncome ? "text-emerald-600" : "text-rose-600"
+                    )}>
+                      {isIncome ? '+' : '-'} {formatBRL(t.amount)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => onEdit(t)}
+                      className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(t)}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </Card>
   );
