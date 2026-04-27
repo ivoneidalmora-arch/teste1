@@ -143,8 +143,26 @@ export const ingestionService = {
     const rawServico = getVal(['categoria', 'servico', 'tipo', 'item']) ?? 'Transferência';
     
     // Busca específica por preço/valor
-    let rawValor = getVal(['preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount']);
+    let rawValor = getVal(['preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount', 'r$', 'custo', 'pagamento', 'tarifa', 'receita']);
     
+    // Fallback: se não encontrou o valor pela chave, busca a ÚLTIMA coluna que seja um número (geralmente o preço fica no final)
+    if (rawValor === undefined || rawValor === null || rawValor === 0) {
+      const reverseKeys = [...keys].reverse();
+      for (const key of reverseKeys) {
+        const val = row[key];
+        const strVal = String(val).replace(/[^\d.,]/g, '');
+        // Se parece com um número ou moeda, e não é a placa nem a data
+        if (strVal && strVal !== '0' && !key.toLowerCase().includes('data') && !key.toLowerCase().includes('placa') && !key.toLowerCase().includes('veiculo')) {
+           // Checa se realmente é um número válido e não um ID longo (preços normalmente são menores que 1.000.000)
+           const testNum = parseFloat(strVal.replace(',', '.'));
+           if (!isNaN(testNum) && testNum > 0 && testNum < 1000000) {
+             rawValor = val;
+             break;
+           }
+        }
+      }
+    }
+
     if (rawValor === undefined || rawValor === null) {
       rawValor = 0;
     }
