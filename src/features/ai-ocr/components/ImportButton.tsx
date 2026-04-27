@@ -46,11 +46,12 @@ export function ImportButton({ onSuccess, className }: Props) {
   const handleConfirmImport = async (finalData: any[]) => {
     setImporting(true);
     setStatusText('Salvando dados...');
-    setShowPreview(false);
 
     try {
-      const promises = finalData.map(item => 
-        transactionService.save({
+      const failedItems: any[] = [];
+      
+      const promises = finalData.map(async (item) => {
+        const result = await transactionService.save({
           type: 'income',
           category: item.categoria || 'Transferência',
           placa: item.placa || '',
@@ -61,26 +62,29 @@ export function ImportButton({ onSuccess, className }: Props) {
           date: item.data || new Date().toISOString().split('T')[0],
           pagamento: 'Pix',
           observacao: item.observacao || 'IMPORTADO VIA IA'
-        })
-      );
-
-      const results = await Promise.all(promises);
-      const successCount = results.filter(r => r !== null).length;
-
-      if (successCount > 0) {
-        if (successCount === finalData.length) {
-          alert('Sucesso! Todos os registros foram importados.');
-        } else {
-          alert(`Aviso: ${successCount} de ${finalData.length} registros foram importados. Alguns falharam.`);
+        });
+        
+        if (result === null) {
+          failedItems.push(item);
         }
-        onSuccess();
+        return result;
+      });
+
+      await Promise.all(promises);
+
+      if (failedItems.length > 0) {
+        alert(`Atenção: ${failedItems.length} registro(s) falhou(aram). Eles continuam na tela para você corrigir os dados (ex: datas inválidas, placa muito longa) e tentar salvar novamente.`);
+        setPreviewData(failedItems); // Atualiza o modal só com os erros
       } else {
-        alert('Ocorreu um erro e nenhum registro foi salvo no banco de dados.');
+        alert('Sucesso! Todos os registros foram importados.');
+        setShowPreview(false); // Só fecha se tudo deu certo
+        onSuccess();
       }
     } catch (err: any) {
       alert(`Erro ao salvar: ${err.message}`);
     } finally {
       setImporting(false);
+      setStatusText('Importar PDF');
     }
   };
 
