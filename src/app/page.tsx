@@ -69,30 +69,28 @@ export default function DashboardPage() {
       {/* Resumo de Métricas */}
       <MetricsSummary metrics={safeMetrics as any} />
 
-      {/* Grid de Conteúdo Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Flexbox de Conteúdo Principal */}
+      <div className="flex flex-col lg:flex-row gap-6">
         
         {/* Coluna da Esquerda: Balanço e IA */}
-        <div className="lg:col-span-1 space-y-8">
+        <div className="w-full lg:w-1/3 flex flex-col gap-6">
           <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
         </div>
 
         {/* Coluna Central/Direita: Atividade e Ranking */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="w-full lg:w-2/3 flex flex-col gap-6">
           <RecentActivity 
             transactions={transactions || []} 
             onEdit={setEditingTransaction} 
             onRefresh={refresh}
           />
           
-          <div className="grid grid-cols-1 gap-8">
-            <ClientRanking data={safeMetrics.clientRanking || []} />
-          </div>
+          <ClientRanking data={safeMetrics.clientRanking || []} />
         </div>
       </div>
 
       {/* Seção de Calendário */}
-      <div className="grid grid-cols-1 gap-8 pb-24">
+      <div className="flex flex-col gap-6 pb-24">
         <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
       </div>
 

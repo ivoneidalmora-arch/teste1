@@ -17,7 +17,7 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
 
   if (recent.length === 0) {
     return (
-      <Card className="flex flex-col items-center justify-center min-h-[350px]">
+      <Card className="flex flex-col items-center justify-center py-12">
          <Clock className="w-12 h-12 text-slate-200 mb-4" />
          <p className="text-slate-500 font-medium text-sm">Nenhuma atividade recente</p>
       </Card>
@@ -33,7 +33,7 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
   };
 
   return (
-    <Card className="h-full flex flex-col min-h-[350px]">
+    <Card className="h-auto flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <CardHeader 
           title="Atividade Recente" 

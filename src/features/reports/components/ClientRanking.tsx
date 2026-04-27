@@ -20,7 +20,7 @@ interface ClientRankingProps {
 export function ClientRanking({ data }: ClientRankingProps) {
   if (!data || data.length === 0) {
     return (
-      <Card className="h-[440px] flex flex-col items-center justify-center">
+      <Card className="h-auto flex flex-col items-center justify-center py-12">
         <Users className="w-12 h-12 text-slate-200 mb-2" />
         <p className="text-slate-400 text-sm">Sem ranking disponível</p>
       </Card>
@@ -30,8 +30,8 @@ export function ClientRanking({ data }: ClientRankingProps) {
   const maxTotal = data.length > 0 ? Math.max(...data.map(d => d.total)) : 0;
 
   return (
-    <Card className="h-[500px] w-full flex flex-col overflow-y-auto scrollbar-thin">
-      <div className="flex items-center justify-between mb-6 sticky top-0 bg-white pb-4 z-10 border-b border-slate-50">
+    <Card className="h-auto w-full flex flex-col">
+      <div className="flex items-center justify-between mb-6 bg-white pb-4 border-b border-slate-50">
         <CardHeader 
           title="Ranking de Clientes" 
           subtitle="Performance por Volume Financeiro"

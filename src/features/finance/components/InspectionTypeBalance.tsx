@@ -18,7 +18,7 @@ export function InspectionTypeBalance({ data = [] }: Props) {
   
   if (safeData.length === 0) {
     return (
-      <Card className="h-full flex flex-col items-center justify-center min-h-[350px]">
+      <Card className="h-auto flex flex-col items-center justify-center py-12">
          <TrendingUp className="w-12 h-12 text-slate-200 mb-4" />
          <p className="text-slate-500 font-medium text-sm">Sem dados de vistoria</p>
       </Card>
@@ -28,7 +28,7 @@ export function InspectionTypeBalance({ data = [] }: Props) {
   const grandTotal = safeData.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
   return (
-    <Card className="h-full flex flex-col min-h-[350px]">
+    <Card className="h-auto flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <CardHeader 
           title="Balanço por Tipo" 
