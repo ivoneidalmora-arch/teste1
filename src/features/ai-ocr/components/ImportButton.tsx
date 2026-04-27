@@ -62,7 +62,7 @@ export function ImportButton({ onSuccess, className }: Props) {
         observacao: item.observacao || 'IMPORTADO VIA IA'
       }));
 
-      const success = await transactionService.bulkUpsert(transactions as any);
+      const success = await transactionService.bulkInsert(transactions as any);
 
       if (success) {
         alert('Sucesso! Os registros foram importados.');

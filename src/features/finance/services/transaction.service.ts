@@ -57,26 +57,26 @@ export const transactionService = {
   },
 
   /**
-   * Realiza o upsert em lote seguindo a sugestão do usuário.
+   * Realiza o insert em lote para as transações importadas.
    */
-  async bulkUpsert(transactions: NewTransaction[]): Promise<boolean> {
+  async bulkInsert(transactions: NewTransaction[]): Promise<boolean> {
     const incomes = transactions.filter(t => t.type === 'income').map(({type, ...p}) => p);
     const expenses = transactions.filter(t => t.type === 'expense').map(({type, ...p}) => p);
 
     let success = true;
 
     if (incomes.length > 0) {
-      const { error } = await supabase.from('Receitas').upsert(incomes, { onConflict: 'placa' });
+      const { error } = await supabase.from('Receitas').insert(incomes);
       if (error) {
-        console.error('Erro no upsert de receitas:', error);
+        console.error('Erro no insert de receitas:', error);
         success = false;
       }
     }
 
     if (expenses.length > 0) {
-      const { error } = await supabase.from('Despesas').upsert(expenses, { onConflict: 'id' });
+      const { error } = await supabase.from('Despesas').insert(expenses);
       if (error) {
-        console.error('Erro no upsert de despesas:', error);
+        console.error('Erro no insert de despesas:', error);
         success = false;
       }
     }
