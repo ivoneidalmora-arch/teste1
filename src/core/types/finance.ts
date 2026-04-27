@@ -11,6 +11,10 @@ export interface TransactionBase {
   createdAt?: string;
 }
 
+export type NewTransaction = 
+  | (Omit<IncomeTransaction, 'id' | 'createdAt'> & { type: 'income' })
+  | (Omit<ExpenseTransaction, 'id' | 'createdAt'> & { type: 'expense' });
+
 export interface IncomeTransaction extends TransactionBase {
   type: 'income';
   placa?: string;

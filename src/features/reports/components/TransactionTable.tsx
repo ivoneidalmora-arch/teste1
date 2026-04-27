@@ -4,7 +4,7 @@ import { Edit2, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card } from '@/core/components/Card';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { formatDisplayDate } from '@/core/utils/date';
-import { Transaction, IncomeTransaction } from '@/core/types/finance';
+import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
 import { transactionService } from '@/features/finance/services/transaction.service';
 
 interface Props {
@@ -53,7 +53,9 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-bold text-slate-800 truncate">
-                          {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
+                          {isIncome 
+                            ? (t as IncomeTransaction).cliente || 'S/N' 
+                            : (t as ExpenseTransaction).description || 'Despesa'}
                         </span>
                         {isIncome && (t as IncomeTransaction).placa && (
                           <span className="text-[10px] font-mono text-brand-primary font-bold">{(t as IncomeTransaction).placa}</span>

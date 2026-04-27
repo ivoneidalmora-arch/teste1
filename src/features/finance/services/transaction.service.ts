@@ -1,5 +1,5 @@
 import { supabase } from '@/services/supabase';
-import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
+import { Transaction, IncomeTransaction, ExpenseTransaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 
 export const transactionService = {
@@ -25,7 +25,7 @@ export const transactionService = {
     }
   },
 
-  async save(transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> {
+  async save(transaction: NewTransaction): Promise<Transaction | null> {
     const { type, ...payload } = transaction as any;
     const table = type === 'income' ? 'Receitas' : 'Despesas';
     
@@ -44,7 +44,7 @@ export const transactionService = {
     return !error;
   },
 
-  async delete(id: string, type: 'income' | 'expense') {
+  async delete(id: string | number, type: 'income' | 'expense') {
     const table = type === 'income' ? 'Receitas' : 'Despesas';
     const { error } = await supabase.from(table).delete().eq('id', id);
     return !error;
