@@ -49,26 +49,33 @@ export function ImportButton({ onSuccess, className }: Props) {
     setShowPreview(false);
 
     try {
-      const transactions = finalData.map(item => ({
-        type: 'income',
-        category: item.categoria || 'Transferência',
-        placa: item.placa || '',
-        cliente: item.cliente || '',
-        amountBruto: item.valorBruto || 0,
-        amountLiquido: item.valorLiquido || 0,
-        amount: item.valorBruto || 0,
-        date: item.data || new Date().toISOString().split('T')[0],
-        pagamento: 'Pix',
-        observacao: item.observacao || 'IMPORTADO VIA IA'
-      }));
+      const promises = finalData.map(item => 
+        transactionService.save({
+          type: 'income',
+          category: item.categoria || 'Transferência',
+          placa: item.placa || '',
+          cliente: item.cliente || '',
+          amountBruto: item.valorBruto || 0,
+          amountLiquido: item.valorLiquido || 0,
+          amount: item.valorBruto || 0,
+          date: item.data || new Date().toISOString().split('T')[0],
+          pagamento: 'Pix',
+          observacao: item.observacao || 'IMPORTADO VIA IA'
+        })
+      );
 
-      const success = await transactionService.bulkInsert(transactions as any);
+      const results = await Promise.all(promises);
+      const successCount = results.filter(r => r !== null).length;
 
-      if (success) {
-        alert('Sucesso! Os registros foram importados.');
+      if (successCount > 0) {
+        if (successCount === finalData.length) {
+          alert('Sucesso! Todos os registros foram importados.');
+        } else {
+          alert(`Aviso: ${successCount} de ${finalData.length} registros foram importados. Alguns falharam.`);
+        }
         onSuccess();
       } else {
-        alert('Ocorreu um erro ao salvar alguns registros no banco de dados.');
+        alert('Ocorreu um erro e nenhum registro foi salvo no banco de dados.');
       }
     } catch (err: any) {
       alert(`Erro ao salvar: ${err.message}`);

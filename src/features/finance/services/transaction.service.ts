@@ -69,7 +69,7 @@ export const transactionService = {
       const { error } = await supabase.from('Receitas').insert(incomes);
       if (error) {
         console.error('Erro no insert de receitas:', error);
-        success = false;
+        throw new Error(`Erro Receitas: ${error.message || JSON.stringify(error)}`);
       }
     }
 
@@ -77,7 +77,7 @@ export const transactionService = {
       const { error } = await supabase.from('Despesas').insert(expenses);
       if (error) {
         console.error('Erro no insert de despesas:', error);
-        success = false;
+        throw new Error(`Erro Despesas: ${error.message || JSON.stringify(error)}`);
       }
     }
 
