@@ -2,6 +2,7 @@ import { Plus, ChevronDown, RefreshCw } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/core/utils/formatters';
+import { ImportButton } from '@/features/ai-ocr/components/ImportButton';
 
 interface Props {
   selectedDate: Date;
@@ -58,6 +59,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <ImportButton onSuccess={onRefresh} />
         <button 
           onClick={onNewDespesa}
           className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
