@@ -34,25 +34,25 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Saldo Geral - Destaque */}
-      <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 overflow-hidden group">
-        <div className="flex justify-between items-start mb-4">
-          <div className="p-2.5 bg-slate-800 rounded-xl text-white group-hover:bg-slate-700 transition-colors">
-            <Activity className="w-5 h-5" />
+      <div className="bg-slate-900 rounded-xl p-4 shadow-md border border-slate-800 overflow-hidden group">
+        <div className="flex justify-between items-start mb-2">
+          <div className="p-2 bg-slate-800 rounded-lg text-white group-hover:bg-slate-700 transition-colors">
+            <Activity className="w-4 h-4" />
           </div>
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Patrimônio Líquido</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Patrimônio</span>
         </div>
         <div>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Saldo Geral Acumulado</p>
-          <h3 className="text-2xl font-black text-white tracking-tighter">
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">Saldo Geral</p>
+          <h3 className="text-xl font-black text-white tracking-tighter">
             {formatBRL(m.totalGlobalBalance)}
           </h3>
         </div>
       </div>
 
       <MetricCard 
-        title="Receita do Mês"
+        title="Receita"
         value={m.currentIncome}
         variation={m.incomeVariation}
         icon={TrendingUp}
@@ -60,7 +60,7 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
       />
       
       <MetricCard 
-        title="Despesas do Mês"
+        title="Despesas"
         value={m.currentExpense}
         variation={m.expenseVariation}
         icon={TrendingDown}
@@ -69,7 +69,7 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
       />
 
       <MetricCard 
-        title="Lucro no Mês"
+        title="Lucro"
         value={m.currentBalance}
         variation={m.balanceVariation}
         icon={Activity}
@@ -84,29 +84,29 @@ function MetricCard({ title, value, variation, icon: Icon, color, inverse = fals
   const isGood = inverse ? !isPositive : isPositive;
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group">
+      <div className="flex justify-between items-start mb-3">
         <div className={cn(
-          "p-2.5 rounded-xl transition-colors",
+          "p-2 rounded-lg transition-colors",
           color === 'emerald' ? "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100" :
           color === 'rose' ? "bg-rose-50 text-rose-600 group-hover:bg-rose-100" :
           "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
         )}>
-          <Icon className="w-5 h-5" />
+          <Icon className="w-4 h-4" />
         </div>
         <div className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black",
+          "flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black",
           variation === 0 ? "bg-slate-50 text-slate-400" :
           isGood ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
         )}>
-          {variation !== 0 && (isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />)}
+          {variation !== 0 && (isPositive ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />)}
           {formatVar(variation)}
         </div>
       </div>
       
       <div>
-        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{title}</p>
-        <p className="text-2xl font-black text-slate-900 tracking-tighter">{formatBRL(value)}</p>
+        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">{title}</p>
+        <p className="text-xl font-black text-slate-900 tracking-tighter">{formatBRL(value)}</p>
       </div>
     </div>
   );

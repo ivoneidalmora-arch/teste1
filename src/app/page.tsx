@@ -39,7 +39,7 @@ export default function DashboardPage() {
   if (!mounted) return null;
 
   // Garantia de que metrics nunca seja nulo para os componentes filhos
-  const safeMetrics = metrics || {
+  const m = metrics || {
     availableMonths: [],
     inspectionSummary: [],
     clientRanking: [],
@@ -54,64 +54,47 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
+    <div className="container mx-auto px-4 py-4 space-y-4 animate-in fade-in duration-700">
       
       {/* Cabeçalho */}
       <DashboardHeader 
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
-        availableMonths={safeMetrics.availableMonths || []}
+        availableMonths={ m.availableMonths || []}
         onNewVistoria={() => setIsVistoriaModalOpen(true)}
         onNewDespesa={() => setIsDespesaModalOpen(true)}
         onRefresh={refresh}
       />
 
       {/* Resumo de Métricas */}
-      <MetricsSummary metrics={safeMetrics as any} />
+      <MetricsSummary metrics={m as any} />
 
-      {/* Seção de Gestão de Vistorias (Operacional) */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 px-2">
-          <div className="w-1 h-4 bg-brand-primary rounded-full"></div>
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Gestão Operacional de Vistorias</h2>
+      {/* Seção Operacional e Inteligência */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Lado Esquerdo (Vistorias) */}
+        <div className="lg:col-span-8 space-y-4">
+          <RecentActivity 
+            transactions={transactions || []} 
+            onEdit={setEditingTransaction} 
+            onRefresh={refresh}
+          />
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8">
-            <RecentActivity 
-              transactions={transactions || []} 
-              onEdit={setEditingTransaction} 
-              onRefresh={refresh}
-            />
-          </div>
-          <div className="lg:col-span-4">
-            <InspectionTypeBalance data={safeMetrics.inspectionSummary || []} />
-          </div>
+        {/* Lado Direito (Balanço) */}
+        <div className="lg:col-span-4">
+          <InspectionTypeBalance data={m.inspectionSummary || []} />
         </div>
-      </section>
 
-      {/* Seção de Inteligência e Performance (Estratégico) */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 px-2">
-          <div className="w-1 h-4 bg-amber-400 rounded-full"></div>
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Inteligência e Performance</h2>
+        {/* Ranking de Clientes (Full Width mas compacto) */}
+        <div className="lg:col-span-12">
+          <ClientRanking data={m.clientRanking || []} />
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-12">
-            <ClientRanking data={safeMetrics.clientRanking || []} />
-          </div>
-        </div>
-      </section>
 
-      {/* Seção de Planejamento (Calendário) */}
-      <section className="space-y-4 pb-24">
-        <div className="flex items-center gap-2 px-2">
-          <div className="w-1 h-4 bg-slate-400 rounded-full"></div>
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Planejamento Mensal</h2>
+        {/* Planejamento (Calendário) */}
+        <div className="lg:col-span-12 pb-12">
+          <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
         </div>
-        <DashboardCalendar currentDate={selectedDate} transactions={transactions || []} />
-      </section>
+      </div>
 
       {/* Modais */}
       <NovaVistoriaModal 
