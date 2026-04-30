@@ -67,17 +67,18 @@ export const ingestionService = {
             }
           }
 
-          addLog(`Cabeçalho identificado na linha: ${headerIndex + 1}`);
-
           const headers = rows[headerIndex].map(h => {
             const s = String(h || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if (s.includes('data')) return 'data';
             if (s.includes('placa')) return 'placa';
             if (s.includes('cliente')) return 'cliente';
-            if (s.includes('servico') || s.includes('tipo')) return 'servico';
-            if (s.includes('valor') || s.includes('preco') || s.includes('total')) return 'preco';
+            if (s.includes('servico') || s.includes('tipo') || s.includes('vistoria') || s.includes('descricao')) return 'servico';
+            if (s.includes('valor') || s.includes('preco') || s.includes('total') || s.includes('bruto')) return 'preco';
             return null;
           });
+
+          addLog(`Colunas identificadas: ${headers.filter(h => h).join(', ')}`);
+          addLog(`Colunas originais: ${rows[headerIndex].join(' | ')}`);
 
           const jsonData = rows.slice(headerIndex + 1)
             .filter(row => row.length > 0)
@@ -86,7 +87,7 @@ export const ingestionService = {
                headers.forEach((header, index) => {
                  if (header) {
                    const val = row[index];
-                   if (header === 'data' && i < 5) addLog(`Linha ${i+1}: Valor bruto da data = "${val}"`);
+                   if (i < 3) addLog(`Linha ${i+1} [${header}]: Bruto = "${val}"`);
                    obj[header] = val;
                  }
                });
