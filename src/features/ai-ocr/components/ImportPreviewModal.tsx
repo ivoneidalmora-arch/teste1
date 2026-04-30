@@ -52,9 +52,10 @@ export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfi
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowDebug(!showDebug)} 
-              className="text-xs font-mono px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md hover:bg-slate-200"
+              className="text-xs font-bold px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1.5"
             >
-              {showDebug ? 'Ocultar Debug' : 'Ver Dados Brutos'}
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              {showDebug ? 'Ocultar Diagnóstico' : 'Ver Dados Brutos (Debug)'}
             </button>
             <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
               <X className="w-6 h-6 text-slate-500" />
