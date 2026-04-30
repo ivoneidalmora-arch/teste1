@@ -31,20 +31,27 @@ export const ingestionService = {
   /**
    * Parsing para Excel e CSV usando a biblioteca xlsx.
    */
-  async parseExcel(file: File): Promise<IngestionResult[]> {
+  async parseExcel(file: File): Promise<{ data: IngestionResult[], rawResponse: string, logs: string[] }> {
     return new Promise((resolve, reject) => {
+      const logs: string[] = [];
+      const addLog = (msg: string) => logs.push(msg);
+      
+      addLog(`Iniciando leitura de arquivo Excel: ${file.name}`);
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          // Lemos SEM cellDates para evitar que a biblioteca inverta dia/mês baseada no locale
+          const workbook = XLSX.read(data, { type: 'array', raw: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
-          // Extraímos como array de arrays para encontrar o cabeçalho dinamicamente
+          addLog(`Planilha lida: ${firstSheetName}`);
+
           const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+          addLog(`Total de linhas encontradas: ${rows.length}`);
           
-          // Busca a linha de cabeçalho de forma mais robusta (contando matches)
           let headerIndex = 0;
           let maxMatches = 0;
           const headerKeywords = ['placa', 'data', 'cliente', 'preco', 'valor', 'servico', 'tipo', 'veiculo'];
@@ -52,35 +59,52 @@ export const ingestionService = {
           for (let i = 0; i < Math.min(rows.length, 30); i++) {
             const row = rows[i];
             if (!row || !Array.isArray(row)) continue;
-            
-            const rowStr = row.map(c => String(c || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")).join('|');
+            const rowStr = row.map(c => String(c || '').toLowerCase()).join('|');
             const matches = headerKeywords.filter(kw => rowStr.includes(kw)).length;
-            
             if (matches > maxMatches) {
               maxMatches = matches;
               headerIndex = i;
             }
           }
 
-          // Pegamos os nomes das colunas da linha de cabeçalho
-          const headers = rows[headerIndex].map(h => String(h || '').trim());
-          
-          // Processamos o restante das linhas transformando em objetos
+          addLog(`Cabeçalho identificado na linha: ${headerIndex + 1}`);
+
+          const headers = rows[headerIndex].map(h => {
+            const s = String(h || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (s.includes('data')) return 'data';
+            if (s.includes('placa')) return 'placa';
+            if (s.includes('cliente')) return 'cliente';
+            if (s.includes('servico') || s.includes('tipo')) return 'servico';
+            if (s.includes('valor') || s.includes('preco') || s.includes('total')) return 'preco';
+            return null;
+          });
+
           const jsonData = rows.slice(headerIndex + 1)
             .filter(row => row.length > 0)
-            .map(row => {
+            .map((row, i) => {
                const obj: any = {};
                headers.forEach((header, index) => {
-                 if (header) obj[header] = row[index];
+                 if (header) {
+                   const val = row[index];
+                   if (header === 'data' && i < 5) addLog(`Linha ${i+1}: Valor bruto da data = "${val}"`);
+                   obj[header] = val;
+                 }
                });
                return obj;
             });
           
-          // Mapeia para o formato padrão
           const normalized = jsonData.map(row => this.mapToStandard(row));
-          resolve(normalized.filter(item => !!item.placa && item.placa !== 'undefined'));
-        } catch (err) {
-          console.error(err);
+          const filtered = normalized.filter(item => !!item.placa && item.placa !== 'undefined');
+          
+          addLog(`Sucesso: ${filtered.length} itens normalizados.`);
+          
+          resolve({
+            data: filtered,
+            rawResponse: 'Dados processados localmente (Excel/XLSX)',
+            logs: logs
+          });
+        } catch (err: any) {
+          addLog(`ERRO: ${err.message}`);
           reject(new Error('Falha ao ler o arquivo Excel/CSV.'));
         }
       };
@@ -92,7 +116,7 @@ export const ingestionService = {
   /**
    * Parsing para PDF usando o fluxo de IA existente.
    */
-  async parsePDF(file: File): Promise<IngestionResult[]> {
+  async parsePDF(file: File): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
 

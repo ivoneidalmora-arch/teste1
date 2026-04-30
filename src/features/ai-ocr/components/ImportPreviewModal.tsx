@@ -64,12 +64,20 @@ export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfi
         </div>
 
         {showDebug && (
-          <div className="bg-slate-900 p-4 text-xs font-mono text-emerald-400 overflow-auto max-h-[300px] border-b border-slate-800">
-            <h3 className="text-slate-400 mb-2 uppercase">Resposta Bruta da IA:</h3>
-            <pre className="whitespace-pre-wrap mb-4">{rawResponse}</pre>
-            <h3 className="text-slate-400 mb-2 uppercase">Logs de Processamento:</h3>
-            <ul className="space-y-1">
-              {logs?.map((log, i) => <li key={i}>{log}</li>)}
+          <div className="bg-slate-900 p-4 text-xs font-mono text-emerald-400 overflow-auto max-h-[400px] border-b border-slate-800">
+            <h2 className="text-pink-500 font-bold mb-2 border-b border-pink-900/50 pb-1 flex justify-between">
+              <span>PAINEL DE DIAGNÓSTICO (Prints aqui!)</span>
+              <span className="text-[10px] text-slate-500">V3 - Estabilizado</span>
+            </h2>
+            <h3 className="text-slate-400 mb-1 uppercase">Dados Brutos / Fonte:</h3>
+            <pre className="whitespace-pre-wrap mb-4 bg-black/40 p-2 rounded border border-slate-800">{rawResponse || 'Nenhum dado bruto capturado.'}</pre>
+            <h3 className="text-slate-400 mb-1 uppercase">Logs de Processamento (Rastreio de Datas):</h3>
+            <ul className="space-y-1 bg-black/20 p-2 rounded border border-slate-800">
+              {logs?.length ? logs.map((log, i) => (
+                <li key={i} className={log.includes('Inversão') || log.includes('ERRO') ? 'text-amber-400 font-bold' : ''}>
+                  {log}
+                </li>
+              )) : <li className="text-slate-600 italic">Nenhum log disponível.</li>}
             </ul>
           </div>
         )}

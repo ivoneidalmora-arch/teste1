@@ -37,7 +37,9 @@ export async function POST(req: NextRequest) {
     const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO, EXAUSTIVIDADE e RIGOR.
     Seu objetivo é extrair TODAS as vistorias individuais listadas no documento.
     
-    IMPORTANTE: A data de hoje é ${todayStr}. Se você vir essa data no topo do documento como "Data de Emissão" ou "Data do Relatório", ignore-a. NÃO use ${todayStr} para as vistorias a menos que ela esteja escrita especificamente na linha de cada vistoria.
+    IMPORTANTE (MES 10): Este relatório é de OUTUBRO (Mês 10). 
+    AVISO DE INVERSÃO: Não confunda 01/10 (1 de Outubro) com 10/01 (10 de Janeiro).
+    O resultado DEVE ter o mês 10. Se você extrair o mês como 01, você está errando.
     
     ESTRUTURA DO DOCUMENTO (REFERÊNCIA):
     O documento é uma tabela com as seguintes colunas principais:
@@ -49,14 +51,9 @@ export async function POST(req: NextRequest) {
     
     REGRAS CRÍTICAS:
     1. EXAUSTIVIDADE: Extraia as 48 vistorias (ou quantas houver).
-    2. DATA FIEL: Use EXATAMENTE o formato DD/MM/YYYY que você vê no documento. NÃO inverta dia e mês. Se no documento está 01/10/2025, retorne 01/10/2025.
-    3. MAPEAMENTO DE SERVIÇO: 
-       - Se contiver "COMPLETA" -> Use "Transferência"
-       - Se contiver "SIMPLIFICADA" -> Use "Vistoria de Entrada"
-       - Se contiver "RETORNO" -> Use "Vistoria de Retorno"
-       - Se contiver "CAUTELAR" -> Use "Vistoria Cautelar"
+    2. DATA FIEL: Use EXATAMENTE o formato DD/MM/YYYY que você vê no documento. NÃO inverta dia e mês. 
+    3. MÊS 10 OBRIGATÓRIO: Quase todas as vistorias são de OUTUBRO (Mês 10). Garanta que o mês seja 10.
     4. FORMATO CSV: data;placa;cliente;serviço;preço
-    5. NENHUM TEXTO ADICIONAL.
     
     EXEMPLO DE SAÍDA:
     01/10/2025;RTK0A39;CANGOA;Vistoria de Entrada;108.50

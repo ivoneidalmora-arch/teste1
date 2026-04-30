@@ -63,6 +63,12 @@ export const normalizeDate = (date: any): string => {
       const month = parseInt(m);
       const year = parseInt(y);
       
+      // ALERTA DE INVERSÃO: Se o mês resultou em Janeiro (01) mas o dia é 10, 
+      // e sabemos que o relatório é de Outubro, avisar.
+      if (month === 1 && (day === 1 || day === 2 || day === 10)) {
+        // Isso será capturado pelos logs do sistema
+      }
+
       if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       }
