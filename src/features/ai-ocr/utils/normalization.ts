@@ -21,16 +21,33 @@ export const normalizeDate = (date: any): string => {
     return date.toISOString().split('T')[0];
   }
 
-  const today = new Date();
-  const currentYear = today.getFullYear();
   let dateStr = String(date).trim();
 
-  // Remove caracteres invisíveis e normaliza separadores
+  // Caso YYYY-MM-DD (ISO) - CHECAR ANTES DE QUALQUER MUDANÇA
+  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateStr;
+  }
+  if (dateStr.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+    return dateStr.replace(/\//g, '-');
+  }
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  // Se não é ISO, tenta normalizar separadores para processar DD/MM/YYYY
   dateStr = dateStr.replace(/[\.\-]/g, '/');
 
   // Caso DD/MM/YYYY ou DD/MM/YY ou DD/MM
   if (dateStr.includes('/')) {
-    let [d, m, y] = dateStr.split('/');
+    let parts = dateStr.split('/');
+    
+    // Se a primeira parte tem 4 dígitos, provavelmente é YYYY/MM/DD (invertido mas com barra)
+    if (parts[0].length === 4) {
+      const [y, m, d] = parts;
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    let [d, m, y] = parts;
     
     // Se não tem ano, assume o ano atual
     if (!y || y.length === 0) {
@@ -42,7 +59,6 @@ export const normalizeDate = (date: any): string => {
     }
 
     if (d && m && y) {
-      // Garante que são números válidos
       const day = parseInt(d);
       const month = parseInt(m);
       const year = parseInt(y);
@@ -53,14 +69,6 @@ export const normalizeDate = (date: any): string => {
     }
   }
 
-  // Caso YYYY-MM-DD (ISO)
-  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return dateStr;
-  }
-  if (dateStr.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
-    return dateStr.replace(/\//g, '-');
-  }
-
   // Fallback para Date.parse
   try {
     const parsed = new Date(dateStr);
@@ -69,7 +77,6 @@ export const normalizeDate = (date: any): string => {
     }
   } catch (e) {}
 
-  // Retorna vazio em vez de "hoje" para que o usuário perceba a falha na extração
   return '';
 };
 
