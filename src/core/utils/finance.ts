@@ -31,11 +31,13 @@ export const CONVERSAO_VRTE_2025: Record<number, number> = {
  * subtraindo a taxa VRTE correspondente.
  */
 export function calculateLiquido(bruto: number): number {
+  if (bruto === 0) return 0;
+  
   if (CONVERSAO_VRTE_2025[bruto] !== undefined) {
     return CONVERSAO_VRTE_2025[bruto];
   }
   
-  // Se não estiver na tabela, assume taxa padrão de ~50.72 (VRTE 2025)
-  // ou simplesmente retorna o bruto se for um valor manual (ex: Cautelar)
-  return bruto;
+  // Se não estiver na tabela, assume taxa padrão de 50.72 (VRTE 2025)
+  // Somente se for um valor positivo que pareça uma vistoria paga
+  return Math.max(0, bruto - 50.72);
 }

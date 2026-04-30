@@ -17,8 +17,9 @@ interface ImportPreviewModalProps {
   onConfirm: (finalData: ExtractedData[]) => void;
 }
 
-export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfirm }: ImportPreviewModalProps) {
+export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfirm, rawResponse, logs }: ImportPreviewModalProps & { rawResponse?: string, logs?: string[] }) {
   const [items, setItems] = React.useState<ExtractedData[]>(initialData);
+  const [showDebug, setShowDebug] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -48,10 +49,29 @@ export function ImportPreviewModal({ isOpen, onClose, data: initialData, onConfi
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Conferir Importação</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">Verifique os dados extraídos pela IA antes de salvar no sistema.</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
-            <X className="w-6 h-6 text-slate-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowDebug(!showDebug)} 
+              className="text-xs font-mono px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md hover:bg-slate-200"
+            >
+              {showDebug ? 'Ocultar Debug' : 'Ver Dados Brutos'}
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <X className="w-6 h-6 text-slate-500" />
+            </button>
+          </div>
         </div>
+
+        {showDebug && (
+          <div className="bg-slate-900 p-4 text-xs font-mono text-emerald-400 overflow-auto max-h-[300px] border-b border-slate-800">
+            <h3 className="text-slate-400 mb-2 uppercase">Resposta Bruta da IA:</h3>
+            <pre className="whitespace-pre-wrap mb-4">{rawResponse}</pre>
+            <h3 className="text-slate-400 mb-2 uppercase">Logs de Processamento:</h3>
+            <ul className="space-y-1">
+              {logs?.map((log, i) => <li key={i}>{log}</li>)}
+            </ul>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">

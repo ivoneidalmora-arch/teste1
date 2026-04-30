@@ -17,6 +17,8 @@ export function ImportButton({ onSuccess, className }: Props) {
   const [statusText, setStatusText] = useState('Processando IA...');
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [rawResponse, setRawResponse] = useState<string>('');
+  const [logs, setLogs] = useState<string[]>([]);
 
   const handleImportPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,7 +28,13 @@ export function ImportButton({ onSuccess, className }: Props) {
     setImporting(true);
 
     try {
-      const data = await ingestionService.processDocument(file);
+      const result = await ingestionService.processDocument(file);
+      const data = Array.isArray(result) ? result : (result as any).data;
+      const rawRes = (result as any).rawResponse || '';
+      const processLogs = (result as any).logs || [];
+
+      setRawResponse(rawRes);
+      setLogs(processLogs);
       
       if (data.length > 0) {
         setPreviewData(data);
@@ -59,7 +67,7 @@ export function ImportButton({ onSuccess, className }: Props) {
           amountBruto: item.valorBruto || 0,
           amountLiquido: item.valorLiquido || 0,
           amount: item.valorBruto || 0,
-          date: item.data || new Date().toISOString().split('T')[0],
+          date: item.data,
           pagamento: 'Pix',
           observacao: item.observacao || 'IMPORTADO VIA IA'
         });
@@ -114,6 +122,8 @@ export function ImportButton({ onSuccess, className }: Props) {
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
         data={previewData}
+        rawResponse={rawResponse}
+        logs={logs}
         onConfirm={handleConfirmImport}
       />
     </>

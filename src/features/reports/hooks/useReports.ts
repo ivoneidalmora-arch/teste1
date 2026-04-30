@@ -9,8 +9,8 @@ export function useReports() {
   const { transactions, loading, refresh } = useTransactions();
   
   // Filtros
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().substring(0, 8) + '01');
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().substring(0, 10));
   const [filterType, setFilterType] = useState<ReportFilterType>('all');
   const [searchPlaca, setSearchPlaca] = useState<string>('');
   const [searchCliente, setSearchCliente] = useState<string>('');

@@ -16,7 +16,15 @@ export const metricsService = {
         ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) 
         : (t.amount || 0);
 
-      const cat = t.category || 'Outros';
+      let cat = t.category || 'Outros';
+      // Normalização de Casing para evitar duplicidade (ex: Transferência vs TRANSFERÊNCIA)
+      const catLower = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (catLower.includes('transferencia')) cat = 'Transferência';
+      else if (catLower.includes('entrada')) cat = 'Vistoria de Entrada';
+      else if (catLower.includes('saida')) cat = 'Vistoria de Saída';
+      else if (catLower.includes('cautelar')) cat = 'Vistoria Cautelar';
+      else if (catLower.includes('retorno')) cat = 'Vistoria de Retorno';
+      else cat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
 
       if (t.type === 'income') {
         const inc = t as IncomeTransaction;

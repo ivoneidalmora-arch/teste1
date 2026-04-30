@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { normalizeDate } from '@/features/ai-ocr/utils/normalization';
 
 export const runtime = 'nodejs';
 
@@ -31,24 +32,36 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString('base64');
     addLog('Base64 gerado com Buffer.');
+    const todayStr = new Date().toLocaleDateString('pt-BR'); // ex: 30/04/2026
 
-    const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO e EXAUSTIVIDADE.
-    Extraia ABSOLUTAMENTE TODAS as vistorias do relatório.
+    const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO, EXAUSTIVIDADE e RIGOR.
+    Seu objetivo é extrair TODAS as vistorias individuais listadas no documento.
     
-    REGRAS:
-    1. Retorne os dados no formato CSV usando ponto-e-vírgula (;) como separador.
-    2. NÃO inclua cabeçalho. 
-    3. NÃO inclua nenhum texto explicativo, apenas as linhas de dados.
-    4. Campos por linha: data;placa;cliente;serviço;preço
-    5. VERIFICAÇÃO DE SOMA: Antes de entregar o resultado final, verifique se a soma dos valores extraídos bate EXATAMENTE com o total indicado no final do documento. Se houver discrepância, revise a extração para garantir que nenhum item foi esquecido ou lido incorretamente.
+    IMPORTANTE: A data de hoje é ${todayStr}. Se você vir essa data no topo do documento como "Data de Emissão" ou "Data do Relatório", ignore-a. NÃO use ${todayStr} para as vistorias a menos que ela esteja escrita especificamente na linha de cada vistoria.
     
-    FORMATO DE CADA LINHA:
-    YYYY-MM-DD;PLACA;CLIENTE;SERVIÇO;VALOR
+    ESTRUTURA DO DOCUMENTO (REFERÊNCIA):
+    O documento é uma tabela com as seguintes colunas principais:
+    - Coluna 2: Data (ex: 01/10/2025) -> USE ESTA DATA.
+    - Coluna 7: Placa (ex: RTK0A39)
+    - Coluna 8: Cliente (ex: CANGOA)
+    - Coluna 9: Serviço (ex: SIMPLIFICADA MÉDIO)
+    - Coluna 14: Preço (ex: R$ 108,50)
     
-    EXEMPLO:
-    2025-10-01;SFQ3B51;ORVEL;VISTORIA COMPLETA;113.58
-    2025-10-02;RDL1C32;ORVEL;VISTORIA SIMPLIFICADA;89.90
-    2025-10-03;ABC1D23;ORVEL;RETORNO;0.00`;
+    REGRAS CRÍTICAS:
+    1. EXAUSTIVIDADE: Extraia as 48 vistorias (ou quantas houver).
+    2. DATA FIEL: Se no documento está 2025, extraia 2025. NÃO mude para 2026.
+    3. MAPEAMENTO DE SERVIÇO: 
+       - Se contiver "COMPLETA" -> Use "Transferência"
+       - Se contiver "SIMPLIFICADA" -> Use "Vistoria de Entrada"
+       - Se contiver "RETORNO" -> Use "Vistoria de Retorno"
+       - Se contiver "CAUTELAR" -> Use "Vistoria Cautelar"
+    4. FORMATO CSV: data;placa;cliente;serviço;preço
+    5. NENHUM TEXTO ADICIONAL.
+    
+    EXEMPLO DE SAÍDA:
+    2025-10-01;RTK0A39;CANGOA;Vistoria de Entrada;108.50
+    2025-10-02;RTN9E95;CANGOA;Vistoria de Entrada;108.50
+    2025-10-30;SKJ0E91;CANGOA;Transferência;169.83`;
 
     let responseText = '';
     let openRouterError = '';
@@ -209,6 +222,12 @@ export async function POST(req: NextRequest) {
 
     try {
       addLog('Iniciando parsing do formato compactado (CSV)...');
+      addLog(`IA respondeu com ${responseText.length} caracteres.`);
+      if (responseText.length < 500) {
+        addLog(`Resposta RAW: ${responseText}`);
+      } else {
+        addLog(`Início da Resposta RAW: ${responseText.substring(0, 500)}...`);
+      }
       
       const lines = responseText
         .replace(/```csv|```/g, '')
@@ -216,33 +235,58 @@ export async function POST(req: NextRequest) {
         .split('\n')
         .filter(line => line.includes(';'));
 
-      const data = lines.map(line => {
-        const [data, placa, cliente, servico, preco] = line.split(';').map(s => s?.trim());
+      const parsedItems = lines.map((line, i) => {
+        const [rawData, placa, cliente, servico, preco] = line.split(';').map(s => s?.trim());
         
         // Se a linha estiver incompleta (provável corte de token), o map filtrará depois
-        if (!placa || !data) return null;
+        if (!placa || !rawData) return null;
+
+        const dateStr = rawData;
+        addLog(`Linha ${i+1}: Data extraída = "${dateStr}", Placa = "${placa}"`);
+
+        // Clean and parse price string robustly
+        let sPrice = String(preco || '0').replace(/[^\d.,-]/g, '');
+        const lastDot = sPrice.lastIndexOf('.');
+        const lastComma = sPrice.lastIndexOf(',');
+        if (lastDot > -1 && lastComma > -1) {
+          if (lastDot > lastComma) sPrice = sPrice.replace(/,/g, '');
+          else sPrice = sPrice.replace(/\./g, '').replace(',', '.');
+        } else if (lastComma > -1) {
+          sPrice = sPrice.replace(',', '.');
+        }
+        const parsedPrice = parseFloat(sPrice);
+
+        const isCautelar = servico?.toUpperCase().includes('CAUTELAR');
+        const valorLiquido = isCautelar ? (isNaN(parsedPrice) ? 0 : parsedPrice) : Math.max(0, (isNaN(parsedPrice) ? 0 : parsedPrice) - 50.72);
 
         const normalized: any = {
-          data: data.match(/^\d{4}-\d{2}-\d{2}$/) ? data : new Date().toISOString().split('T')[0],
+          data: normalizeDate(dateStr),
           placa: placa.toUpperCase(),
           cliente: cliente || 'DESCONHECIDO',
           categoria: servico || 'Transferência',
-          valorBruto: parseFloat(String(preco || '0').replace(',', '.')),
-          valorLiquido: 0
+          valorBruto: isNaN(parsedPrice) ? 0 : parsedPrice,
+          valorLiquido: valorLiquido
         };
 
         // Mapeamento de categorias
         const catUpper = normalized.categoria.toUpperCase();
-        if (catUpper.includes('COMPLETA')) normalized.categoria = 'Transferência';
-        if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
-        if (catUpper.includes('COMPLETA MÓVEL')) normalized.categoria = 'Transferência';
-        if (catUpper.includes('RETORNO')) normalized.categoria = 'Vistoria de Retorno';
+        if (catUpper.includes('COMPLETA MÓVEL') || catUpper.includes('COMPLETA MOVEL')) normalized.categoria = 'Transferência';
+        else if (catUpper.includes('COMPLETA')) normalized.categoria = 'Transferência';
+        else if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
+        else if (catUpper.includes('CAUTELAR')) normalized.categoria = 'Vistoria Cautelar';
+        else if (catUpper.includes('SAÍDA') || catUpper.includes('SAIDA')) normalized.categoria = 'Vistoria de Saída';
+        else if (catUpper.includes('RETORNO')) normalized.categoria = 'Vistoria de Retorno';
         
         return normalized;
       }).filter(item => item !== null);
 
-      addLog(`Parsing concluído. ${data.length} itens extraídos.`);
-      return NextResponse.json(data);
+      addLog(`Parsing concluído. ${parsedItems.length} itens extraídos.`);
+      return NextResponse.json({ 
+        success: true, 
+        data: parsedItems,
+        rawResponse: responseText,
+        logs: logs 
+      });
     } catch (e: any) {
       addLog(`ERRO no parsing CSV: ${e.message}`);
       return NextResponse.json({ 

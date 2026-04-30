@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { normalizePlaca, normalizeDate, capitalizeName } from '../utils/normalization';
+import { calculateLiquido } from '@/core/utils/finance';
 
 export interface IngestionResult {
   data: string;
@@ -36,7 +37,7 @@ export const ingestionService = {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
@@ -110,10 +111,16 @@ export const ingestionService = {
       throw new Error(errorData.error || 'Falha no processamento da IA');
     }
 
-    const data = await response.json();
+    const apiData = await response.json();
     
     // Normaliza os dados vindos da IA também (Mapper Central)
-    return data.map((item: any) => this.mapToStandard(item));
+    const normalized = apiData.data.map((item: any) => this.mapToStandard(item));
+    
+    return {
+      data: normalized,
+      rawResponse: apiData.rawResponse,
+      logs: apiData.logs
+    } as any;
   },
 
   /**
@@ -226,7 +233,9 @@ export const ingestionService = {
       cliente: capitalizeName(String(rawCliente)),
       categoria: standardizeService(String(rawServico)),
       valorBruto: isNaN(valorNumerico) ? 0 : valorNumerico,
-      valorLiquido: 0,
+      valorLiquido: (standardizeService(String(rawServico)) === 'Vistoria Cautelar') 
+        ? valorNumerico 
+        : calculateLiquido(valorNumerico),
       observacao: 'IMPORTADO VIA INGESTÃO INTELIGENTE'
     };
   }

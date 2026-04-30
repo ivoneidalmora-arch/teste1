@@ -15,23 +15,48 @@ export const normalizePlaca = (placa: string): string => {
  * Suporta formatos: DD/MM/YYYY, YYYY-MM-DD, e objetos Date.
  */
 export const normalizeDate = (date: any): string => {
-  if (!date) return new Date().toISOString().split('T')[0];
+  if (!date) return '';
 
   if (date instanceof Date) {
     return date.toISOString().split('T')[0];
   }
 
-  const dateStr = String(date).trim();
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  let dateStr = String(date).trim();
 
-  // Caso DD/MM/YYYY
+  // Remove caracteres invisíveis e normaliza separadores
+  dateStr = dateStr.replace(/[\.\-]/g, '/');
+
+  // Caso DD/MM/YYYY ou DD/MM/YY ou DD/MM
   if (dateStr.includes('/')) {
-    const [d, m, y] = dateStr.split('/');
+    let [d, m, y] = dateStr.split('/');
+    
+    // Se não tem ano, assume o ano atual
+    if (!y || y.length === 0) {
+      y = String(currentYear);
+    } 
+    // Se o ano tem apenas 2 dígitos (ex: 25)
+    else if (y.length === 2) {
+      y = '20' + y;
+    }
+
     if (d && m && y) {
-      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      // Garante que são números válidos
+      const day = parseInt(d);
+      const month = parseInt(m);
+      const year = parseInt(y);
+      
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
     }
   }
 
-  // Caso YYYY-MM-DD
+  // Caso YYYY-MM-DD (ISO)
+  if (dateStr.match(/^\d{4}/\d{2}/\d{2}$/)) {
+    return dateStr.replace(/\//g, '-');
+  }
   if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateStr;
   }
@@ -44,7 +69,8 @@ export const normalizeDate = (date: any): string => {
     }
   } catch (e) {}
 
-  return new Date().toISOString().split('T')[0];
+  // Retorna vazio em vez de "hoje" para que o usuário perceba a falha na extração
+  return '';
 };
 
 /**
