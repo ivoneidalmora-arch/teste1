@@ -54,11 +54,11 @@ export const normalizeDate = (date: any): string => {
   }
 
   // Caso YYYY-MM-DD (ISO)
-  if (dateStr.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
-    return dateStr.replace(/\//g, '-');
-  }
   if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateStr;
+  }
+  if (dateStr.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+    return dateStr.replace(/\//g, '-');
   }
 
   // Fallback para Date.parse

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     
     REGRAS CRÍTICAS:
     1. EXAUSTIVIDADE: Extraia as 48 vistorias (ou quantas houver).
-    2. DATA FIEL: Se no documento está 2025, extraia 2025. NÃO mude para 2026.
+    2. DATA FIEL: Use EXATAMENTE o formato DD/MM/YYYY que você vê no documento. NÃO inverta dia e mês. Se no documento está 01/10/2025, retorne 01/10/2025.
     3. MAPEAMENTO DE SERVIÇO: 
        - Se contiver "COMPLETA" -> Use "Transferência"
        - Se contiver "SIMPLIFICADA" -> Use "Vistoria de Entrada"
@@ -59,9 +59,9 @@ export async function POST(req: NextRequest) {
     5. NENHUM TEXTO ADICIONAL.
     
     EXEMPLO DE SAÍDA:
-    2025-10-01;RTK0A39;CANGOA;Vistoria de Entrada;108.50
-    2025-10-02;RTN9E95;CANGOA;Vistoria de Entrada;108.50
-    2025-10-30;SKJ0E91;CANGOA;Transferência;169.83`;
+    01/10/2025;RTK0A39;CANGOA;Vistoria de Entrada;108.50
+    02/10/2025;RTN9E95;CANGOA;Vistoria de Entrada;108.50
+    30/10/2025;SKJ0E91;CANGOA;Transferência;169.83`;
 
     let responseText = '';
     let openRouterError = '';
