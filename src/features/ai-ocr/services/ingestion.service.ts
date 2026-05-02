@@ -62,10 +62,12 @@ export const ingestionService = {
           let maxMatches = 0;
           const headerKeywords = ['placa', 'data', 'cliente', 'preco', 'valor', 'servico', 'tipo', 'veiculo'];
 
+          const stripHtml = (html: string) => String(html || '').replace(/<[^>]*>?/gm, '');
+
           for (let i = 0; i < Math.min(rows.length, 50); i++) {
             const row = rows[i];
             if (!row || !Array.isArray(row)) continue;
-            const rowStr = row.map(c => String(c || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")).join('|');
+            const rowStr = row.map(c => stripHtml(String(c)).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")).join('|');
             
             const matches = headerKeywords.filter(kw => rowStr.includes(kw)).length;
             if (matches > maxMatches) {
@@ -78,12 +80,12 @@ export const ingestionService = {
           addLog(`Conteúdo do Header: ${JSON.stringify(rows[headerIndex])}`);
 
           const headers = rows[headerIndex].map(h => {
-            const s = String(h || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const s = stripHtml(String(h || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if (s.includes('data')) return 'data';
             if (s.includes('placa')) return 'placa';
             if (s.includes('cliente')) return 'cliente';
-            if (s.includes('servico') || s.includes('tipo') || s.includes('vistoria') || s.includes('descricao')) return 'servico';
-            if (s.includes('valor') || s.includes('preco') || s.includes('total') || s.includes('bruto')) return 'preco';
+            if (s.includes('servi') || s.includes('tipo') || s.includes('vistoria') || s.includes('descricao')) return 'servico';
+            if (s.includes('valor') || s.includes('pre') || s.includes('total') || s.includes('bruto') || s.includes('r$')) return 'preco';
             return null;
           });
 
@@ -164,12 +166,12 @@ export const ingestionService = {
   mapToStandard(row: any): IngestionResult {
     const keys = Object.keys(row);
     
+    const stripHtml = (html: string) => String(html || '').replace(/<[^>]*>?/gm, '');
+
     // Função auxiliar para buscar valor por palavras-chave com busca mais agressiva
     const getVal = (keywords: string[]) => {
       const foundKey = keys.find(k => {
-        const lowerK = k.toLowerCase().trim();
-        // Remove acentos manualmente para ser mais robusto
-        const cleanK = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        const cleanK = stripHtml(k).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         return keywords.some(kw => {
           const cleanKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
           return cleanK === cleanKw || cleanK.includes(cleanKw);
@@ -188,7 +190,7 @@ export const ingestionService = {
        rawCliente = 'PARTICULAR';
     }
 
-    let rawServico = getVal(['categoria', 'servico', 'tipo', 'item', 'descricao', 'produto', 'laudo', 'vistoria']);
+    let rawServico = getVal(['categoria', 'servi', 'servico', 'tipo', 'item', 'descricao', 'produto', 'laudo', 'vistoria']);
     
     // Fallback para serviço: se não achou a coluna pelo título, procura em todas as colunas de texto da linha
     // as palavras exatas que o usuário pediu ("completo", "simplificada", "retorno")
@@ -222,7 +224,7 @@ export const ingestionService = {
 
     
     // Busca específica por preço/valor
-    let rawValor = getVal(['preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount', 'r$', 'custo', 'pagamento', 'tarifa', 'receita']);
+    let rawValor = getVal(['pre', 'preco', 'preço', 'valorbruto', 'valor_bruto', 'valor', 'total', 'amount', 'r$', 'custo', 'pagamento', 'tarifa', 'receita']);
     
     // Fallback: se não encontrou o valor pela chave, busca a ÚLTIMA coluna que seja um número (geralmente o preço fica no final)
     if (rawValor === undefined || rawValor === null || rawValor === 0) {
