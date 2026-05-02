@@ -43,7 +43,8 @@ export const ingestionService = {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           // Lemos SEM cellDates para evitar que a biblioteca inverta dia/mês baseada no locale
-          const workbook = XLSX.read(data, { type: 'array', raw: true });
+          // Lemos SEM raw para deixar o XLSX processar números e datas se possível
+          const workbook = XLSX.read(data, { type: 'array', cellNF: true, cellText: true, cellDates: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
@@ -52,20 +53,29 @@ export const ingestionService = {
           const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
           addLog(`Total de linhas encontradas: ${rows.length}`);
           
+          // Log das primeiras 5 linhas para diagnóstico
+          rows.slice(0, 5).forEach((row, idx) => {
+            addLog(`DEBUG: Linha ${idx + 1} = ${JSON.stringify(row)}`);
+          });
+          
           let headerIndex = 0;
           let maxMatches = 0;
           const headerKeywords = ['placa', 'data', 'cliente', 'preco', 'valor', 'servico', 'tipo', 'veiculo'];
 
-          for (let i = 0; i < Math.min(rows.length, 30); i++) {
+          for (let i = 0; i < Math.min(rows.length, 50); i++) {
             const row = rows[i];
             if (!row || !Array.isArray(row)) continue;
-            const rowStr = row.map(c => String(c || '').toLowerCase()).join('|');
+            const rowStr = row.map(c => String(c || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")).join('|');
+            
             const matches = headerKeywords.filter(kw => rowStr.includes(kw)).length;
             if (matches > maxMatches) {
               maxMatches = matches;
               headerIndex = i;
             }
           }
+
+          addLog(`Header identificado na linha ${headerIndex + 1} com ${maxMatches} correspondências.`);
+          addLog(`Conteúdo do Header: ${JSON.stringify(rows[headerIndex])}`);
 
           const headers = rows[headerIndex].map(h => {
             const s = String(h || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -185,14 +195,14 @@ export const ingestionService = {
     if (!rawServico) {
       for (const key of keys) {
         const val = String(row[key] || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (val.includes('completo') || val.includes('simplificada') || val.includes('retorno')) {
+        if (val.includes('completo') || val.includes('simplificada') || val.includes('retorno') || val.includes('transferencia')) {
           rawServico = row[key];
           break;
         }
       }
     }
     
-    if (!rawServico) rawServico = 'Transferência';
+    if (!rawServico) rawServico = ''; // Removido default fixo aqui para pegar do standardizedService
 
     
     // Padroniza os nomes dos serviços conforme a regra de negócios
