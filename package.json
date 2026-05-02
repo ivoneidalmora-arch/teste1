@@ -15,7 +15,6 @@
     "@supabase/supabase-js": "^2.39.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "exceljs": "^4.4.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.1",
     "lucide-react": "^0.468.0",
@@ -24,11 +23,11 @@
     "react-dom": "^19.0.0",
     "recharts": "^2.13.0",
     "tailwind-merge": "^2.5.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.0.0-alpha.31",
-    "@types/exceljs": "^0.5.3",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

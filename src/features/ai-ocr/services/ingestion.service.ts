@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { normalizePlaca, normalizeDate, capitalizeName } from '../utils/normalization';
 import { calculateLiquido } from '@/core/utils/finance';
 import { IngestionResult } from '@/core/schemas/transaction.schema';
@@ -20,7 +20,8 @@ export const ingestionService = {
   },
 
   /**
-   * Parsing para Excel e CSV usando a biblioteca exceljs.
+   * Parsing para Excel e CSV usando a biblioteca SheetJS (xlsx).
+   * Suporta .xlsx, .xls, .csv.
    */
   async parseExcel(file: File): Promise<{ data: IngestionResult[], rawResponse: string, logs: string[] }> {
     const logs: string[] = [];
@@ -30,27 +31,22 @@ export const ingestionService = {
     
     try {
       const buffer = await file.arrayBuffer();
-      const workbook = new ExcelJS.Workbook();
+      // Usamos SheetJS (xlsx) que é mais robusto para leitura de múltiplos formatos (.xls incluso)
+      const workbook = XLSX.read(buffer, { 
+        type: 'array',
+        cellDates: false, // Mantém como string para evitar distorções de timezone
+        raw: true 
+      });
       
-      const extension = file.name.split('.').pop()?.toLowerCase();
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
       
-      if (extension === 'csv') {
-        await workbook.csv.read(new Response(buffer) as any);
-      } else {
-        await workbook.xlsx.load(buffer);
-      }
-
-      const worksheet = workbook.worksheets[0];
       if (!worksheet) throw new Error('Planilha vazia ou inválida.');
 
-      addLog(`Planilha lida: ${worksheet.name}`);
+      addLog(`Planilha lida: ${sheetName}`);
 
-      const rows: any[][] = [];
-      worksheet.eachRow((row) => {
-        // exceljs row.values é 1-indexed. O índice 0 é sempre undefined.
-        const rowValues = Array.isArray(row.values) ? row.values.slice(1) : [];
-        rows.push(rowValues);
-      });
+      // Converte para Array de Arrays (formato esperado pelo resto da lógica)
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
       addLog(`Total de linhas encontradas: ${rows.length}`);
       
