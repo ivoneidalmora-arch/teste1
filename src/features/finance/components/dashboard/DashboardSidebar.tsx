@@ -25,7 +25,7 @@ const MENU_ITEMS = [
   { icon: FileText, label: 'Relatórios', href: '/relatorios' },
   { icon: Upload, label: 'Importações', href: '#' },
   { icon: Scan, label: 'OCR / IA', href: '#' },
-  { icon: Settings, label: 'Configurações', href: '#' },
+  { icon: Settings, label: 'Configurações', href: '/configuracoes' },
 ];
 
 export function DashboardSidebar() {
@@ -72,18 +72,6 @@ export function DashboardSidebar() {
           );
         })}
       </nav>
-
-      {/* Plan Card */}
-      <div className="px-4 py-4">
-        <div className="bg-slate-900 rounded-2xl p-5 relative overflow-hidden group">
-          <div className="absolute top-[-20px] right-[-20px] w-24 h-24 bg-brand-primary/20 rounded-full blur-2xl group-hover:bg-brand-primary/30 transition-all" />
-          <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-1 relative z-10">Plano Pro</h4>
-          <p className="text-slate-400 text-[11px] leading-relaxed mb-4 relative z-10">Libere recursos avançados de IA e relatórios ilimitados.</p>
-          <button className="w-full py-2 bg-white text-slate-900 text-xs font-bold rounded-lg hover:bg-brand-primary hover:text-white transition-all relative z-10">
-            Fazer Upgrade
-          </button>
-        </div>
-      </div>
 
       {/* User Block */}
       <div className="p-4 border-t border-slate-100">

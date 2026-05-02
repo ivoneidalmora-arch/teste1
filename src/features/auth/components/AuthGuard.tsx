@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
-import { Navbar } from '@/core/components/Navbar';
+import { DashboardLayout } from '@/features/finance/components/dashboard/DashboardLayout';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { loading, isAuthenticated } = useAuth();
@@ -25,10 +25,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {!isLoginPage && <Navbar />}
-      <main className={!isLoginPage ? 'pt-16' : ''}>
-        {children}
-      </main>
+      {!isLoginPage ? (
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
+      ) : (
+        <main>
+          {children}
+        </main>
+      )}
     </>
   );
 }

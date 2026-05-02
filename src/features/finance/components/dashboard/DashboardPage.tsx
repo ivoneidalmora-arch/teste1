@@ -80,47 +80,45 @@ export function DashboardPage() {
   }
 
   return (
-    <DashboardLayout>
+    <div className="space-y-8">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
         onNewTransaction={() => setIsVistoriaModalOpen(true)}
-        onImportFile={() => setIsVistoriaModalOpen(true)} // Por enquanto ambos abrem o mesmo para demonstração
+        onImportFile={() => setIsVistoriaModalOpen(true)} 
       />
 
-      <div className="space-y-8">
-        {/* Destaque Saldo */}
-        <FinancialHeroCard 
-          balance={totalBalance} 
-          lastUpdate="Hoje, 10:45" 
-          variation={18.4} 
-        />
+      {/* Destaque Saldo */}
+      <FinancialHeroCard 
+        balance={totalBalance} 
+        lastUpdate="Hoje, 10:45" 
+        variation={18.4} 
+      />
 
-        {/* KPIs Principais */}
-        <MetricsGrid metrics={displayMetrics} />
+      {/* KPIs Principais */}
+      <MetricsGrid metrics={displayMetrics} />
 
-        {/* Gráfico & Alertas */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-          <div className="xl:col-span-8">
-            <CashFlowChart data={MOCK_CASH_FLOW} />
-          </div>
-          <div className="xl:col-span-4">
-            <AlertsInsightsPanel alerts={MOCK_ALERTS} />
-          </div>
+      {/* Gráfico & Alertas */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <div className="xl:col-span-8">
+          <CashFlowChart data={MOCK_CASH_FLOW} />
         </div>
-
-        {/* Tabela de Transações */}
-        <RecentTransactionsTable 
-          transactions={MOCK_TRANSACTIONS} 
-          onAction={(id) => {}} 
-        />
-
-        {/* Cards Secundários */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <TopClientsCard clients={MOCK_TOP_CLIENTS} />
-          <CategoryDonutCard data={MOCK_CATEGORIES} totalValue={30700} />
-          <FinancialCalendarCard events={MOCK_EVENTS} />
+        <div className="xl:col-span-4">
+          <AlertsInsightsPanel alerts={MOCK_ALERTS} />
         </div>
+      </div>
+
+      {/* Tabela de Transações */}
+      <RecentTransactionsTable 
+        transactions={MOCK_TRANSACTIONS} 
+        onAction={(id) => {}} 
+      />
+
+      {/* Cards Secundários */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <TopClientsCard clients={MOCK_TOP_CLIENTS} />
+        <CategoryDonutCard data={MOCK_CATEGORIES} totalValue={30700} />
+        <FinancialCalendarCard events={MOCK_EVENTS} />
       </div>
 
       {/* Modais de Operação */}
@@ -143,6 +141,6 @@ export function DashboardPage() {
           onSuccess={refresh}
         />
       )}
-    </DashboardLayout>
+    </div>
   );
 }
