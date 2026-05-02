@@ -31,7 +31,6 @@ export const transactionService = {
       amount: transaction.amount,
       date: transaction.date,
       category: transaction.category,
-      source: transaction.source || 'manual',
     };
 
     if (transaction.type === 'income') {
@@ -107,7 +106,6 @@ export const transactionService = {
       nf: t.metadata?.nf,
       pagamento: t.metadata?.pagamento,
       observacao: t.metadata?.observacao,
-      source: 'import'
     }));
 
     const expenses = transactions.filter(t => t.type === 'expense').map(t => ({
@@ -118,7 +116,6 @@ export const transactionService = {
       vencimento: t.dueDate || t.date,
       status: t.status === 'paid' ? 'Pago' : 'Pendente',
       observacao: t.metadata?.observacao,
-      source: 'import'
     }));
 
     if (incomes.length > 0) {
