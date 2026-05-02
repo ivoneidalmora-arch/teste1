@@ -12,6 +12,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Bypass imediato para Vercel/Produção temporária
+  if (typeof window !== 'undefined' && true) { // O 'true' aqui representa o BYPASS_AUTH
+    router.push('/');
+    return null;
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
