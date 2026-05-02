@@ -43,8 +43,8 @@ export const ingestionService = {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           // Lemos SEM cellDates para evitar que a biblioteca inverta dia/mês baseada no locale
-          // Lemos SEM raw para deixar o XLSX processar números e datas se possível
-          const workbook = XLSX.read(data, { type: 'array', cellNF: true, cellText: true, cellDates: true });
+          // Lemos SEM cellDates para evitar que a biblioteca inverta dia/mês baseada no locale (US vs BR)
+          const workbook = XLSX.read(data, { type: 'array', cellNF: true, cellText: true, cellDates: false });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
