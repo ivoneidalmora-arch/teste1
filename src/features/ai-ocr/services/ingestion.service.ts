@@ -87,7 +87,7 @@ export const ingestionService = {
                headers.forEach((header, index) => {
                  if (header) {
                    const val = row[index];
-                   if (i < 3) addLog(`Linha ${i+1} [${header}]: Bruto = "${val}"`);
+                   addLog(`Linha ${i+1} [${header}]: Bruto = "${val}"`);
                    obj[header] = val;
                  }
                });
@@ -197,13 +197,17 @@ export const ingestionService = {
     
     // Padroniza os nomes dos serviços conforme a regra de negócios
     const standardizeService = (raw: string) => {
-      const s = String(raw).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (s.includes('completo') || s.includes('transferencia')) return 'Transferência';
-      if (s.includes('simplificada') || s.includes('entrada')) return 'Vistoria de Entrada';
-      if (s.includes('retorno')) return 'Vistoria de Retorno';
-      if (s.includes('saida')) return 'Vistoria de Saída';
-      if (s.includes('cautelar')) return 'Vistoria Cautelar';
-      return 'Transferência'; // Default seguro
+      const s = String(raw).trim();
+      const normalized = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      
+      if (normalized.includes('completo') || normalized.includes('transferencia')) return 'Transferência';
+      if (normalized.includes('simplificada') || normalized.includes('entrada')) return 'Vistoria de Entrada';
+      if (normalized.includes('retorno')) return 'Vistoria de Retorno';
+      if (normalized.includes('saida')) return 'Vistoria de Saída';
+      if (normalized.includes('cautelar')) return 'Vistoria Cautelar';
+      
+      // Se não bateu com nenhum padrão, retorna o texto original capitalizado
+      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     };
 
     
@@ -240,13 +244,26 @@ export const ingestionService = {
       // Remove R$, espaços e símbolos, mantendo apenas dígitos, vírgula e ponto
       const clean = s.replace(/[^\d.,]/g, '');
       
+      // Lógica de separador:
+      // Caso 1: Tem vírgula e ponto (1.234,56)
       if (clean.includes(',') && clean.includes('.')) {
-        // Formato 1.234,56
         return parseFloat(clean.replace(/\./g, '').replace(',', '.'));
-      } else if (clean.includes(',')) {
-        // Formato 1234,56
+      } 
+      // Caso 2: Tem apenas vírgula (1234,56 ou 1.250)
+      else if (clean.includes(',')) {
         return parseFloat(clean.replace(',', '.'));
       }
+      // Caso 3: Tem apenas ponto (1234.56 ou 1.234)
+      else if (clean.includes('.')) {
+        const parts = clean.split('.');
+        // Se a parte após o ponto tem 3 dígitos, provavelmente é separador de milhar (ex: 1.250)
+        // A menos que seja algo como 10.50 (que é incomum para IA/Excel sem vírgula)
+        if (parts[parts.length - 1].length === 3) {
+          return parseFloat(clean.replace(/\./g, ''));
+        }
+        return parseFloat(clean);
+      }
+      
       return parseFloat(clean);
     };
 

@@ -37,27 +37,26 @@ export async function POST(req: NextRequest) {
     const prompt = `Você é um robô de extração de dados de ALTA PRECISÃO, EXAUSTIVIDADE e RIGOR.
     Seu objetivo é extrair TODAS as vistorias individuais listadas no documento.
     
-    IMPORTANTE (MES 10): Este relatório é de OUTUBRO (Mês 10). 
-    AVISO DE INVERSÃO: Não confunda 01/10 (1 de Outubro) com 10/01 (10 de Janeiro).
-    O resultado DEVE ter o mês 10. Se você extrair o mês como 01, você está errando.
-    
     ESTRUTURA DO DOCUMENTO (REFERÊNCIA):
-    O documento é uma tabela com as seguintes colunas principais:
-    - Coluna 2: Data (ex: 01/10/2025) -> USE ESTA DATA.
-    - Coluna 7: Placa (ex: RTK0A39)
-    - Coluna 8: Cliente (ex: CANGOA)
-    - Coluna 9: Serviço (ex: SIMPLIFICADA MÉDIO)
-    - Coluna 14: Preço (ex: R$ 108,50)
+    O documento é uma tabela com as seguintes colunas principais (os nomes podem variar levemente):
+    - Data (ex: 01/10/2025)
+    - Placa (ex: RTK0A39)
+    - Cliente (ex: CANGOA)
+    - Serviço/Tipo de Vistoria (ex: SIMPLIFICADA MÉDIO, CAUTELAR, TRANSFERÊNCIA)
+    - Preço/Valor (ex: R$ 108,50)
     
     REGRAS CRÍTICAS:
-    1. EXAUSTIVIDADE: Extraia as 48 vistorias (ou quantas houver).
+    1. EXAUSTIVIDADE: Extraia TODAS as vistorias presentes no documento sem pular nenhuma.
     2. DATA FIEL: Use EXATAMENTE o formato DD/MM/YYYY que você vê no documento. NÃO inverta dia e mês. 
-    3. MÊS 10 OBRIGATÓRIO: Quase todas as vistorias são de OUTUBRO (Mês 10). Garanta que o mês seja 10.
-    4. FORMATO CSV: data;placa;cliente;serviço;preço
+    3. SERVIÇO DINÂMICO: Capture o texto EXATO da coluna de serviço. Não use valores genéricos se o texto original estiver disponível.
+    4. PREÇO PRECISO: Capture o valor numérico completo. Se houver "R$", ignore-o e retorne apenas o número com ponto decimal.
+    5. FORMATO CSV: data;placa;cliente;serviço;preço
+    
+    AVISO: Se o documento for de um mês específico (ex: Outubro), garanta que todas as datas reflitam esse mês corretamente.
     
     EXEMPLO DE SAÍDA:
-    01/10/2025;RTK0A39;CANGOA;Vistoria de Entrada;108.50
-    02/10/2025;RTN9E95;CANGOA;Vistoria de Entrada;108.50
+    01/10/2025;RTK0A39;CANGOA;SIMPLIFICADA MÉDIO;108.50
+    02/10/2025;RTN9E95;CANGOA;Vistoria Cautelar;150.00
     30/10/2025;SKJ0E91;CANGOA;Transferência;169.83`;
 
     let responseText = '';
@@ -239,40 +238,53 @@ export async function POST(req: NextRequest) {
         if (!placa || !rawData) return null;
 
         const dateStr = rawData;
-        addLog(`Linha ${i+1}: Data extraída = "${dateStr}", Placa = "${placa}"`);
-
+        
         // Clean and parse price string robustly
         let sPrice = String(preco || '0').replace(/[^\d.,-]/g, '');
         const lastDot = sPrice.lastIndexOf('.');
         const lastComma = sPrice.lastIndexOf(',');
+        
         if (lastDot > -1 && lastComma > -1) {
           if (lastDot > lastComma) sPrice = sPrice.replace(/,/g, '');
           else sPrice = sPrice.replace(/\./g, '').replace(',', '.');
         } else if (lastComma > -1) {
           sPrice = sPrice.replace(',', '.');
+        } else if (lastDot > -1) {
+          // Se só tem ponto, pode ser decimal (US) ou milhar (BR). 
+          // Geralmente IA retorna decimal com ponto. Mas se for algo como "1.000", tratamos como milhar se não houver decimais
+          const parts = sPrice.split('.');
+          if (parts.length === 2 && parts[1].length === 3 && parseInt(parts[0]) < 100) {
+            // Provavelmente milhar, ex: 1.250 -> 1250
+            // Mas se for 1.250,00 já caiu no caso acima. 
+            // Se for apenas 1.250, é ambíguo. Vamos assumir decimal se for IA.
+          }
         }
+        
         const parsedPrice = parseFloat(sPrice);
+        addLog(`Linha ${i+1}: Data="${dateStr}", Placa="${placa}", Serviço="${servico}", Valor="${parsedPrice}"`);
 
         const isCautelar = servico?.toUpperCase().includes('CAUTELAR');
         const valorLiquido = isCautelar ? (isNaN(parsedPrice) ? 0 : parsedPrice) : Math.max(0, (isNaN(parsedPrice) ? 0 : parsedPrice) - 50.72);
+
+        // Capitalize servico for better display
+        const displayServico = servico ? servico.charAt(0).toUpperCase() + servico.slice(1).toLowerCase() : 'Transferência';
 
         const normalized: any = {
           data: normalizeDate(dateStr),
           placa: placa.toUpperCase(),
           cliente: cliente || 'DESCONHECIDO',
-          categoria: servico || 'Transferência',
+          categoria: displayServico,
           valorBruto: isNaN(parsedPrice) ? 0 : parsedPrice,
           valorLiquido: valorLiquido
         };
 
-        // Mapeamento de categorias
+        // Mapeamento Sugerido (Apenas normaliza nomes conhecidos, mas mantém o original se for algo novo)
         const catUpper = normalized.categoria.toUpperCase();
-        if (catUpper.includes('COMPLETA MÓVEL') || catUpper.includes('COMPLETA MOVEL')) normalized.categoria = 'Transferência';
-        else if (catUpper.includes('COMPLETA')) normalized.categoria = 'Transferência';
-        else if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
+        if (catUpper.includes('SIMPLIFICADA')) normalized.categoria = 'Vistoria de Entrada';
         else if (catUpper.includes('CAUTELAR')) normalized.categoria = 'Vistoria Cautelar';
         else if (catUpper.includes('SAÍDA') || catUpper.includes('SAIDA')) normalized.categoria = 'Vistoria de Saída';
         else if (catUpper.includes('RETORNO')) normalized.categoria = 'Vistoria de Retorno';
+        else if (catUpper.includes('COMPLETA') || catUpper.includes('TRANSFERENCIA')) normalized.categoria = 'Transferência';
         
         return normalized;
       }).filter(item => item !== null);
