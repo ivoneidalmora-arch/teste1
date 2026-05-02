@@ -6,7 +6,7 @@ import { Transaction, IncomeTransaction } from '@/core/types/finance';
 export type ReportFilterType = 'all' | 'income' | 'expense';
 
 export function useReports() {
-  const { transactions, loading, refresh } = useTransactions();
+  const { transactions, loading, error, refresh } = useTransactions();
   
   // Filtros
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().substring(0, 8) + '01');
@@ -23,12 +23,12 @@ export function useReports() {
     
     if (searchPlaca) {
       const pl = searchPlaca.toUpperCase();
-      filtered = filtered.filter(t => t.type === 'income' && (t as IncomeTransaction).placa?.includes(pl));
+      filtered = filtered.filter(t => String(t.metadata?.placa || '').includes(pl));
     }
     
     if (searchCliente) {
       const cli = searchCliente.toUpperCase();
-      filtered = filtered.filter(t => t.type === 'income' && ((t as IncomeTransaction).cliente || '').toUpperCase().includes(cli));
+      filtered = filtered.filter(t => (t.customer || '').toUpperCase().includes(cli));
     }
 
     if (filterType !== 'all') {
@@ -44,6 +44,7 @@ export function useReports() {
 
   return {
     loading,
+    error,
     refresh,
     transactions: filteredTransactions,
     metrics,

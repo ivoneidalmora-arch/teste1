@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const { transactions, metrics, loading, refresh } = useFinance(selectedDate);
+  const { transactions, metrics, loading, error, refresh } = useFinance(selectedDate);
 
   useEffect(() => {
     setMounted(true);
@@ -38,12 +38,23 @@ export default function DashboardPage() {
 
   if (!mounted) return null;
 
+  if (loading && !transactions.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+      </div>
+    );
+  }
+
   // Garantia de que metrics nunca seja nulo para os componentes filhos
   const m = metrics || {
     availableMonths: [],
     inspectionSummary: [],
     clientRanking: [],
     totalGlobalBalance: 0,
+    totalIncome: 0,
+    totalExpense: 0,
+    netBalance: 0,
     currentIncome: 0,
     incomeVariation: 0,
     currentExpense: 0,
@@ -56,6 +67,12 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-1.5 py-1.5 space-y-1.5 animate-in fade-in duration-700">
       
+      {error && (
+        <div className="bg-rose-50 border border-rose-100 p-3 rounded-xl text-rose-600 text-sm font-bold text-center">
+          {error}
+        </div>
+      )}
+
       {/* Cabeçalho */}
       <DashboardHeader 
         selectedDate={selectedDate}
@@ -67,7 +84,7 @@ export default function DashboardPage() {
       />
 
       {/* Resumo de Métricas */}
-      <MetricsSummary metrics={m as any} />
+      <MetricsSummary metrics={m} />
 
       {/* Seção Operacional e Inteligência */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-1.5">

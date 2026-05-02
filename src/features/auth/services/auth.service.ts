@@ -1,8 +1,18 @@
 import { supabase } from '@/services/supabase';
 
 export const authService = {
+  async login(email: string, password: string) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  },
+
   async getSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) return null;
     return session;
   },
 
@@ -10,15 +20,13 @@ export const authService = {
     await supabase.auth.signOut();
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('alfa_initialized');
-      localStorage.removeItem('auth_token');
     }
   },
 
-  async setSession(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
-      // Aqui poderíamos usar o supabase.auth.setSession(token) se fosse um token real
-    }
+  onAuthStateChange(callback: (session: any) => void) {
+    return supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session);
+    });
   },
 
   isInitialized() {

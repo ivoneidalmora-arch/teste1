@@ -65,7 +65,7 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold text-slate-800 truncate group-hover:text-brand-primary transition-colors">
-                        {isIncome ? (t as IncomeTransaction).cliente || 'S/N' : (t as any).description || 'Despesa'}
+                        {t.description || t.customer || 'Lançamento'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">

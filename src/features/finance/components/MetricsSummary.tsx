@@ -82,7 +82,16 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
   );
 }
 
-function MetricCard({ title, value, variation, icon: Icon, color, inverse = false }: any) {
+interface MetricCardProps {
+  title: string;
+  value: number;
+  variation: number;
+  icon: React.ElementType;
+  color: 'emerald' | 'rose' | 'blue';
+  inverse?: boolean;
+}
+
+function MetricCard({ title, value, variation, icon: Icon, color, inverse = false }: MetricCardProps) {
   const isPositive = variation >= 0;
   const isGood = inverse ? !isPositive : isPositive;
 

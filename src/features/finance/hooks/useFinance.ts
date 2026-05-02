@@ -3,7 +3,7 @@ import { useTransactions } from './useTransactions';
 import { metricsService } from '../services/metrics.service';
 
 export function useFinance(selectedDate: Date) {
-  const { transactions, loading, refresh } = useTransactions();
+  const { transactions, loading, error, refresh } = useTransactions();
 
   const metrics = useMemo(() => {
     if (!transactions) return null;
@@ -20,6 +20,7 @@ export function useFinance(selectedDate: Date) {
     transactions: transactions || [],
     metrics,
     loading,
+    error,
     refresh
   };
 }

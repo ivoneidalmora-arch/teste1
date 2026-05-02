@@ -53,12 +53,10 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-bold text-slate-800 truncate">
-                          {isIncome 
-                            ? (t as IncomeTransaction).cliente || 'S/N' 
-                            : (t as ExpenseTransaction).description || 'Despesa'}
+                          {t.description || t.customer || 'Lançamento'}
                         </span>
-                        {isIncome && (t as IncomeTransaction).placa && (
-                          <span className="text-[10px] font-mono text-brand-primary font-bold">{(t as IncomeTransaction).placa}</span>
+                        {t.metadata?.placa && (
+                          <span className="text-[10px] font-mono text-brand-primary font-bold">{String(t.metadata.placa)}</span>
                         )}
                       </div>
                     </div>

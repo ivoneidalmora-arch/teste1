@@ -8,15 +8,28 @@ import { authService } from '@/features/auth/services/auth.service';
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate auth logic
-    setTimeout(() => {
-      authService.setSession('active_session_token');
+    setError(null);
+
+    try {
+      await authService.login(email, password);
       router.push('/');
-    }, 600);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(
+        err.message === 'Invalid login credentials' 
+          ? 'Credenciais inválidas. Verifique seu e-mail e senha.' 
+          : 'Ocorreu um erro ao tentar acessar o sistema. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,13 +58,21 @@ export default function LoginPage() {
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm text-center">
+                {error}
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Usário de Acesso</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">E-mail de Acesso</label>
               <input 
-                type="text" 
-                defaultValue="admin"
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: joao.silva"
+                placeholder="Ex: joao@alfa.com.br"
               />
             </div>
             
@@ -59,7 +80,9 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-slate-300 mb-2">Senha Operacional</label>
               <input 
                 type="password" 
-                defaultValue="alfa2026"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
                 className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
@@ -68,7 +91,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-500 hover:to-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-500 hover:to-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

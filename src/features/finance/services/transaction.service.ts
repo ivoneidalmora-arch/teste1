@@ -1,86 +1,136 @@
 import { supabase } from '@/services/supabase';
-import { Transaction, IncomeTransaction, ExpenseTransaction, NewTransaction } from '@/core/types/finance';
+import { Transaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 
 export const transactionService = {
   async getAll(): Promise<Transaction[]> {
-    try {
-      const [resRec, resDes] = await Promise.all([
-        supabase.from('Receitas').select('*'),
-        supabase.from('Despesas').select('*')
-      ]);
+    const [resRec, resDes] = await Promise.all([
+      supabase.from('Receitas').select('*'),
+      supabase.from('Despesas').select('*')
+    ]);
 
-      const income = (resRec.data || []).map(TransactionMapper.toIncome);
-      const expense = (resDes.data || []).map(TransactionMapper.toExpense);
+    if (resRec.error) throw resRec.error;
+    if (resDes.error) throw resDes.error;
 
-      const combined: Transaction[] = [...income, ...expense];
+    const income = (resRec.data || []).map(raw => TransactionMapper.toIncome(raw));
+    const expense = (resDes.data || []).map(raw => TransactionMapper.toExpense(raw));
 
-      return combined.sort((a, b) => {
-        if (b.date !== a.date) return b.date.localeCompare(a.date);
-        return (Number(b.id) || 0) - (Number(a.id) || 0);
-      });
-    } catch (error) {
-      console.error('[TransactionService] Error fetching all:', error);
-      return [];
-    }
+    const combined: Transaction[] = [...income, ...expense];
+
+    return combined.sort((a, b) => {
+      if (b.date !== a.date) return b.date.localeCompare(a.date);
+      return String(b.id).localeCompare(String(a.id));
+    });
   },
 
   async save(transaction: NewTransaction): Promise<Transaction | null> {
-    const { type, ...payload } = transaction as any;
-    const table = type === 'income' ? 'Receitas' : 'Despesas';
+    const table = transaction.type === 'income' ? 'Receitas' : 'Despesas';
+    
+    // Mapeamento inverso para o banco de dados (legado)
+    const payload: Record<string, any> = {
+      amount: transaction.amount,
+      date: transaction.date,
+      category: transaction.category,
+      source: transaction.source || 'manual',
+    };
+
+    if (transaction.type === 'income') {
+      payload.amountBruto = transaction.grossAmount || transaction.amount;
+      payload.amountLiquido = transaction.netAmount || transaction.amount;
+      payload.cliente = transaction.customer;
+      payload.placa = transaction.metadata?.placa;
+      payload.nf = transaction.metadata?.nf;
+      payload.pagamento = transaction.metadata?.pagamento;
+      payload.observacao = transaction.metadata?.observacao;
+    } else {
+      payload.description = transaction.description;
+      payload.vencimento = transaction.dueDate || transaction.date;
+      payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
+      payload.observacao = transaction.metadata?.observacao;
+    }
     
     const { data, error } = await supabase.from(table).insert([payload]).select().single();
-    if (error) return null;
+    if (error) throw error;
     
-    return type === 'income' ? TransactionMapper.toIncome(data) : TransactionMapper.toExpense(data);
+    return transaction.type === 'income' 
+      ? TransactionMapper.toIncome(data) 
+      : TransactionMapper.toExpense(data);
   },
 
-  async update(id: string | number, type: 'income' | 'expense', payload: Partial<Transaction>): Promise<boolean> {
+  async update(id: string | number, type: 'income' | 'expense', transaction: Partial<Transaction>): Promise<boolean> {
     const table = type === 'income' ? 'Receitas' : 'Despesas';
-    // Removemos campos que não devem ser enviados no update
-    const { id: _id, type: _type, createdAt: _ca, ...cleanPayload } = payload as any;
     
-    const { error } = await supabase.from(table).update(cleanPayload).eq('id', id);
-    return !error;
+    const payload: Record<string, any> = {};
+    if (transaction.amount !== undefined) payload.amount = transaction.amount;
+    if (transaction.date !== undefined) payload.date = transaction.date;
+    if (transaction.category !== undefined) payload.category = transaction.category;
+    
+    if (type === 'income') {
+      if (transaction.grossAmount !== undefined) payload.amountBruto = transaction.grossAmount;
+      if (transaction.netAmount !== undefined) payload.amountLiquido = transaction.netAmount;
+      if (transaction.customer !== undefined) payload.cliente = transaction.customer;
+      if (transaction.metadata?.placa !== undefined) payload.placa = transaction.metadata.placa;
+    } else {
+      if (transaction.description !== undefined) payload.description = transaction.description;
+      if (transaction.status !== undefined) payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
+    }
+    
+    const { error } = await supabase.from(table).update(payload).eq('id', id);
+    if (error) throw error;
+    return true;
   },
 
-  async delete(id: string | number, type: 'income' | 'expense') {
+  async delete(id: string | number, type: 'income' | 'expense'): Promise<boolean> {
     const table = type === 'income' ? 'Receitas' : 'Despesas';
     const { error } = await supabase.from(table).delete().eq('id', id);
-    return !error;
+    if (error) throw error;
+    return true;
   },
 
-  async deleteAll() {
+  async deleteAll(): Promise<boolean> {
     const { error: err1 } = await supabase.from('Receitas').delete().neq('id', '0');
     const { error: err2 } = await supabase.from('Despesas').delete().neq('id', '0');
-    return !err1 && !err2;
+    if (err1) throw err1;
+    if (err2) throw err2;
+    return true;
   },
 
-  /**
-   * Realiza o insert em lote para as transações importadas.
-   */
   async bulkInsert(transactions: NewTransaction[]): Promise<boolean> {
-    const incomes = transactions.filter(t => t.type === 'income').map(({type, ...p}) => p);
-    const expenses = transactions.filter(t => t.type === 'expense').map(({type, ...p}) => p);
+    const incomes = transactions.filter(t => t.type === 'income').map(t => ({
+      amount: t.amount,
+      amountBruto: t.grossAmount || t.amount,
+      amountLiquido: t.netAmount || t.amount,
+      date: t.date,
+      category: t.category,
+      cliente: t.customer,
+      placa: t.metadata?.placa,
+      nf: t.metadata?.nf,
+      pagamento: t.metadata?.pagamento,
+      observacao: t.metadata?.observacao,
+      source: 'import'
+    }));
 
-    let success = true;
+    const expenses = transactions.filter(t => t.type === 'expense').map(t => ({
+      amount: t.amount,
+      date: t.date,
+      category: t.category,
+      description: t.description,
+      vencimento: t.dueDate || t.date,
+      status: t.status === 'paid' ? 'Pago' : 'Pendente',
+      observacao: t.metadata?.observacao,
+      source: 'import'
+    }));
 
     if (incomes.length > 0) {
       const { error } = await supabase.from('Receitas').insert(incomes);
-      if (error) {
-        console.error('Erro no insert de receitas:', error);
-        throw new Error(`Erro Receitas: ${error.message || JSON.stringify(error)}`);
-      }
+      if (error) throw error;
     }
 
     if (expenses.length > 0) {
       const { error } = await supabase.from('Despesas').insert(expenses);
-      if (error) {
-        console.error('Erro no insert de despesas:', error);
-        throw new Error(`Erro Despesas: ${error.message || JSON.stringify(error)}`);
-      }
+      if (error) throw error;
     }
 
-    return success;
+    return true;
   }
 };

@@ -57,13 +57,13 @@ export const pdfService = {
     // Tabela
     const tableData = transactions.map(t => {
       const isInc = t.type === 'income';
-      const val = isInc ? ((t as IncomeTransaction).amountLiquido || t.amount) : t.amount;
-      const desc = isInc ? ((t as IncomeTransaction).cliente || t.category) : ((t as any).description || t.category);
+      const val = isInc ? (t.netAmount || t.amount) : t.amount;
+      const desc = t.description || t.customer || t.category || 'N/A';
       
       return [
         format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy'),
         isInc ? 'ENTRADA' : 'SAÍDA',
-        t.category,
+        t.category || 'Geral',
         desc.length > 30 ? desc.substring(0, 30) + '...' : desc,
         isInc ? formatBRL(val) : `- ${formatBRL(t.amount)}`
       ];

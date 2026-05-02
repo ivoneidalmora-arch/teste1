@@ -1,45 +1,60 @@
-import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
+import { Transaction } from '@/core/types/finance';
 
 export const TransactionMapper = {
   /**
-   * Converte um registro bruto da tabela 'Receitas' para o tipo IncomeTransaction
+   * Converte um registro bruto da tabela 'Receitas' para o tipo Transaction padronizado
    */
-  toIncome(raw: any): IncomeTransaction {
+  toIncome(raw: Record<string, any>): Transaction {
     const amountBruto = parseFloat(raw.amountBruto) || parseFloat(raw.amount) || 0;
     const amountLiquido = parseFloat(raw.amountLiquido) || amountBruto || 0;
     
     return {
-      id: raw.id,
+      id: String(raw.id),
       type: 'income',
       category: raw.category || 'Outros',
-      amount: amountBruto, // No sistema atual, amount geralmente reflete o bruto
-      amountBruto,
-      amountLiquido,
-      date: raw.date || raw.data || '',
-      placa: raw.placa || '',
-      cliente: raw.cliente || '',
-      nf: raw.nf || '',
-      pagamento: raw.pagamento || 'Pix',
-      observacao: raw.observacao || '',
-      createdAt: raw.created_at || raw.createdAt
+      amount: amountBruto,
+      grossAmount: amountBruto,
+      netAmount: amountLiquido,
+      date: String(raw.date || raw.data || '').split('T')[0],
+      description: `Placa: ${raw.placa || 'N/A'} - ${raw.cliente || 'Particular'}`,
+      customer: raw.cliente || 'Particular',
+      status: 'paid', // Receitas no Supabase geralmente são tratadas como pagas
+      source: raw.source || 'supabase',
+      metadata: {
+        placa: raw.placa,
+        nf: raw.nf,
+        pagamento: raw.pagamento,
+        observacao: raw.observacao
+      },
+      createdAt: raw.created_at || raw.createdAt,
+      updatedAt: raw.updated_at || raw.updatedAt
     };
   },
 
   /**
-   * Converte um registro bruto da tabela 'Despesas' para o tipo ExpenseTransaction
+   * Converte um registro bruto da tabela 'Despesas' para o tipo Transaction padronizado
    */
-  toExpense(raw: any): ExpenseTransaction {
+  toExpense(raw: Record<string, any>): Transaction {
+    const amount = parseFloat(raw.amount) || parseFloat(raw.valor) || 0;
+    const legacyStatus = raw.status || 'Pago';
+    
     return {
-      id: raw.id,
+      id: String(raw.id),
       type: 'expense',
       category: raw.category || 'Operacional',
-      amount: parseFloat(raw.amount) || parseFloat(raw.valor) || 0,
-      date: raw.date || raw.data || raw.vencimento || '',
+      amount: amount,
+      grossAmount: amount,
+      netAmount: amount,
+      date: String(raw.date || raw.data || raw.vencimento || '').split('T')[0],
+      dueDate: raw.vencimento ? String(raw.vencimento).split('T')[0] : undefined,
       description: raw.description || raw.descricao || 'Despesa',
-      vencimento: raw.vencimento || raw.date || '',
-      status: raw.status || 'Pago',
-      observacao: raw.observacao || '',
-      createdAt: raw.created_at || raw.createdAt
+      status: legacyStatus === 'Pago' ? 'paid' : 'pending',
+      source: raw.source || 'supabase',
+      metadata: {
+        observacao: raw.observacao
+      },
+      createdAt: raw.created_at || raw.createdAt,
+      updatedAt: raw.updated_at || raw.updatedAt
     };
   }
 };

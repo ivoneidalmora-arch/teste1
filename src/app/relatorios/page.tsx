@@ -27,7 +27,7 @@ import { Transaction } from '@/core/types/finance';
 export const dynamic = 'force-dynamic';
 
 export default function RelatoriosPage() {
-  const { loading, transactions, metrics, filters, refresh } = useReports();
+  const { loading, error, transactions, metrics, filters, refresh } = useReports();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -71,7 +71,11 @@ export default function RelatoriosPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-700 pb-24">
       
-      {/* Header Context */}
+      {error && (
+        <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-rose-600 text-sm font-bold text-center">
+          {error}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
          <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-900 tracking-tight">
@@ -159,7 +163,7 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      <SeniorFinancialReport metrics={safeMetrics as any} />
+      <SeniorFinancialReport metrics={safeMetrics} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2">

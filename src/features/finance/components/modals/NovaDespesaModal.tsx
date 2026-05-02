@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from 'react';
 import { BaseModal } from '@/core/components/BaseModal';
 import { transactionService } from '@/features/finance/services/transaction.service';
@@ -20,7 +18,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     descricao: '',
     valor: 0,
     data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
-    status: 'Pago',
+    status: 'paid' as 'paid' | 'pending',
     observacao: ''
   });
 
@@ -38,24 +36,30 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     if (!formData.descricao) return alert('Informe uma descrição.');
 
     setLoading(true);
-    const success = await transactionService.save({
-      type: 'expense',
-      category: formData.categoria,
-      description: formData.descricao.toUpperCase(),
-      amount: formData.valor,
-      date: formData.data,
-      vencimento: formData.data,
-      status: formData.status as 'Pago' | 'Pendente',
-      observacao: formData.observacao.toUpperCase()
-    });
+    try {
+      await transactionService.save({
+        type: 'expense',
+        category: formData.categoria,
+        description: formData.descricao.toUpperCase(),
+        amount: formData.valor,
+        grossAmount: formData.valor,
+        netAmount: formData.valor,
+        date: formData.data,
+        dueDate: formData.data,
+        status: formData.status,
+        source: 'manual',
+        metadata: {
+          observacao: formData.observacao.toUpperCase()
+        }
+      });
 
-    setLoading(false);
-
-    if (success) {
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
-    } else {
-      alert('Erro ao salvar a despesa.');
+    } catch (err: any) {
+      console.error('[NovaDespesaModal] Error:', err);
+      alert('Erro ao salvar a despesa: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,8 +95,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Status de Pagamento</label>
             <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500">
-              <option value="Pago">Liquidado (Pago)</option>
-              <option value="Pendente">Em Aberto (Pendente)</option>
+              <option value="paid">Liquidado (Pago)</option>
+              <option value="pending">Em Aberto (Pendente)</option>
             </select>
           </div>
         </div>

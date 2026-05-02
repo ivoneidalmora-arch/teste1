@@ -62,14 +62,19 @@ export function ImportButton({ onSuccess, className }: Props) {
         const result = await transactionService.save({
           type: 'income',
           category: item.categoria || 'Transferência',
-          placa: item.placa || '',
-          cliente: item.cliente || '',
-          amountBruto: item.valorBruto || 0,
-          amountLiquido: item.valorLiquido || 0,
           amount: item.valorBruto || 0,
+          grossAmount: item.valorBruto || 0,
+          netAmount: item.valorLiquido || 0,
           date: item.data,
-          pagamento: 'Pix',
-          observacao: item.observacao || 'IMPORTADO VIA IA'
+          description: `Placa: ${item.placa || 'S/N'} - ${item.cliente || 'CLIENTE'}`,
+          customer: item.cliente || 'CLIENTE',
+          status: 'paid',
+          source: 'import',
+          metadata: {
+            placa: item.placa,
+            observacao: item.observacao || 'IMPORTADO VIA IA',
+            pagamento: 'Pix'
+          }
         });
         
         if (result === null) {

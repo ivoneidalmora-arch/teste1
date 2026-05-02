@@ -1,9 +1,7 @@
-"use client";
-
 import { useState, useEffect } from 'react';
 import { BaseModal } from '@/core/components/BaseModal';
 import { transactionService } from '@/features/finance/services/transaction.service';
-import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
+import { Transaction } from '@/core/types/finance';
 import { cn } from '@/core/utils/formatters';
 import { Save } from 'lucide-react';
 import { PlacaInput } from '@/core/components/ui/PlacaInput';
@@ -17,49 +15,55 @@ interface Props {
   transaction: Transaction | null;
 }
 
+interface FormData {
+  type: 'income' | 'expense';
+  categoria: string;
+  placa: string;
+  cliente: string;
+  data: string;
+  valorBruto: number;
+  valorLiquido: number;
+  pagamento: string;
+  nf: string;
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  status: 'paid' | 'pending';
+  observacao: string;
+}
+
 export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }: Props) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<FormData | null>(null);
 
   useEffect(() => {
     if (transaction) {
-      if (transaction.type === 'income') {
-        const t = transaction as IncomeTransaction;
-        setFormData({
-          type: 'income',
-          categoria: t.category,
-          placa: t.placa || '',
-          cliente: t.cliente || '',
-          data: t.date || '',
-          valorBruto: t.amountBruto || t.amount || 0,
-          valorLiquido: t.amountLiquido || t.amount || 0,
-          pagamento: t.pagamento || 'Pix',
-          nf: t.nf || '',
-          observacao: t.observacao || ''
-        });
-      } else {
-        const t = transaction as ExpenseTransaction;
-        setFormData({
-          type: 'expense',
-          categoria: t.category,
-          descricao: t.description || '',
-          valor: t.amount || 0,
-          data: t.date || '',
-          vencimento: t.vencimento || t.date || '',
-          status: t.status || 'Pago',
-          observacao: t.observacao || ''
-        });
-      }
+      setFormData({
+        type: transaction.type,
+        categoria: transaction.category || '',
+        placa: String(transaction.metadata?.placa || ''),
+        cliente: transaction.customer || '',
+        data: transaction.date || '',
+        valorBruto: transaction.grossAmount || transaction.amount || 0,
+        valorLiquido: transaction.netAmount || transaction.amount || 0,
+        pagamento: String(transaction.metadata?.pagamento || 'Pix'),
+        nf: String(transaction.metadata?.nf || ''),
+        descricao: transaction.description || '',
+        valor: transaction.amount || 0,
+        vencimento: transaction.dueDate || transaction.date || '',
+        status: transaction.status === 'paid' ? 'paid' : 'pending',
+        observacao: String(transaction.metadata?.observacao || '')
+      });
     }
   }, [transaction]);
 
   useEffect(() => {
     if (formData?.type === 'income') {
       if (formData.categoria === 'Vistoria de Retorno') {
-        setFormData((prev: any) => ({ ...prev, valorBruto: 0, valorLiquido: 0 }));
+        setFormData(prev => prev ? ({ ...prev, valorBruto: 0, valorLiquido: 0 }) : null);
       } else if (formData.categoria !== 'Vistoria Cautelar') {
         const liq = calculateLiquido(formData.valorBruto);
-        setFormData((prev: any) => ({ ...prev, valorLiquido: liq }));
+        setFormData(prev => prev ? ({ ...prev, valorLiquido: liq }) : null);
       }
     }
   }, [formData?.valorBruto, formData?.categoria, formData?.type]);
@@ -70,49 +74,46 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({
-      ...prev,
-      [name]: name === 'valor' || name.startsWith('valor') ? parseFloat(value) || 0 : value
-    }));
+    setFormData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [name]: name === 'valor' || name.startsWith('valor') ? parseFloat(value) || 0 : value
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const updatedData: any = {
-      category: formData.categoria,
-      date: formData.data,
-      observacao: formData.observacao.toUpperCase(),
-    };
+    try {
+      const updatedData: Partial<Transaction> = {
+        category: formData.categoria,
+        date: formData.data,
+        description: isIncome ? `Placa: ${formData.placa} - ${formData.cliente.toUpperCase()}` : formData.descricao.toUpperCase(),
+        amount: isIncome ? formData.valorBruto : formData.valor,
+        grossAmount: isIncome ? formData.valorBruto : formData.valor,
+        netAmount: isIncome ? formData.valorLiquido : formData.valor,
+        customer: isIncome ? formData.cliente.toUpperCase() : undefined,
+        status: isIncome ? 'paid' : formData.status,
+        dueDate: isIncome ? undefined : formData.vencimento,
+        metadata: {
+          placa: isIncome ? formData.placa : undefined,
+          nf: isIncome ? formData.nf.toUpperCase() : undefined,
+          pagamento: isIncome ? formData.pagamento : undefined,
+          observacao: formData.observacao.toUpperCase()
+        }
+      };
 
-    if (isIncome) {
-      Object.assign(updatedData, {
-        placa: formData.placa,
-        cliente: formData.cliente.toUpperCase(),
-        amountBruto: formData.valorBruto,
-        amountLiquido: formData.valorLiquido,
-        amount: formData.valorBruto,
-        pagamento: formData.pagamento,
-        nf: formData.nf.toUpperCase(),
-      });
-    } else {
-      Object.assign(updatedData, {
-        description: formData.descricao.toUpperCase(),
-        amount: formData.valor,
-        vencimento: formData.vencimento,
-        status: formData.status,
-      });
-    }
-
-    const success = await transactionService.update(transaction.id, formData.type, updatedData);
-    
-    setLoading(false);
-    if (success) {
+      await transactionService.update(transaction.id, formData.type, updatedData);
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
-    } else {
-      alert('Erro ao atualizar lançamento.');
+    } catch (err: any) {
+      console.error('[EditTransactionModal] Error:', err);
+      alert('Erro ao atualizar lançamento: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,7 +178,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
               <PlacaInput label="Placa" name="placa" required value={formData.placa} onChange={handleChange} />
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Cliente</label>
-                <input type="text" name="cliente" required value={formData.cliente} onChange={e => setFormData((p: any) => ({...p, cliente: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" name="cliente" required value={formData.cliente} onChange={e => setFormData(p => p ? ({...p, cliente: e.target.value.toUpperCase()}) : null)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
@@ -197,15 +198,15 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           <>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Descrição</label>
-              <input type="text" name="descricao" required value={formData.descricao} onChange={e => setFormData((p: any) => ({...p, descricao: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="text" name="descricao" required value={formData.descricao} onChange={e => setFormData(p => p ? ({...p, descricao: e.target.value.toUpperCase()}) : null)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <MoneyInput label="Valor Total" name="valor" required value={formData.valor} onChange={handleChange} prefix="R$" className="bg-rose-50/30 border-rose-100" />
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                 <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="Pago">Liquidado (Pago)</option>
-                  <option value="Pendente">Em Aberto (Pendente)</option>
+                  <option value="paid">Liquidado (Pago)</option>
+                  <option value="pending">Em Aberto (Pendente)</option>
                 </select>
               </div>
             </div>
@@ -214,7 +215,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Observações Privadas</label>
-          <textarea name="observacao" rows={2} value={formData.observacao} onChange={e => setFormData((p: any) => ({...p, observacao: e.target.value.toUpperCase()}))} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+          <textarea name="observacao" rows={2} value={formData.observacao} onChange={e => setFormData(p => p ? ({...p, observacao: e.target.value.toUpperCase()}) : null)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="flex gap-3 pt-2">

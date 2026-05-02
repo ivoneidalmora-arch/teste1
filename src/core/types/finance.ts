@@ -1,6 +1,12 @@
+import { Transaction as StandardTransaction, NewTransaction as StandardNewTransaction } from '../schemas/transaction.schema';
+
 export type TransactionType = 'income' | 'expense';
 export type ExpenseStatus = 'Pago' | 'Pendente';
 
+/**
+ * @deprecated Use Transaction from @/core/schemas/transaction.schema instead.
+ * Mantido temporariamente para compatibilidade durante a refatoração.
+ */
 export interface TransactionBase {
   id: string | number;
   type: TransactionType;
@@ -10,10 +16,6 @@ export interface TransactionBase {
   observacao?: string;
   createdAt?: string;
 }
-
-export type NewTransaction = 
-  | (Omit<IncomeTransaction, 'id' | 'createdAt'> & { type: 'income' })
-  | (Omit<ExpenseTransaction, 'id' | 'createdAt'> & { type: 'expense' });
 
 export interface IncomeTransaction extends TransactionBase {
   type: 'income';
@@ -32,7 +34,8 @@ export interface ExpenseTransaction extends TransactionBase {
   status?: ExpenseStatus;
 }
 
-export type Transaction = IncomeTransaction | ExpenseTransaction;
+export type Transaction = StandardTransaction;
+export type NewTransaction = StandardNewTransaction;
 
 // Tipos para Agregações e Dashboards
 export interface FinancialMetrics {

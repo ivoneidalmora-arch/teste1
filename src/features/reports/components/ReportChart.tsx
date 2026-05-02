@@ -51,8 +51,8 @@ export function ReportChart({ data, type }: Props) {
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length] || colors[0]} />
               ))}
             </Pie>
-            <Tooltip 
-               formatter={(value: any) => formatBRL(value)}
+             <Tooltip 
+               formatter={(value: number) => formatBRL(value)}
                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             />
             <Legend verticalAlign="bottom" height={36} iconType="circle" />

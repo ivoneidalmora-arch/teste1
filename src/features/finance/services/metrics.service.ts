@@ -1,5 +1,5 @@
 import { format, subMonths } from 'date-fns';
-import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
+import { Transaction } from '@/core/types/finance';
 
 export const metricsService = {
   calculateMetrics(transactions: Transaction[]) {
@@ -13,11 +13,11 @@ export const metricsService = {
 
     transactions.forEach(t => {
       const tValue = t.type === 'income' 
-        ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) 
+        ? (t.netAmount || t.amount || 0) 
         : (t.amount || 0);
 
       let cat = t.category || 'Outros';
-      // Normalização de Casing para evitar duplicidade (ex: Transferência vs TRANSFERÊNCIA)
+      // Normalização de Casing para evitar duplicidade
       const catLower = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (catLower.includes('transferencia')) cat = 'Transferência';
       else if (catLower.includes('entrada')) cat = 'Vistoria de Entrada';
@@ -27,7 +27,6 @@ export const metricsService = {
       else cat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
 
       if (t.type === 'income') {
-        const inc = t as IncomeTransaction;
         totalIncome += tValue;
         validIncomesCount++;
         
@@ -35,19 +34,18 @@ export const metricsService = {
         incomeByCategory[cat].total += tValue;
         incomeByCategory[cat].count += 1;
 
-        const cliente = (inc.cliente || '').trim().toUpperCase();
+        const cliente = (t.customer || '').trim().toUpperCase();
         if (cliente && cliente !== 'S/N' && cliente !== 'SN') {
           if (!rankingMap[cliente]) {
             rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0, categories: {} };
           }
           rankingMap[cliente].count += 1;
-          rankingMap[cliente].bruto += (inc.amountBruto || inc.amount || 0);
+          rankingMap[cliente].bruto += (t.grossAmount || t.amount || 0);
           rankingMap[cliente].liquido += tValue;
           rankingMap[cliente].categories[cat] = (rankingMap[cliente].categories[cat] || 0) + 1;
         }
       } else {
-        const exp = t as ExpenseTransaction;
-        if (exp.status !== 'Pendente') {
+        if (t.status === 'paid') {
           totalExpense += tValue;
           if (!expenseByCategory[cat]) expenseByCategory[cat] = { total: 0, count: 0 };
           expenseByCategory[cat].total += tValue;
@@ -106,8 +104,8 @@ export const metricsService = {
       if (monthKey && /^\d{4}-\d{2}$/.test(monthKey)) monthsSet.add(monthKey);
     });
 
-    const totalGlobalIncome = transactions.reduce((acc, t) => acc + (t.type === 'income' ? ((t as IncomeTransaction).amountLiquido || t.amount || 0) : 0), 0);
-    const totalGlobalExpense = transactions.reduce((acc, t) => acc + (t.type === 'expense' && (t as ExpenseTransaction).status !== 'Pendente' ? t.amount : 0), 0);
+    const totalGlobalIncome = transactions.reduce((acc, t) => acc + (t.type === 'income' ? (t.netAmount || t.amount || 0) : 0), 0);
+    const totalGlobalExpense = transactions.reduce((acc, t) => acc + (t.type === 'expense' && t.status === 'paid' ? t.amount : 0), 0);
 
     return {
       ...currentMetrics,

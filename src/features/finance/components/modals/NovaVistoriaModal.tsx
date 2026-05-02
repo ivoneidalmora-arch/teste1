@@ -59,9 +59,9 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
 
     const selectedDate = new Date(formData.data + 'T12:00:00');
     const dataCompMonth = formData.data.substring(0, 7);
-    const hasDuplicate = existingTransactions.some((t: any) => 
+    const hasDuplicate = existingTransactions.some((t) => 
       t.type === 'income' && 
-      t.placa === formData.placa && 
+      t.metadata?.placa === formData.placa && 
       t.category === formData.categoria && 
       t.date.substring(0, 7) === dataCompMonth
     );
@@ -69,27 +69,33 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     if (hasDuplicate && !window.confirm('Já existe um lançamento similar este mês. Continuar?')) return;
 
     setLoading(true);
-    const success = await transactionService.save({
-      type: 'income',
-      category: formData.categoria,
-      placa: formData.placa,
-      cliente: formData.cliente,
-      nf: formData.nf,
-      pagamento: formData.pagamento,
-      amountBruto: formData.valorBruto,
-      amountLiquido: formData.valorLiquido,
-      amount: formData.valorBruto,
-      date: formData.data,
-      observacao: formData.observacao
-    });
+    try {
+      await transactionService.save({
+        type: 'income',
+        category: formData.categoria,
+        amount: formData.valorBruto,
+        grossAmount: formData.valorBruto,
+        netAmount: formData.valorLiquido,
+        date: formData.data,
+        description: `Placa: ${formData.placa} - ${formData.cliente}`,
+        customer: formData.cliente,
+        status: 'paid',
+        source: 'manual',
+        metadata: {
+          placa: formData.placa,
+          nf: formData.nf,
+          pagamento: formData.pagamento,
+          observacao: formData.observacao
+        }
+      });
 
-    setLoading(false);
-
-    if (success) {
       onSuccess(selectedDate);
       onClose();
-    } else {
-      alert('Erro ao salvar o laudo.');
+    } catch (err: any) {
+      console.error('[NovaVistoriaModal] Error:', err);
+      alert('Erro ao salvar o laudo: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
     }
   };
 

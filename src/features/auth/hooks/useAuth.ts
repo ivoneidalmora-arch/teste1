@@ -13,20 +13,7 @@ export function useAuth() {
   const checkAuth = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Tenta pegar do Supabase
       const currentSession = await authService.getSession();
-      
-      // 2. Se não tiver no Supabase, tenta o mock do localStorage (para persistência do mock)
-      if (!currentSession && typeof window !== 'undefined') {
-        const mockToken = localStorage.getItem('auth_token');
-        if (mockToken) {
-          // Criamos um objeto de sessão fake para satisfazer o sistema
-          setSession({ access_token: mockToken, user: { id: 'mock-user' } } as any);
-          setLoading(false);
-          return;
-        }
-      }
-
       setSession(currentSession);
     } catch (error) {
       console.error('[useAuth] Error checking session:', error);
@@ -39,20 +26,17 @@ export function useAuth() {
     checkAuth();
 
     // Listener do Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = authService.onAuthStateChange((session) => {
       setSession(session);
-      if (!session && typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
-        if (pathname !== '/login') router.push('/login');
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkAuth, pathname, router]);
+  }, [checkAuth]);
 
   useEffect(() => {
     if (!loading) {
       const isLoginPage = pathname === '/login';
-      const hasAuth = !!session || (typeof window !== 'undefined' && !!localStorage.getItem('auth_token'));
+      const hasAuth = !!session;
 
       if (hasAuth && isLoginPage) {
         router.push('/');
@@ -68,5 +52,5 @@ export function useAuth() {
     router.push('/login');
   };
 
-  return { session, loading, isAuthenticated: !!session || (typeof window !== 'undefined' && !!localStorage.getItem('auth_token')), logout };
+  return { session, loading, isAuthenticated: !!session, logout };
 }
