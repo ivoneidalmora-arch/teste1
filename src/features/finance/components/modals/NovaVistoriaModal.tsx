@@ -9,6 +9,7 @@ import { PlacaInput } from '@/core/components/ui/PlacaInput';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025, VistoriaCategory, VISTORIA_CATEGORIES } from '@/core/utils/finance';
 import { cn } from '@/core/utils/formatters';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransactions, defaultDate }: Props) {
+  const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'Transferência' as VistoriaCategory,
@@ -70,6 +72,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
 
     setLoading(true);
     try {
+      if (!user) throw new Error('Usuário não autenticado');
+      
       await transactionService.save({
         type: 'income',
         category: formData.categoria,
@@ -87,7 +91,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
           pagamento: formData.pagamento,
           observacao: formData.observacao
         }
-      });
+      }, user.id);
 
       onSuccess(selectedDate);
       onClose();

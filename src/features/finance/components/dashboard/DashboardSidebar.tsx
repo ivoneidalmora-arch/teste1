@@ -86,9 +86,9 @@ export function DashboardSidebar() {
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-slate-900 truncate">
-                {user?.email?.split('@')[0] || 'Admin'}
+                {user?.username || 'Usuário'}
               </span>
-              <span className="text-[10px] text-slate-500 truncate">Administrador</span>
+              <span className="text-[10px] text-slate-500 truncate">Operador Alfa</span>
             </div>
           </div>
           <button 

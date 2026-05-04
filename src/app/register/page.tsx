@@ -4,15 +4,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { authService } from '@/features/auth/services/auth.service';
+import { registerUser } from '@/features/auth/actions/auth.actions';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refresh } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -27,19 +29,21 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres.');
-      setLoading(false);
-      return;
-    }
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("password", password);
 
     try {
-      await authService.signUp(email, password);
-      setSuccess(true);
-      // O Supabase enviará um e-mail de confirmação se configurado
+      const result = await registerUser(formData);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        await refresh();
+        setSuccess(true);
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Ocorreu um erro ao criar sua conta.');
+      setError('Ocorreu um erro ao criar sua conta.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +59,7 @@ export default function RegisterPage() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Conta Criada!</h2>
-          <p className="text-slate-400 mb-8">Enviamos um link de confirmação para o seu e-mail. Verifique sua caixa de entrada para ativar sua conta.</p>
+          <p className="text-slate-400 mb-8">Sua conta foi configurada com sucesso. Você já pode acessar o painel administrativo.</p>
           <Link 
             href="/login" 
             className="block w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all"
@@ -95,8 +99,8 @@ export default function RegisterPage() {
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Usuário</label>
               <input 
                 type="text" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-600"
                 placeholder="Ex: joao.vistoria"

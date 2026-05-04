@@ -7,6 +7,7 @@ import { Save } from 'lucide-react';
 import { PlacaInput } from '@/core/components/ui/PlacaInput';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/core/utils/finance';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface FormData {
 }
 
 export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }: Props) {
+  const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
 
@@ -105,8 +107,10 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           observacao: formData.observacao.toUpperCase()
         }
       };
+      
+      if (!user) throw new Error('Usuário não autenticado');
 
-      await transactionService.update(transaction.id, formData.type, updatedData);
+      await transactionService.update(transaction.id, formData.type, updatedData, user.id);
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
     } catch (err: any) {

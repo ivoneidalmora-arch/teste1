@@ -3,6 +3,7 @@ import { BaseModal } from '@/core/components/BaseModal';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { format } from 'date-fns';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Props) {
+  const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'Operacional',
@@ -37,6 +39,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
 
     setLoading(true);
     try {
+      if (!user) throw new Error('Usuário não autenticado');
+
       await transactionService.save({
         type: 'expense',
         category: formData.categoria,
@@ -51,7 +55,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
         metadata: {
           observacao: formData.observacao.toUpperCase()
         }
-      });
+      }, user.id);
 
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();

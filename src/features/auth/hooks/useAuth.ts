@@ -3,7 +3,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthContext } from '../contexts/AuthContext';
 
 export function useAuth() {
-  const { session, user, loading, logout, isAuthenticated } = useAuthContext();
+  const { user, loading, logout, isAuthenticated } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -23,7 +23,6 @@ export function useAuth() {
   }, [loading, isAuthenticated, pathname, router]);
 
   return { 
-    session, 
     user, 
     loading, 
     isAuthenticated, 

@@ -1,35 +1,35 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { authService } from '../services/auth.service';
-import { useRouter, usePathname } from 'next/navigation';
+import { getSession, logoutUser } from '../actions/auth.actions';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  user: { id: string, username: string } | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{ id: string, username: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   const initializeAuth = useCallback(async () => {
     try {
-      const currentSession = await authService.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      const session = await getSession();
+      if (session) {
+        setUser(session.user);
+      } else {
+        setUser(null);
+      }
     } catch (error) {
       console.error('[AuthProvider] Error initializing auth:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -37,39 +37,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     initializeAuth();
-
-    const { data: { subscription } } = authService.onAuthStateChange((newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [initializeAuth]);
 
-  const login = async (email: string, password: string) => {
-    const data = await authService.login(email, password);
-    setSession(data.session);
-    setUser(data.user);
-    router.push('/');
-  };
-
   const logout = async () => {
-    await authService.logout();
-    setSession(null);
+    setLoading(true);
+    await logoutUser();
     setUser(null);
+    setLoading(false);
     router.push('/login');
   };
 
   const value = {
-    session,
     user,
     loading,
-    login,
     logout,
-    isAuthenticated: !!session,
+    isAuthenticated: !!user,
+    refresh: initializeAuth
   };
 
   return (

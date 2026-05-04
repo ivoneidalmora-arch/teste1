@@ -6,6 +6,7 @@ import { formatBRL, cn } from '@/core/utils/formatters';
 import { formatDisplayDate } from '@/core/utils/date';
 import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
 import { transactionService } from '@/features/finance/services/transaction.service';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   transactions: Transaction[];
@@ -14,10 +15,12 @@ interface Props {
 }
 
 export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
+  const { user } = useAuthContext();
   
   const handleDelete = async (t: Transaction) => {
+    if (!user) return alert('Sessão expirada. Faça login novamente.');
     if (window.confirm('Excluir este lançamento permanentemente?')) {
-      const success = await transactionService.delete(t.id, t.type);
+      const success = await transactionService.delete(t.id, t.type, user.id);
       if (success) onRefresh();
     }
   };

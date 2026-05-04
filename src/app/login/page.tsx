@@ -4,32 +4,37 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { authService } from '@/features/auth/services/auth.service';
+import { loginUser } from '@/features/auth/actions/auth.actions';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refresh } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("password", password);
+
     try {
-      await authService.login(email, password);
-      router.push('/');
+      const result = await loginUser(formData);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        await refresh();
+        router.push('/');
+      }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(
-        err.message === 'Invalid login credentials' 
-          ? 'Credenciais inválidas. Verifique seu e-mail e senha.' 
-          : 'Ocorreu um erro ao tentar acessar o sistema. Tente novamente.'
-      );
+      setError('Ocorreu um erro ao tentar acessar o sistema. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -71,8 +76,8 @@ export default function LoginPage() {
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nome de Usuário</label>
               <input 
                 type="text" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-600"
                 placeholder="Ex: joao_alfa"

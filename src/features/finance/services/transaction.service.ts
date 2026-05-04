@@ -3,10 +3,10 @@ import { Transaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 
 export const transactionService = {
-  async getAll(): Promise<Transaction[]> {
+  async getAll(app_user_id: string): Promise<Transaction[]> {
     const [resRec, resDes] = await Promise.all([
-      supabase.from('Receitas').select('*'),
-      supabase.from('Despesas').select('*')
+      supabase.from('Receitas').select('*').eq('app_user_id', app_user_id),
+      supabase.from('Despesas').select('*').eq('app_user_id', app_user_id)
     ]);
 
     if (resRec.error) throw resRec.error;
@@ -23,11 +23,11 @@ export const transactionService = {
     });
   },
 
-  async save(transaction: NewTransaction): Promise<Transaction | null> {
+  async save(transaction: NewTransaction, app_user_id: string): Promise<Transaction | null> {
     const table = transaction.type === 'income' ? 'Receitas' : 'Despesas';
     
-    // Mapeamento inverso para o banco de dados (legado)
     const payload: Record<string, any> = {
+      app_user_id,
       amount: transaction.amount,
       date: transaction.date,
       category: transaction.category,
@@ -56,7 +56,7 @@ export const transactionService = {
       : TransactionMapper.toExpense(data);
   },
 
-  async update(id: string | number, type: 'income' | 'expense', transaction: Partial<Transaction>): Promise<boolean> {
+  async update(id: string | number, type: 'income' | 'expense', transaction: Partial<Transaction>, app_user_id: string): Promise<boolean> {
     const table = type === 'income' ? 'Receitas' : 'Despesas';
     
     const payload: Record<string, any> = {};
@@ -74,28 +74,29 @@ export const transactionService = {
       if (transaction.status !== undefined) payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
     }
     
-    const { error } = await supabase.from(table).update(payload).eq('id', id);
+    const { error } = await supabase.from(table).update(payload).eq('id', id).eq('app_user_id', app_user_id);
     if (error) throw error;
     return true;
   },
 
-  async delete(id: string | number, type: 'income' | 'expense'): Promise<boolean> {
+  async delete(id: string | number, type: 'income' | 'expense', app_user_id: string): Promise<boolean> {
     const table = type === 'income' ? 'Receitas' : 'Despesas';
-    const { error } = await supabase.from(table).delete().eq('id', id);
+    const { error } = await supabase.from(table).delete().eq('id', id).eq('app_user_id', app_user_id);
     if (error) throw error;
     return true;
   },
 
-  async deleteAll(): Promise<boolean> {
-    const { error: err1 } = await supabase.from('Receitas').delete().neq('id', '0');
-    const { error: err2 } = await supabase.from('Despesas').delete().neq('id', '0');
+  async deleteAll(app_user_id: string): Promise<boolean> {
+    const { error: err1 } = await supabase.from('Receitas').delete().eq('app_user_id', app_user_id);
+    const { error: err2 } = await supabase.from('Despesas').delete().eq('app_user_id', app_user_id);
     if (err1) throw err1;
     if (err2) throw err2;
     return true;
   },
 
-  async bulkInsert(transactions: NewTransaction[]): Promise<boolean> {
+  async bulkInsert(transactions: NewTransaction[], app_user_id: string): Promise<boolean> {
     const incomes = transactions.filter(t => t.type === 'income').map(t => ({
+      app_user_id,
       amount: t.amount,
       amountBruto: t.grossAmount || t.amount,
       amountLiquido: t.netAmount || t.amount,
@@ -109,6 +110,7 @@ export const transactionService = {
     }));
 
     const expenses = transactions.filter(t => t.type === 'expense').map(t => ({
+      app_user_id,
       amount: t.amount,
       date: t.date,
       category: t.category,
