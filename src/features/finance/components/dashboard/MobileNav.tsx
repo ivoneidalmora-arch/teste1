@@ -15,6 +15,8 @@ import {
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
+import Image from 'next/image';
+
 const MENU_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: FileText, label: 'Relatórios', href: '/relatorios' },
@@ -30,12 +32,15 @@ export function MobileNav() {
   return (
     <div className="lg:hidden">
       {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-[60]">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center shadow-lg shadow-brand-primary/20">
-            <ShieldCheck className="text-white w-5 h-5" />
-          </div>
-          <span className="text-sm font-black tracking-tighter text-slate-900 uppercase">Alfa Mateus</span>
+      <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between sticky top-0 z-[60]">
+        <div className="flex items-center">
+          <Image 
+            src="/logo.png" 
+            alt="Alfa Logo" 
+            width={120} 
+            height={40} 
+            className="object-contain"
+          />
         </div>
         
         <button 

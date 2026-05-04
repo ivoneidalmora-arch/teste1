@@ -36,12 +36,16 @@ export function DashboardSidebar() {
   return (
     <aside className="w-64 h-screen bg-white border-r border-slate-200 flex flex-col fixed left-0 top-0 z-50">
       {/* Branding */}
-      <div className="p-6">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center shadow-lg shadow-brand-primary/20">
-            <ShieldCheck className="text-white w-5 h-5" />
-          </div>
-          <span className="text-lg font-black tracking-tighter text-slate-900 uppercase">Alfa Mateus</span>
+      <div className="p-8">
+        <div className="flex items-center justify-center">
+          <Image 
+            src="/logo.png" 
+            alt="Alfa Perícia e Vistoria" 
+            width={160} 
+            height={60} 
+            className="object-contain"
+            priority
+          />
         </div>
       </div>
 
