@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { Download, Upload, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Database } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 export default function ConfigPage() {
+  const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
@@ -34,7 +36,7 @@ export default function ConfigPage() {
     }
 
     setLoading(true);
-    const success = await transactionService.deleteAll();
+    const success = await transactionService.deleteAll(user?.id || '');
     if (success) {
       setStatus({ type: 'success', msg: 'Banco de dados zerado com sucesso!' });
     } else {
