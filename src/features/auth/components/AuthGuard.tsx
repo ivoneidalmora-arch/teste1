@@ -7,10 +7,11 @@ import { DashboardLayout } from '@/features/finance/components/dashboard/Dashboa
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { loading, isAuthenticated } = useAuth();
   const pathname = usePathname();
-  const isLoginPage = pathname === '/login';
+  
+  const isPublicPage = ['/login', '/register', '/forgot-password'].includes(pathname);
 
-  // Enquanto verifica a sessão, mostramos o loader apenas se não for a página de login
-  if (loading && !isLoginPage) {
+  // Enquanto verifica a sessão, mostramos o loader apenas se não for uma página pública
+  if (loading && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
@@ -18,14 +19,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Se não estiver autenticado e não for login, não renderiza nada (o hook redirecionará)
-  if (!isAuthenticated && !isLoginPage) {
+  // Se não estiver autenticado e não for página pública, o hook redirecionará
+  if (!isAuthenticated && !isPublicPage) {
     return null;
   }
 
   return (
     <>
-      {!isLoginPage ? (
+      {!isPublicPage ? (
         <DashboardLayout>
           {children}
         </DashboardLayout>

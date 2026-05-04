@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { authService } from '@/features/auth/services/auth.service';
 
 export default function LoginPage() {
@@ -59,33 +60,38 @@ export default function LoginPage() {
             <p className="text-slate-400 mt-1.5 text-xs sm:text-sm">Autentique-se para acessar o sistema corporativo</p>
           </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm text-center">
+              <div className="bg-rose-500/10 border border-rose-500/50 text-rose-400 p-3 rounded-xl text-xs text-center font-bold">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">E-mail de Acesso</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">E-mail de Acesso</label>
               <input 
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: joao@alfa.com.br"
+                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-600"
+                placeholder="nome@empresa.com.br"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Senha Operacional</label>
+              <div className="flex items-center justify-between mb-1.5 ml-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Senha Operacional</label>
+                <Link href="/forgot-password" title="Recuperar senha" className="text-[10px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-wider">
+                  Esqueci a senha
+                </Link>
+              </div>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-600"
                 placeholder="••••••••"
               />
             </div>
@@ -93,15 +99,24 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-500 hover:to-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-emerald-500 hover:scale-[1.02] active:scale-[0.98] text-white font-black py-4 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                'Acessar Sistema'
+                'Entrar no Sistema'
               )}
             </button>
           </form>
+
+          <div className="mt-10 text-center border-t border-white/5 pt-6">
+            <p className="text-slate-500 text-sm">
+              Novo por aqui?{' '}
+              <Link href="/register" className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors">
+                Criar uma conta
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

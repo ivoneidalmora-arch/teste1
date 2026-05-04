@@ -1,57 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { authService } from '../services/auth.service';
-import { supabase } from '@/services/supabase';
-import { Session } from '@supabase/supabase-js';
-
+import { useAuthContext } from '../contexts/AuthContext';
 
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, user, loading, logout, isAuthenticated } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
-
-  const checkAuth = useCallback(async () => {
-    setLoading(true);
-    try {
-      const currentSession = await authService.getSession();
-      setSession(currentSession);
-    } catch (error) {
-      console.error('[useAuth] Error checking session:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-
-    // Listener do Supabase
-    const { data: { subscription } } = authService.onAuthStateChange((session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [checkAuth]);
 
   useEffect(() => {
     if (!loading) {
       const isLoginPage = pathname === '/login';
-      const hasAuth = !!session;
+      const isRegisterPage = pathname === '/register';
+      const isForgotPasswordPage = pathname === '/forgot-password';
+      const isPublicPage = isLoginPage || isRegisterPage || isForgotPasswordPage;
 
-      if (hasAuth && isLoginPage) {
+      if (isAuthenticated && isPublicPage) {
         router.push('/');
-      } else if (!hasAuth && !isLoginPage) {
+      } else if (!isAuthenticated && !isPublicPage) {
         router.push('/login');
       }
     }
-  }, [loading, session, pathname, router]);
+  }, [loading, isAuthenticated, pathname, router]);
 
-  const logout = async () => {
-    await authService.logout();
-    setSession(null);
-    router.push('/login');
+  return { 
+    session, 
+    user, 
+    loading, 
+    isAuthenticated, 
+    logout 
   };
-
-  return { session, loading, isAuthenticated: !!session, logout };
 }
