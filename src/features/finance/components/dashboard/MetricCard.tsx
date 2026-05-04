@@ -53,8 +53,9 @@ export function MetricCard({ metric, className }: Props) {
   const styles = COLOR_MAP[metric.color] || COLOR_MAP.slate;
   const isPositive = metric.trend === 'up';
 
-  // Dados fake para o sparkline se não houver
-  const sparkData = (metric.sparkline || [10, 20, 15, 30, 25, 40]).map((val, i) => ({ val }));
+  // Dados para o sparkline (apenas reais)
+  const sparkData = (metric.sparkline || []).map((val, i) => ({ val }));
+  const hasData = sparkData.length > 0;
 
   return (
     <div className={cn(
@@ -85,25 +86,27 @@ export function MetricCard({ metric, className }: Props) {
 
         {/* Mini Sparkline */}
         <div className="w-20 h-10 shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparkData}>
-              <defs>
-                <linearGradient id={`gradient-${metric.id}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={styles.chart} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={styles.chart} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <Area 
-                type="monotone" 
-                dataKey="val" 
-                stroke={styles.chart} 
-                strokeWidth={2} 
-                fillOpacity={1} 
-                fill={`url(#gradient-${metric.id})`}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {hasData && (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sparkData}>
+                <defs>
+                  <linearGradient id={`gradient-${metric.id}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={styles.chart} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={styles.chart} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Area 
+                  type="monotone" 
+                  dataKey="val" 
+                  stroke={styles.chart} 
+                  strokeWidth={2} 
+                  fillOpacity={1} 
+                  fill={`url(#gradient-${metric.id})`}
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>

@@ -26,32 +26,43 @@ export function CategoryDonutCard({ data, totalValue }: Props) {
       <h3 className="text-lg font-black text-slate-900 tracking-tight mb-8">Gastos por Categoria</h3>
 
       <div className="flex-1 min-h-[220px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Tooltip content={<CustomTooltip />} />
-            <Pie
-              data={data}
-              innerRadius={70}
-              outerRadius={90}
-              paddingAngle={8}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} className="outline-none" />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+        {totalValue === 0 ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-2">
+              <PieChart className="w-8 h-8" />
+            </div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Sem despesas</p>
+          </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip content={<CustomTooltip />} />
+                <Pie
+                  data={data}
+                  innerRadius={70}
+                  outerRadius={90}
+                  paddingAngle={8}
+                  dataKey="value"
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} className="outline-none" />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
 
-        {/* Centro do Donut */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</span>
-          <span className="text-xl font-black text-slate-900">{formatBRL(totalValue)}</span>
-        </div>
+            {/* Centro do Donut */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+              <span className="text-xl font-black text-slate-900">{formatBRL(totalValue)}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="mt-8 space-y-3">
-        {data.map((item, index) => (
+        {totalValue > 0 && data.map((item, index) => (
           <div key={index} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -62,6 +73,11 @@ export function CategoryDonutCard({ data, totalValue }: Props) {
             </span>
           </div>
         ))}
+        {totalValue === 0 && (
+          <p className="text-center text-[11px] font-semibold text-slate-400">
+            Registre despesas para ver a distribuição por categoria.
+          </p>
+        )}
       </div>
     </div>
   );

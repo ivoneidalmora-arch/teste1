@@ -49,21 +49,24 @@ export function AlertsInsightsPanel({ alerts }: Props) {
         ))}
 
         {alerts.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center py-10 opacity-50">
-            <AlertCircle className="w-10 h-10 text-slate-300 mb-4" />
-            <p className="text-sm font-bold text-slate-400">Nenhum alerta crítico</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-10 text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-emerald-500 mb-4">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <p className="text-slate-500 text-sm font-bold">Tudo em ordem!</p>
+            <p className="text-slate-400 text-xs font-semibold max-w-[200px]">Não detectamos anomalias financeiras ou alertas pendentes para este período.</p>
           </div>
         )}
       </div>
 
       <div className="mt-8 pt-6 border-t border-slate-100">
-        <div className="bg-blue-600 rounded-2xl p-5 text-white shadow-lg shadow-blue-600/20">
+        <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-lg shadow-slate-900/20">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-blue-200" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-100">Insight da IA</span>
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status do Sistema</span>
           </div>
           <p className="text-xs font-bold leading-relaxed">
-            Seu custo fixo subiu 5% este mês. Reduzir gastos com software pode economizar R$ 1.200,00/mês.
+            Monitoramento em tempo real ativo. Novas transações serão analisadas automaticamente.
           </p>
         </div>
       </div>

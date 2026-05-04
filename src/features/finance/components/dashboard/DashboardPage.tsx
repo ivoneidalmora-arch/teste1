@@ -12,18 +12,18 @@ import { CategoryDonutCard } from './CategoryDonutCard';
 import { FinancialCalendarCard } from './FinancialCalendarCard';
 
 import { 
-  MOCK_METRICS, 
-  MOCK_CASH_FLOW, 
-  MOCK_ALERTS, 
-  MOCK_TRANSACTIONS, 
-  MOCK_TOP_CLIENTS, 
-  MOCK_CATEGORIES, 
-  MOCK_EVENTS 
-} from '../../data/dashboard.mock';
+  TrendingUp, 
+  TrendingDown, 
+  Wallet, 
+  Target, 
+  ShieldCheck,
+  Clock
+} from 'lucide-react';
 import { useFinance } from '../../hooks/useFinance';
 import { formatBRL } from '@/core/utils/formatters';
 import { useState } from 'react';
 import { Transaction } from '@/core/types/finance';
+import { DashboardMetric } from '../../types/dashboard.types';
 
 // Modals
 import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
@@ -38,27 +38,69 @@ export function DashboardPage() {
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  // Integrando dados reais com o visual premium
-  const displayMetrics = MOCK_METRICS.map(m => {
-    if (!realMetrics) return m;
-    
-    switch(m.title) {
-      case 'Receita Bruta':
-        return { ...m, value: realMetrics.currentIncome, formattedValue: formatBRL(realMetrics.currentIncome), change: Number(realMetrics.incomeVariation.toFixed(1)) };
-      case 'Receita Líquida':
-        return { ...m, value: realMetrics.currentIncome, formattedValue: formatBRL(realMetrics.currentIncome), change: Number(realMetrics.incomeVariation.toFixed(1)) };
-      case 'Despesa Total':
-        return { ...m, value: realMetrics.currentExpense, formattedValue: formatBRL(realMetrics.currentExpense), change: Number(realMetrics.expenseVariation.toFixed(1)) };
-      case 'Despesas Pendentes':
-        return { ...m, value: realMetrics.currentPendingExpense || 0, formattedValue: formatBRL(realMetrics.currentPendingExpense || 0) };
-      case 'Saldo Atual':
-        return { ...m, value: realMetrics.totalGlobalBalance, formattedValue: formatBRL(realMetrics.totalGlobalBalance), change: Number(realMetrics.balanceVariation.toFixed(1)) };
-      case 'Lucro do Mês':
-        return { ...m, value: realMetrics.currentBalance, formattedValue: formatBRL(realMetrics.currentBalance), change: Number(realMetrics.balanceVariation.toFixed(1)) };
-      default:
-        return m;
+  // KPIs dinâmicos baseados em dados reais
+  const displayMetrics: DashboardMetric[] = [
+    {
+      id: 'revenue-gross',
+      title: 'Receita Bruta',
+      value: realMetrics?.currentIncome || 0,
+      formattedValue: formatBRL(realMetrics?.currentIncome || 0),
+      change: Number(realMetrics?.incomeVariation.toFixed(1)) || 0,
+      trend: (realMetrics?.incomeVariation || 0) >= 0 ? 'up' : 'down',
+      icon: TrendingUp,
+      color: 'green'
+    },
+    {
+      id: 'revenue-net',
+      title: 'Receita Líquida',
+      value: realMetrics?.currentIncome || 0, // Ajustar se houver cálculo de líquido
+      formattedValue: formatBRL(realMetrics?.currentIncome || 0),
+      change: Number(realMetrics?.incomeVariation.toFixed(1)) || 0,
+      trend: (realMetrics?.incomeVariation || 0) >= 0 ? 'up' : 'down',
+      icon: ShieldCheck,
+      color: 'blue'
+    },
+    {
+      id: 'expense-total',
+      title: 'Despesa Total',
+      value: realMetrics?.currentExpense || 0,
+      formattedValue: formatBRL(realMetrics?.currentExpense || 0),
+      change: Number(realMetrics?.expenseVariation.toFixed(1)) || 0,
+      trend: (realMetrics?.expenseVariation || 0) <= 0 ? 'down' : 'up',
+      icon: TrendingDown,
+      color: 'red'
+    },
+    {
+      id: 'expense-pending',
+      title: 'Despesas Pendentes',
+      value: realMetrics?.currentPendingExpense || 0,
+      formattedValue: formatBRL(realMetrics?.currentPendingExpense || 0),
+      change: 0,
+      trend: 'up',
+      icon: Clock,
+      color: 'orange'
+    },
+    {
+      id: 'balance-global',
+      title: 'Saldo Atual',
+      value: realMetrics?.totalGlobalBalance || 0,
+      formattedValue: formatBRL(realMetrics?.totalGlobalBalance || 0),
+      change: Number(realMetrics?.balanceVariation.toFixed(1)) || 0,
+      trend: (realMetrics?.balanceVariation || 0) >= 0 ? 'up' : 'down',
+      icon: Wallet,
+      color: 'purple'
+    },
+    {
+      id: 'profit-month',
+      title: 'Lucro do Mês',
+      value: realMetrics?.currentBalance || 0,
+      formattedValue: formatBRL(realMetrics?.currentBalance || 0),
+      change: Number(realMetrics?.balanceVariation.toFixed(1)) || 0,
+      trend: (realMetrics?.balanceVariation || 0) >= 0 ? 'up' : 'down',
+      icon: Target,
+      color: 'green'
     }
-  });
+  ];
 
   const recentTransactions = (transactions || []).slice(0, 10).map(t => ({
     id: String(t.id),
@@ -127,27 +169,27 @@ export function DashboardPage() {
       {/* Gráfico & Alertas */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-8">
-          <CashFlowChart data={realMetrics?.cashFlowData || MOCK_CASH_FLOW} />
+          <CashFlowChart data={realMetrics?.cashFlowData || []} />
         </div>
         <div className="xl:col-span-4">
-          <AlertsInsightsPanel alerts={MOCK_ALERTS} />
+          <AlertsInsightsPanel alerts={[]} />
         </div>
       </div>
 
       {/* Tabela de Transações */}
       <RecentTransactionsTable 
-        transactions={recentTransactions.length > 0 ? recentTransactions : MOCK_TRANSACTIONS} 
+        transactions={recentTransactions} 
         onAction={(id) => {}} 
       />
 
       {/* Cards Secundários */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <TopClientsCard clients={realMetrics?.topClients || MOCK_TOP_CLIENTS} />
+        <TopClientsCard clients={realMetrics?.topClients || []} />
         <CategoryDonutCard 
-          data={realMetrics?.categoryDistribution || MOCK_CATEGORIES} 
-          totalValue={realMetrics?.currentExpense || 1} 
+          data={realMetrics?.categoryDistribution || []} 
+          totalValue={realMetrics?.currentExpense || 0} 
         />
-        <FinancialCalendarCard events={realMetrics?.calendarEvents || MOCK_EVENTS} />
+        <FinancialCalendarCard events={realMetrics?.calendarEvents || []} />
       </div>
 
       {/* Modais de Operação */}

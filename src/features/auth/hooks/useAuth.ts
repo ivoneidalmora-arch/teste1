@@ -4,7 +4,6 @@ import { authService } from '../services/auth.service';
 import { supabase } from '@/services/supabase';
 import { Session } from '@supabase/supabase-js';
 
-const BYPASS_AUTH = true; // DESATIVAR LOGIN TEMPORARIAMENTE
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -13,11 +12,6 @@ export function useAuth() {
   const pathname = usePathname();
 
   const checkAuth = useCallback(async () => {
-    if (BYPASS_AUTH) {
-      setSession({ user: { id: 'dummy-id', email: 'dev@dashboard.alfa' } } as any);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const currentSession = await authService.getSession();
@@ -30,11 +24,6 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    if (BYPASS_AUTH) {
-      setSession({ user: { id: 'dummy-id', email: 'dev@dashboard.alfa' } } as any);
-      setLoading(false);
-      return;
-    }
     checkAuth();
 
     // Listener do Supabase
@@ -48,7 +37,7 @@ export function useAuth() {
   useEffect(() => {
     if (!loading) {
       const isLoginPage = pathname === '/login';
-      const hasAuth = !!session || BYPASS_AUTH;
+      const hasAuth = !!session;
 
       if (hasAuth && isLoginPage) {
         router.push('/');
@@ -59,14 +48,10 @@ export function useAuth() {
   }, [loading, session, pathname, router]);
 
   const logout = async () => {
-    if (BYPASS_AUTH) {
-      alert('Logout desativado em modo de bypass.');
-      return;
-    }
     await authService.logout();
     setSession(null);
     router.push('/login');
   };
 
-  return { session, loading, isAuthenticated: !!session || BYPASS_AUTH, logout };
+  return { session, loading, isAuthenticated: !!session, logout };
 }
