@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Transaction, IncomeTransaction } from '@/core/types/finance';
+import { Transaction } from '@/core/types/finance';
 import { format } from 'date-fns';
 import { formatBRL } from '@/core/utils/formatters';
 
@@ -15,7 +15,6 @@ interface ExportSummary {
 export const pdfService = {
   exportToPDF(transactions: Transaction[], summary: ExportSummary) {
     const doc = new jsPDF('p', 'pt', 'a4');
-    const brandBlue = '#3b82f6';
     const textDark = '#1e293b';
     const textLight = '#64748b';
 

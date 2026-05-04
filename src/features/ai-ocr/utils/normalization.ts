@@ -39,7 +39,7 @@ export const normalizeDate = (date: any): string => {
 
   // Caso DD/MM/YYYY ou DD/MM/YY ou DD/MM
   if (dateStr.includes('/')) {
-    let parts = dateStr.split('/');
+    const parts = dateStr.split('/');
     
     // Se a primeira parte tem 4 dígitos, provavelmente é YYYY/MM/DD (invertido mas com barra)
     if (parts[0].length === 4) {

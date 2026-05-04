@@ -156,7 +156,7 @@ export const metricsService = {
       .filter(t => t.date)
       .slice(0, 5)
       .map(t => ({
-        id: t.id || Math.random().toString(),
+        id: String(t.id || Math.random().toString()),
         date: t.date!,
         title: t.description || 'Transação',
         amount: t.amount || 0,

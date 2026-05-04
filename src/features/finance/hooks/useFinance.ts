@@ -8,7 +8,7 @@ export function useFinance(selectedDate: Date) {
   const metrics = useMemo(() => {
     if (!transactions) return null;
     try {
-      console.log('[useFinance] Calculating metrics for', transactions.length, 'transactions');
+      // Calculating metrics for transactions.length
       return metricsService.calculateDashboard(transactions, selectedDate);
     } catch (err) {
       console.error('[useFinance] Error calculating dashboard metrics:', err);

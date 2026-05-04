@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     30/10/2025;SKJ0E91;CANGOA;Transferência;169.83`;
 
     let responseText = '';
-    let openRouterError = '';
+    const openRouterError = '';
 
     // --- DIAGNÓSTICO: LISTAR MODELOS DISPONÍVEIS (GOOGLE) ---
     if (geminiKey) {

@@ -152,16 +152,15 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
                   />
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => formatBRL(Number(value))}
+                  formatter={(value: number) => formatBRL(value)}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                 />
                 <Legend 
                   verticalAlign="bottom" 
                   align="center"
                   iconType="circle"
-                  formatter={(value, entry: any) => {
-                    const { payload } = entry;
-                    const percent = totalIncome > 0 ? ((payload.value / totalIncome) * 100).toFixed(1) : '0';
+                  formatter={(value, entry: { payload?: { value: number } }) => {
+                    const percent = totalIncome > 0 && entry.payload ? ((entry.payload.value / totalIncome) * 100).toFixed(1) : '0';
                     return <span className="text-xs font-bold text-slate-600 uppercase ml-1">{value} ({percent}%)</span>;
                   }}
                 />
