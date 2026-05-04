@@ -1,6 +1,6 @@
 import { supabase } from '@/services/supabase';
 
-const INTERNAL_DOMAIN = '@alfa.sistema';
+const INTERNAL_DOMAIN = '@alfa.com.br';
 
 export const authService = {
   /**

@@ -81,7 +81,7 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
               Criar Nova Conta
             </h1>
-            <p className="text-slate-400 mt-1 text-sm">Cadastre seu e-mail corporativo</p>
+            <p className="text-slate-400 mt-1 text-sm">Defina seus dados de acesso</p>
           </div>
           
           <form onSubmit={handleRegister} className="space-y-4">
