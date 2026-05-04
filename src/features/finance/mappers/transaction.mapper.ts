@@ -10,6 +10,7 @@ export const TransactionMapper = {
     
     return {
       id: String(raw.id),
+      app_user_id: raw.app_user_id,
       type: 'income',
       category: raw.category || 'Outros',
       amount: amountBruto,
@@ -40,6 +41,7 @@ export const TransactionMapper = {
     
     return {
       id: String(raw.id),
+      app_user_id: raw.app_user_id,
       type: 'expense',
       category: raw.category || 'Operacional',
       amount: amount,
