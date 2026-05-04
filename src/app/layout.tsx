@@ -1,3 +1,4 @@
+// Build timestamp: 2026-05-04 11:42
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
@@ -9,8 +10,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard Alfa São Mateus",
-  description: "Sistema Avançado de Gestão Financeira Corporativa",
+  title: "Dashboard Alfa (PROD)",
+  description: "Sistema Oficial Alfa Perícia e Vistoria",
 };
 
 export default function RootLayout({
