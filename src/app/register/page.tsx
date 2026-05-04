@@ -82,8 +82,8 @@ export default function RegisterPage() {
             <div className="inline-flex items-center justify-center p-2 bg-white rounded-xl shadow-xl mb-4 border border-white/20">
               <Image src="/logo.png" alt="Alfa Logo" width={140} height={50} className="h-10 w-auto object-contain" />
             </div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-              Criar Nova Conta
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-400">
+              Criar Nova Conta (SISTEMA NOVO)
             </h1>
             <p className="text-slate-400 mt-1 text-sm">Defina seus dados de acesso</p>
           </div>
