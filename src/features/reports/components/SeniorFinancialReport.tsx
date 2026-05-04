@@ -159,8 +159,9 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
                   verticalAlign="bottom" 
                   align="center"
                   iconType="circle"
-                  formatter={(value, entry: { payload?: { value: number } }) => {
-                    const percent = totalIncome > 0 && entry.payload ? ((entry.payload.value / totalIncome) * 100).toFixed(1) : '0';
+                  formatter={(value: any, entry: any) => {
+                    const payload = entry?.payload;
+                    const percent = totalIncome > 0 && payload ? ((payload.value / totalIncome) * 100).toFixed(1) : '0';
                     return <span className="text-xs font-bold text-slate-600 uppercase ml-1">{value} ({percent}%)</span>;
                   }}
                 />
