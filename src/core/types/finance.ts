@@ -51,4 +51,9 @@ export interface FinancialMetrics {
   balanceVariation: number;
   ticketMedio: number;
   availableMonths: string[];
+  currentPendingExpense: number;
+  cashFlowData: any[];
+  topClients: any[];
+  categoryDistribution: any[];
+  calendarEvents: any[];
 }

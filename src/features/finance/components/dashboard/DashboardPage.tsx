@@ -45,19 +45,45 @@ export function DashboardPage() {
     switch(m.title) {
       case 'Receita Bruta':
         return { ...m, value: realMetrics.currentIncome, formattedValue: formatBRL(realMetrics.currentIncome), change: Number(realMetrics.incomeVariation.toFixed(1)) };
+      case 'Receita Líquida':
+        return { ...m, value: realMetrics.currentIncome, formattedValue: formatBRL(realMetrics.currentIncome), change: Number(realMetrics.incomeVariation.toFixed(1)) };
       case 'Despesa Total':
         return { ...m, value: realMetrics.currentExpense, formattedValue: formatBRL(realMetrics.currentExpense), change: Number(realMetrics.expenseVariation.toFixed(1)) };
+      case 'Despesas Pendentes':
+        return { ...m, value: realMetrics.currentPendingExpense || 0, formattedValue: formatBRL(realMetrics.currentPendingExpense || 0) };
       case 'Saldo Atual':
-        return { ...m, value: realMetrics.currentBalance, formattedValue: formatBRL(realMetrics.currentBalance), change: Number(realMetrics.balanceVariation.toFixed(1)) };
+        return { ...m, value: realMetrics.totalGlobalBalance, formattedValue: formatBRL(realMetrics.totalGlobalBalance), change: Number(realMetrics.balanceVariation.toFixed(1)) };
       case 'Lucro do Mês':
-        // No contexto atual, lucro do mês é o saldo mensal (receita - despesa)
         return { ...m, value: realMetrics.currentBalance, formattedValue: formatBRL(realMetrics.currentBalance), change: Number(realMetrics.balanceVariation.toFixed(1)) };
       default:
         return m;
     }
   });
 
-  const totalBalance = realMetrics?.totalGlobalBalance ?? 1283750.90;
+  const recentTransactions = (transactions || []).slice(0, 10).map(t => ({
+    id: String(t.id),
+    date: t.date,
+    description: t.description,
+    customer: t.customer || 'N/A',
+    category: t.category || 'Outros',
+    amount: t.amount,
+    status: t.status as any,
+    origin: t.source || 'supabase',
+    type: t.type
+  }));
+
+  const totalBalance = realMetrics?.totalGlobalBalance ?? 0;
+
+  if (loading && (!transactions || transactions.length === 0)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-bold">Carregando Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -91,8 +117,8 @@ export function DashboardPage() {
       {/* Destaque Saldo */}
       <FinancialHeroCard 
         balance={totalBalance} 
-        lastUpdate="Hoje, 10:45" 
-        variation={18.4} 
+        lastUpdate="Atualizado agora" 
+        variation={realMetrics?.balanceVariation || 0} 
       />
 
       {/* KPIs Principais */}
@@ -101,7 +127,7 @@ export function DashboardPage() {
       {/* Gráfico & Alertas */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-8">
-          <CashFlowChart data={MOCK_CASH_FLOW} />
+          <CashFlowChart data={realMetrics?.cashFlowData || MOCK_CASH_FLOW} />
         </div>
         <div className="xl:col-span-4">
           <AlertsInsightsPanel alerts={MOCK_ALERTS} />
@@ -110,15 +136,18 @@ export function DashboardPage() {
 
       {/* Tabela de Transações */}
       <RecentTransactionsTable 
-        transactions={MOCK_TRANSACTIONS} 
+        transactions={recentTransactions.length > 0 ? recentTransactions : MOCK_TRANSACTIONS} 
         onAction={(id) => {}} 
       />
 
       {/* Cards Secundários */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <TopClientsCard clients={MOCK_TOP_CLIENTS} />
-        <CategoryDonutCard data={MOCK_CATEGORIES} totalValue={30700} />
-        <FinancialCalendarCard events={MOCK_EVENTS} />
+        <TopClientsCard clients={realMetrics?.topClients || MOCK_TOP_CLIENTS} />
+        <CategoryDonutCard 
+          data={realMetrics?.categoryDistribution || MOCK_CATEGORIES} 
+          totalValue={realMetrics?.currentExpense || 1} 
+        />
+        <FinancialCalendarCard events={realMetrics?.calendarEvents || MOCK_EVENTS} />
       </div>
 
       {/* Modais de Operação */}
