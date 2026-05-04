@@ -6,6 +6,7 @@ import { cn } from '@/core/utils/formatters';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { ingestionService } from '../services/ingestion.service';
 import { ImportPreviewModal } from './ImportPreviewModal';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   onSuccess: () => void;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ImportButton({ onSuccess, className }: Props) {
+  const { user } = useAuthContext();
   const [importing, setImporting] = useState(false);
   const [statusText, setStatusText] = useState('Processando IA...');
   const [showPreview, setShowPreview] = useState(false);
@@ -70,12 +72,12 @@ export function ImportButton({ onSuccess, className }: Props) {
           customer: item.cliente || 'CLIENTE',
           status: 'paid',
           source: 'import',
-          metadata: {
-            placa: item.placa,
-            observacao: item.observacao || 'IMPORTADO VIA IA',
-            pagamento: 'Pix'
-          }
-        });
+            metadata: {
+              placa: item.placa,
+              observacao: item.observacao || 'IMPORTADO VIA IA',
+              pagamento: 'Pix'
+            }
+          }, user?.id || '');
         
         if (result === null) {
           failedItems.push(item);
