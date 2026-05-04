@@ -11,8 +11,8 @@ interface Props {
 }
 
 const DECORATIVE_DATA = [
-  { val: 400 }, { val: 700 }, { val: 500 }, { val: 900 }, 
-  { val: 600 }, { val: 800 }, { val: 1000 }, { val: 700 }
+  { val: 0 }, { val: 0 }, { val: 0 }, { val: 0 }, 
+  { val: 0 }, { val: 0 }, { val: 0 }, { val: 0 }
 ];
 
 export function FinancialHeroCard({ balance, lastUpdate, variation }: Props) {
@@ -46,25 +46,15 @@ export function FinancialHeroCard({ balance, lastUpdate, variation }: Props) {
           </div>
         </div>
 
-        {/* Centro: Insights Rápidos */}
+        {/* Centro: Insights Rápidos (Limpando dados fictícios) */}
         <div className="lg:col-span-4 p-8 lg:p-10 bg-slate-50/30 flex flex-col justify-center gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900">Receitas em alta</h4>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">Suas entradas cresceram 12% na última semana.</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-              <Target className="w-4 h-4" />
+              <BarChart3 className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Meta de Lucro</h4>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">Você atingiu 84% da sua meta mensal projetada.</p>
+              <h4 className="text-sm font-bold text-slate-900">Indicadores em Tempo Real</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">O sistema está pronto para processar seus novos lançamentos e gerar insights automáticos.</p>
             </div>
           </div>
         </div>
