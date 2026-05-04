@@ -85,7 +85,9 @@ export function DashboardSidebar() {
               {user?.email?.[0].toUpperCase() || 'A'}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-slate-900 truncate">{user?.email?.split('@')[0] || 'Admin'}</span>
+              <span className="text-xs font-bold text-slate-900 truncate">
+                {user?.email?.split('@')[0] || 'Admin'}
+              </span>
               <span className="text-[10px] text-slate-500 truncate">Administrador</span>
             </div>
           </div>

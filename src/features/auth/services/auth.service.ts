@@ -1,7 +1,18 @@
 import { supabase } from '@/services/supabase';
 
+const INTERNAL_DOMAIN = '@alfa.sistema';
+
 export const authService = {
-  async login(email: string, password: string) {
+  /**
+   * Converte um nome de usuário simples em um formato de e-mail interno para o Supabase
+   */
+  formatEmail(username: string) {
+    if (username.includes('@')) return username; // Se já for e-mail, mantém
+    return `${username.trim().toLowerCase()}${INTERNAL_DOMAIN}`;
+  },
+
+  async login(username: string, password: string) {
+    const email = this.formatEmail(username);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -10,7 +21,8 @@ export const authService = {
     return data;
   },
 
-  async signUp(email: string, password: string) {
+  async signUp(username: string, password: string) {
+    const email = this.formatEmail(username);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
