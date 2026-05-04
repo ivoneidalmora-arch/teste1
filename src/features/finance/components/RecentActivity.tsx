@@ -4,6 +4,7 @@ import { formatBRL, cn } from '@/core/utils/formatters';
 import { formatDisplayDate } from '@/core/utils/date';
 import { Transaction, IncomeTransaction } from '@/core/types/finance';
 import { transactionService } from '../services/transaction.service';
+import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 
 interface Props {
   transactions: Transaction[];
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) {
+  const { user } = useAuthContext();
   const safeTransactions = transactions || [];
   const recent = safeTransactions.slice(0, 6);
 
@@ -27,7 +29,7 @@ export function RecentActivity({ transactions = [], onEdit, onRefresh }: Props) 
   const handleDelete = async (t: Transaction) => {
     if (!t.id) return;
     if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
-      const success = await transactionService.delete(String(t.id), t.type);
+      const success = await transactionService.delete(String(t.id), t.type, user?.id || '');
       if (success) onRefresh();
     }
   };
