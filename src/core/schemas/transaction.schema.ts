@@ -8,6 +8,7 @@ export const LegacyStatusSchema = z.enum(['Pago', 'Pendente']);
 
 export const TransactionSchema = z.object({
   id: z.union([z.string(), z.number()]),
+  app_user_id: z.string().uuid().optional(),
   type: TransactionTypeSchema,
   amount: z.number().min(0),
   grossAmount: z.number().optional(),
