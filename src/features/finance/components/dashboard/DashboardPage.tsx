@@ -153,6 +153,7 @@ export function DashboardPage() {
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
         onNewTransaction={() => setIsVistoriaModalOpen(true)}
+        onNewExpense={() => setIsDespesaModalOpen(true)}
         onImportFile={() => setIsVistoriaModalOpen(true)} 
       />
 

@@ -6,10 +6,11 @@ interface Props {
   title: string;
   subtitle?: string;
   onNewTransaction?: () => void;
+  onNewExpense?: () => void;
   onImportFile?: () => void;
 }
 
-export function DashboardHeader({ title, subtitle, onNewTransaction, onImportFile }: Props) {
+export function DashboardHeader({ title, subtitle, onNewTransaction, onNewExpense, onImportFile }: Props) {
   return (
     <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
       {/* Title & Context */}
@@ -58,11 +59,19 @@ export function DashboardHeader({ title, subtitle, onNewTransaction, onImportFil
           </button>
           
           <button 
-            onClick={onNewTransaction}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary text-white rounded-xl text-sm font-bold hover:bg-brand-primary/90 transition-all shadow-lg shadow-brand-primary/25"
+            onClick={onNewExpense}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/25"
           >
             <Plus className="w-4 h-4" />
-            <span>Novo</span>
+            <span>Despesa</span>
+          </button>
+
+          <button 
+            onClick={onNewTransaction}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/25"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Vistoria</span>
           </button>
         </div>
       </div>

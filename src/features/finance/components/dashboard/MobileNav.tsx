@@ -7,6 +7,10 @@ import {
   Menu, 
   X, 
   LayoutDashboard, 
+  TrendingUp,
+  TrendingDown,
+  Upload,
+  Scan,
   FileText, 
   Settings, 
   LogOut,
@@ -19,7 +23,11 @@ import Image from 'next/image';
 
 const MENU_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+  { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
+  { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
   { icon: FileText, label: 'Relatórios', href: '/relatorios' },
+  { icon: Upload, label: 'Importações', href: '/importacoes' },
+  { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
   { icon: Settings, label: 'Configurações', href: '/configuracoes' },
 ];
 
@@ -63,7 +71,9 @@ export function MobileNav() {
 
             <nav className="flex-1 p-4 space-y-2">
               {MENU_ITEMS.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = item.href === '/' 
+                  ? pathname === '/' 
+                  : pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.label}
