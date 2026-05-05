@@ -1,9 +1,19 @@
 "use client";
 
-import { Scan, BrainCircuit, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Scan, BrainCircuit, Zap, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { ImportButton } from '@/features/ai-ocr/components/ImportButton';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function OCRiaPage() {
+  const router = useRouter();
+
+  const handleSuccess = () => {
+    toast.success('Processamento concluído! Redirecionando para relatórios...');
+    router.push('/relatorios');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12 animate-in fade-in duration-1000">
       <div className="flex flex-col md:flex-row items-center gap-12 bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/50">
@@ -21,13 +31,10 @@ export default function OCRiaPage() {
             permite ler e categorizar vistorias automaticamente a partir de qualquer documento.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center md:justify-start">
-            <Link 
-              href="/importacoes"
-              className="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all group"
-            >
-              Começar Importação
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <ImportButton 
+              onSuccess={handleSuccess} 
+              className="px-10 h-14 bg-purple-600 hover:bg-purple-700 shadow-purple-600/20 text-lg" 
+            />
           </div>
         </div>
         <div className="flex-1 relative group">

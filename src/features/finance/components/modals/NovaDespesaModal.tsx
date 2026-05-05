@@ -4,6 +4,7 @@ import { transactionService } from '@/features/finance/services/transaction.serv
 import { format } from 'date-fns';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Props {
   isOpen: boolean;
@@ -34,8 +35,8 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.valor <= 0) return alert('O valor deve ser maior que zero.');
-    if (!formData.descricao) return alert('Informe uma descrição.');
+    if (formData.valor <= 0) return toast.error('O valor deve ser maior que zero.');
+    if (!formData.descricao) return toast.error('Informe uma descrição.');
 
     setLoading(true);
     try {
@@ -57,11 +58,12 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
         }
       }, user.id);
 
+      toast.success('Despesa registrada com sucesso!');
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
     } catch (err: any) {
       console.error('[NovaDespesaModal] Error:', err);
-      alert('Erro ao salvar a despesa: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao salvar a despesa: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }

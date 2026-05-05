@@ -9,7 +9,7 @@ interface BaseModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  headerColorContext?: 'neutral' | 'success' | 'danger';
+  headerColorContext?: 'neutral' | 'success' | 'danger' | 'warning' | 'info';
 }
 
 export function BaseModal({ isOpen, onClose, title, children, headerColorContext = 'neutral' }: BaseModalProps) {
@@ -30,7 +30,9 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
   const contextMap = {
     neutral: 'bg-slate-50 text-slate-800',
     success: 'bg-emerald-50 text-emerald-800',
-    danger: 'bg-rose-50 text-rose-800'
+    danger: 'bg-rose-50 text-rose-800',
+    warning: 'bg-amber-50 text-amber-800',
+    info: 'bg-blue-50 text-blue-800'
   };
 
   return (

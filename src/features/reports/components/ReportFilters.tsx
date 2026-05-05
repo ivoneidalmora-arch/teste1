@@ -16,6 +16,8 @@ interface Props {
     setSearchPlaca: (v: string) => void;
     searchCliente: string;
     setSearchCliente: (v: string) => void;
+    filterStatus: 'all' | 'paid' | 'pending';
+    setFilterStatus: (v: 'all' | 'paid' | 'pending') => void;
   };
 }
 

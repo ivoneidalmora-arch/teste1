@@ -4,6 +4,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthGuard } from "@/features/auth/components/AuthGuard";
 import { AuthProvider } from "@/features/auth/contexts/AuthContext";
+import { Toaster } from "sonner";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -28,6 +29,7 @@ export default function RootLayout({
             {children}
           </AuthGuard>
         </AuthProvider>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

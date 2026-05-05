@@ -21,14 +21,34 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import Image from 'next/image';
 
-const MENU_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-  { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
-  { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
-  { icon: FileText, label: 'Relatórios', href: '/relatorios' },
-  { icon: Upload, label: 'Importações', href: '/importacoes' },
-  { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
-  { icon: Settings, label: 'Configurações', href: '/configuracoes' },
+const MENU_GROUPS = [
+  {
+    title: 'Principal',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+    ]
+  },
+  {
+    title: 'Financeiro',
+    items: [
+      { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
+      { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
+      { icon: FileText, label: 'Relatórios', href: '/relatorios' },
+    ]
+  },
+  {
+    title: 'Automação',
+    items: [
+      { icon: Upload, label: 'Importações', href: '/importacoes' },
+      { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
+    ]
+  },
+  {
+    title: 'Sistema',
+    items: [
+      { icon: Settings, label: 'Configurações', href: '/configuracoes' },
+    ]
+  }
 ];
 
 export function MobileNav() {
@@ -69,28 +89,37 @@ export function MobileNav() {
               </button>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2">
-              {MENU_ITEMS.map((item) => {
-                const isActive = item.href === '/' 
-                  ? pathname === '/' 
-                  : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                      isActive 
-                        ? "bg-brand-primary/10 text-brand-primary font-bold" 
-                        : "text-slate-500 hover:bg-slate-50"
-                    )}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+              {MENU_GROUPS.map((group) => (
+                <div key={group.title} className="space-y-2">
+                  <h3 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {group.title}
+                  </h3>
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = item.href === '/' 
+                        ? pathname === '/' 
+                        : pathname.startsWith(item.href);
+                      return (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          onClick={() => setIsOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                            isActive 
+                              ? "bg-brand-primary/10 text-brand-primary font-bold shadow-sm shadow-brand-primary/5" 
+                              : "text-slate-500 hover:bg-slate-50"
+                          )}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          <span className="text-sm">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50/50">

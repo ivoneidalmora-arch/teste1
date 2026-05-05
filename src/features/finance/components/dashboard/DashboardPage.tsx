@@ -20,7 +20,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useFinance } from '../../hooks/useFinance';
-import { formatBRL } from '@/core/utils/formatters';
+import { formatBRL, cn } from '@/core/utils/formatters';
 import { useState } from 'react';
 import { Transaction } from '@/core/types/finance';
 import { DashboardMetric } from '../../types/dashboard.types';
@@ -32,11 +32,24 @@ import { EditTransactionModal } from '@/features/finance/components/modals/EditT
 
 export function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'last30' | 'custom'>('month');
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const { transactions, metrics: realMetrics, loading, error, refresh } = useFinance(selectedDate);
   
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  // Filtro de Transações por busca
+  const filteredTransactions = transactions.filter(t => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      t.description?.toLowerCase().includes(searchLower) ||
+      t.customer?.toLowerCase().includes(searchLower) ||
+      t.category?.toLowerCase().includes(searchLower)
+    );
+  });
 
   // KPIs dinâmicos baseados em dados reais
   const displayMetrics: DashboardMetric[] = [
@@ -102,7 +115,7 @@ export function DashboardPage() {
     }
   ];
 
-  const recentTransactions = (transactions || []).slice(0, 10).map(t => ({
+  const recentTransactions = (filteredTransactions || []).slice(0, 10).map(t => ({
     id: String(t.id),
     date: t.date,
     description: t.description,
@@ -154,8 +167,34 @@ export function DashboardPage() {
         subtitle="Visão Geral Corporativa" 
         onNewTransaction={() => setIsVistoriaModalOpen(true)}
         onNewExpense={() => setIsDespesaModalOpen(true)}
-        onImportFile={() => setIsVistoriaModalOpen(true)} 
+        onImportFile={() => window.location.href = '/importacoes'} 
+        onGenerateReport={() => window.location.href = '/relatorios'}
+        onSearch={setSearchQuery}
       />
+
+      {/* Filtros de Período */}
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { id: 'today', label: 'Hoje' },
+          { id: 'week', label: 'Esta Semana' },
+          { id: 'month', label: 'Este Mês' },
+          { id: 'last30', label: 'Últimos 30 Dias' },
+          { id: 'custom', label: 'Personalizado' },
+        ].map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setPeriodFilter(p.id as any)}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+              periodFilter === p.id 
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
 
       {/* Destaque Saldo */}
       <FinancialHeroCard 

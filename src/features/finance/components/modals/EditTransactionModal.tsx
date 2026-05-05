@@ -5,6 +5,7 @@ import { Transaction } from '@/core/types/finance';
 import { cn } from '@/core/utils/formatters';
 import { Save } from 'lucide-react';
 import { PlacaInput } from '@/core/components/ui/PlacaInput';
+import { toast } from 'sonner';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/core/utils/finance';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
@@ -111,11 +112,12 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
       if (!user) throw new Error('Usuário não autenticado');
 
       await transactionService.update(transaction.id, formData.type, updatedData, user.id);
+      toast.success('Lançamento atualizado com sucesso!');
       onSuccess(new Date(formData.data + 'T12:00:00'));
       onClose();
     } catch (err: any) {
       console.error('[EditTransactionModal] Error:', err);
-      alert('Erro ao atualizar lançamento: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao atualizar lançamento: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }

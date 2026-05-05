@@ -50,8 +50,44 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
     { name: 'Lucro Líquido', value: Math.max(0, netProfit), color: '#10b981' },
   ].filter(item => item.value > 0);
 
+  const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+  
+  const getExecutiveSummary = () => {
+    if (totalIncome === 0) return "Nenhuma atividade registrada no período selecionado.";
+    
+    let text = `O período encerrou com uma receita bruta de ${formatBRL(totalIncome)}. `;
+    
+    if (netProfit > 0) {
+      text += `A operação foi lucrativa, com um saldo líquido de ${formatBRL(netProfit)} e uma margem de ${profitMargin.toFixed(1)}%. `;
+      if (profitMargin > 30) text += "O desempenho é excelente, superando as metas de eficiência operacional.";
+      else if (profitMargin > 15) text += "O resultado é saudável e dentro dos padrões de mercado.";
+      else text += "A margem está apertada, sugere-se revisar custos operacionais.";
+    } else {
+      text += `A operação registrou prejuízo de ${formatBRL(Math.abs(netProfit))}. `;
+      text += "É urgente realizar uma auditoria nas despesas fixas e custos operacionais para reequilibrar o caixa.";
+    }
+    
+    return text;
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Resumo Executivo Textual */}
+      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-900/20">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+             <div className="w-8 h-8 rounded-full border-4 border-emerald-400 border-t-transparent animate-spin-slow" />
+          </div>
+          <div>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Resumo Executivo do Período</h2>
+            <p className="text-xl font-medium leading-relaxed text-slate-100 max-w-4xl">
+              {getExecutiveSummary()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         
         {/* Parte 1: Tabela DRE */}

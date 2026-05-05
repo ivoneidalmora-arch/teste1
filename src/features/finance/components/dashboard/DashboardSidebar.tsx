@@ -18,14 +18,34 @@ import {
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
-const MENU_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-  { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
-  { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
-  { icon: FileText, label: 'Relatórios', href: '/relatorios' },
-  { icon: Upload, label: 'Importações', href: '/importacoes' },
-  { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
-  { icon: Settings, label: 'Configurações', href: '/configuracoes' },
+const MENU_GROUPS = [
+  {
+    title: 'Principal',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+    ]
+  },
+  {
+    title: 'Financeiro',
+    items: [
+      { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
+      { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
+      { icon: FileText, label: 'Relatórios', href: '/relatorios' },
+    ]
+  },
+  {
+    title: 'Automação',
+    items: [
+      { icon: Upload, label: 'Importações', href: '/importacoes' },
+      { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
+    ]
+  },
+  {
+    title: 'Sistema',
+    items: [
+      { icon: Settings, label: 'Configurações', href: '/configuracoes' },
+    ]
+  }
 ];
 
 export function DashboardSidebar() {
@@ -49,33 +69,45 @@ export function DashboardSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-none">
-        {MENU_ITEMS.map((item) => {
-          const isActive = item.href === '/' 
-            ? pathname === '/' 
-            : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                isActive 
-                  ? "bg-brand-primary/10 text-brand-primary" 
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className={cn(
-                  "w-5 h-5 transition-colors",
-                  isActive ? "text-brand-primary" : "text-slate-400 group-hover:text-slate-600"
-                )} />
-                <span className="text-sm font-semibold tracking-tight">{item.label}</span>
-              </div>
-              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto scrollbar-none">
+        {MENU_GROUPS.map((group) => (
+          <div key={group.title} className="space-y-2">
+            <h3 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400/80">
+              {group.title}
+            </h3>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = item.href === '/' 
+                  ? pathname === '/' 
+                  : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 group",
+                      isActive 
+                        ? "bg-brand-primary/10 text-brand-primary shadow-sm shadow-brand-primary/5" 
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className={cn(
+                        "w-4.5 h-4.5 transition-colors",
+                        isActive ? "text-brand-primary" : "text-slate-400 group-hover:text-slate-600"
+                      )} />
+                      <span className={cn(
+                        "text-sm tracking-tight",
+                        isActive ? "font-bold" : "font-semibold"
+                      )}>{item.label}</span>
+                    </div>
+                    {isActive && <ChevronRight className="w-4 h-4 text-brand-primary/50" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User Block */}

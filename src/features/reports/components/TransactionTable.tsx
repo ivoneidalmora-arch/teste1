@@ -7,6 +7,10 @@ import { formatDisplayDate } from '@/core/utils/date';
 import { Transaction, IncomeTransaction, ExpenseTransaction } from '@/core/types/finance';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
+import { toast } from 'sonner';
+import { ConfirmationModal } from '@/core/components/ConfirmationModal';
+import { useState } from 'react';
+import { MoreHorizontal, Edit, Trash, CheckCircle, Copy } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -16,12 +20,54 @@ interface Props {
 
 export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
   const { user } = useAuthContext();
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const handleDelete = async (t: Transaction) => {
-    if (!user) return alert('Sessão expirada. Faça login novamente.');
-    if (window.confirm('Excluir este lançamento permanentemente?')) {
-      const success = await transactionService.delete(t.id, t.type, user.id);
-      if (success) onRefresh();
+  const handleDelete = async () => {
+    if (!user || !deletingTransaction) return;
+    setIsDeleting(true);
+    try {
+      const success = await transactionService.delete(deletingTransaction.id, deletingTransaction.type, user.id);
+      if (success) {
+        toast.success('Lançamento excluído com sucesso!');
+        onRefresh();
+      } else {
+        toast.error('Não foi possível excluir o lançamento.');
+      }
+    } catch (err) {
+      toast.error('Erro ao excluir lançamento.');
+    } finally {
+      setIsDeleting(false);
+      setDeletingTransaction(null);
+    }
+  };
+
+  const handleDuplicate = async (t: Transaction) => {
+    if (!user) return;
+    try {
+      const { id, ...dataToSave } = t;
+      await transactionService.save({
+        ...dataToSave,
+        date: new Date().toISOString().split('T')[0],
+        description: `${t.description} (Cópia)`
+      } as any, user.id);
+      toast.success('Lançamento duplicado!');
+      onRefresh();
+    } catch (err) {
+      toast.error('Erro ao duplicar.');
+    }
+  };
+
+  const handleToggleStatus = async (t: Transaction) => {
+    if (!user) return;
+    if (t.type === 'income') return;
+    const newStatus = t.status === 'paid' ? 'pending' : 'paid';
+    try {
+      await transactionService.update(t.id, t.type, { status: newStatus }, user.id);
+      toast.success(`Status alterado para ${newStatus === 'paid' ? 'Pago' : 'Pendente'}`);
+      onRefresh();
+    } catch (err) {
+      toast.error('Erro ao alterar status.');
     }
   };
 
@@ -78,13 +124,31 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => onEdit(t)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(t)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <div className="relative group/menu">
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/50 py-2 z-20 hidden group-hover/menu:block animate-in fade-in zoom-in-95 duration-100">
+                          <button onClick={() => onEdit(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                            <Edit className="w-4 h-4 text-slate-400" /> Editar Registro
+                          </button>
+                          {!isIncome && (
+                            <button onClick={() => handleToggleStatus(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                              <CheckCircle className={cn("w-4 h-4", t.status === 'paid' ? "text-emerald-500" : "text-slate-400")} /> 
+                              {t.status === 'paid' ? 'Marcar Pendente' : 'Marcar como Pago'}
+                            </button>
+                          )}
+                          <button onClick={() => handleDuplicate(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                            <Copy className="w-4 h-4 text-slate-400" /> Duplicar Lançamento
+                          </button>
+                          <div className="h-px bg-slate-50 my-1" />
+                          <button onClick={() => setDeletingTransaction(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+                            <Trash className="w-4 h-4 text-rose-400" /> Excluir Registro
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -100,6 +164,16 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
           </tbody>
         </table>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!deletingTransaction}
+        onClose={() => setDeletingTransaction(null)}
+        onConfirm={handleDelete}
+        loading={isDeleting}
+        title="Excluir Lançamento?"
+        description={`Você está prestes a excluir "${deletingTransaction?.description || deletingTransaction?.customer}". Esta ação não pode ser desfeita.`}
+        confirmText="Sim, Excluir"
+      />
     </Card>
   );
 }

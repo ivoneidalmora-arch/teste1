@@ -14,6 +14,7 @@ export function useReports() {
   const [filterType, setFilterType] = useState<ReportFilterType>('all');
   const [searchPlaca, setSearchPlaca] = useState<string>('');
   const [searchCliente, setSearchCliente] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'paid' | 'pending'>('all');
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -35,6 +36,10 @@ export function useReports() {
       filtered = filtered.filter(t => t.type === filterType);
     }
 
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(t => t.status === filterStatus);
+    }
+
     return filtered;
   }, [transactions, startDate, endDate, searchPlaca, searchCliente, filterType]);
 
@@ -53,7 +58,8 @@ export function useReports() {
       endDate, setEndDate,
       filterType, setFilterType,
       searchPlaca, setSearchPlaca,
-      searchCliente, setSearchCliente
+      searchCliente, setSearchCliente,
+      filterStatus, setFilterStatus
     }
   };
 }

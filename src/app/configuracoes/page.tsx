@@ -2,139 +2,157 @@
 
 import { useState } from 'react';
 import { transactionService } from '@/features/finance/services/transaction.service';
-import { Download, Upload, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Database } from 'lucide-react';
+import { Download, Upload, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Database, User, Bell, ShieldCheck } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
+import { toast } from 'sonner';
+import { ConfirmationModal } from '@/core/components/ConfirmationModal';
 
 export default function ConfigPage() {
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const handleExport = async () => {
-    setLoading(true);
-    // Nota: Reimplementar export no transactionService se necessário
-    alert('Funcionalidade de backup em nuvem automática ativa. Exportação JSON manual em manutenção.');
-    setLoading(false);
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    alert('Importação via arquivo desativada por segurança. Utilize o banco de dados Supabase diretamente.');
-    e.target.value = '';
+    toast.info('Funcionalidade de backup automático ativa. Exportação manual em breve.');
   };
 
   const handleDeleteAll = async () => {
+    if (confirmText !== 'LIMPAR TUDO') {
+      toast.error('Texto de confirmação incorreto.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const confirm1 = window.confirm('⚠️ AVISO CRÍTICO: Você está prestes a APAGAR TODOS os dados do sistema. Esta ação NÃO pode ser desfeita. Tem certeza?');
-      if (!confirm1) return;
-
-      const confirm2 = window.prompt('Para confirmar a exclusão total, digite "LIMPAR TUDO" no campo abaixo:');
-      if (confirm2 !== 'LIMPAR TUDO') {
-        alert('Confirmação incorreta. Operação cancelada.');
-        return;
-      }
-
-      setLoading(true);
-
-      if (!user?.id) {
-        setStatus({
-          type: "error",
-          msg: "Usuário não autenticado.",
-        });
-        return;
-      }
-
+      if (!user?.id) return;
       const success = await transactionService.deleteAll(user.id);
-
       if (success) {
-        setStatus({
-          type: "success",
-          msg: "Banco de dados zerado com sucesso!",
-        });
+        toast.success("Banco de dados zerado com sucesso!");
+        setIsDeleteModalOpen(false);
+        setConfirmText('');
       } else {
-        setStatus({
-          type: "error",
-          msg: "Não foi possível zerar o banco de dados.",
-        });
+        toast.error("Não foi possível zerar o banco de dados.");
       }
     } catch (error) {
-      console.error("Erro ao zerar banco de dados:", error);
-      setStatus({
-        type: "error",
-        msg: "Erro inesperado ao zerar o banco de dados.",
-      });
+      toast.error("Erro inesperado ao zerar o banco de dados.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-brand-primary/10 rounded-xl">
-          <Database className="w-8 h-8 text-brand-primary" />
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-10 animate-in fade-in duration-700">
+      <div className="flex items-center gap-4">
+        <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl">
+          <Database className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Configurações de Dados</h1>
-          <p className="text-slate-500">Gerencie backups e manutenção do sistema</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Configurações</h1>
+          <p className="text-slate-500">Gerencie sua conta e as preferências do sistema</p>
         </div>
       </div>
 
-      {status && (
-        <div className={cn(
-          "mb-8 p-4 rounded-xl flex items-center gap-3 animate-in fade-in",
-          status.type === 'success' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100"
-        )}>
-          {status.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-          <span className="font-medium">{status.msg}</span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Backup Section */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Download className="w-5 h-5 text-blue-600" />
-            </div>
-            <h2 className="font-bold text-slate-800">Exportar Backup</h2>
+      <div className="grid grid-cols-1 gap-8">
+        {/* Seção: Conta e Perfil */}
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-slate-400" />
+            <h2 className="text-xl font-bold text-slate-800">Sua Conta</h2>
           </div>
-          <p className="text-sm text-slate-500 mb-6">
-            Funcionalidade em migração para o novo TransactionService.
-          </p>
-          <button 
-            onClick={handleExport}
-            disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-          >
-            {loading ? 'Processando...' : 'Exportar JSON'}
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+              <span className="text-xs font-black uppercase text-slate-400 block mb-1">Usuário Ativo</span>
+              <p className="text-lg font-bold text-slate-700">{user?.id || 'Desconectado'}</p>
+            </div>
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-black uppercase text-slate-400 block mb-1">Status da Sessão</span>
+                <p className="text-lg font-bold text-emerald-600">Conectado via Supabase</p>
+              </div>
+              <ShieldCheck className="w-8 h-8 text-emerald-500" />
+            </div>
+          </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm col-span-1 md:col-span-2">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-rose-50 rounded-lg">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-            </div>
-            <h2 className="font-bold text-rose-800">Zona de Perigo</h2>
+        {/* Seção: Preferências */}
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <Bell className="w-6 h-6 text-slate-400" />
+            <h2 className="text-xl font-bold text-slate-800">Preferências e Notificações</h2>
           </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500 max-w-xl">
-              A opção abaixo apaga permanentemente todos os registros de Receitas e Despesas do banco de dados. 
+          <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100">
+            <div>
+              <p className="font-bold text-slate-700">Notificações Sonner (Ativas)</p>
+              <p className="text-xs text-slate-500">Alertas flutuantes de sucesso e erro</p>
+            </div>
+            <div className="w-12 h-6 bg-emerald-500 rounded-full relative">
+              <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* Seção: Backup */}
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <Download className="w-6 h-6 text-slate-400" />
+            <h2 className="text-xl font-bold text-slate-800">Exportação de Dados</h2>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+            <p className="text-sm text-blue-700 font-medium">
+              A exportação gera um arquivo JSON contendo todos os seus lançamentos para backup pessoal.
             </p>
             <button 
-              onClick={handleDeleteAll}
-              disabled={loading}
-              className="w-full md:w-auto px-8 py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              onClick={handleExport}
+              className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
             >
-              <Trash2 className="w-4 h-4" /> Zerar Banco de Dados
+              Exportar Agora
+            </button>
+          </div>
+        </div>
+
+        {/* Zona de Perigo */}
+        <div className="bg-white p-8 rounded-[2rem] border border-rose-100 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 text-rose-600">
+            <ShieldAlert className="w-6 h-6" />
+            <h2 className="text-xl font-bold">Zona de Perigo</h2>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-rose-50/50 rounded-2xl border border-rose-100">
+            <p className="text-sm text-rose-700 font-medium">
+              Zerar o banco de dados removerá permanentemente todas as suas receitas e despesas.
+            </p>
+            <button 
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="w-full md:w-auto px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all"
+            >
+              Zerar Banco de Dados
             </button>
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação Crítica */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setConfirmText('');
+        }}
+        onConfirm={handleDeleteAll}
+        loading={loading}
+        title="⚠️ AVISO CRÍTICO"
+        description="Esta ação é IRREVERSÍVEL. Todos os seus dados financeiros serão apagados. Para continuar, digite 'LIMPAR TUDO' abaixo:"
+        confirmText="CONFIRMAR EXCLUSÃO TOTAL"
+      >
+        <input 
+          type="text" 
+          value={confirmText}
+          onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+          placeholder="Digite LIMPAR TUDO"
+          className="w-full mt-4 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 font-black text-center outline-none focus:ring-4 focus:ring-rose-500/20"
+        />
+      </ConfirmationModal>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { transactionService } from '@/features/finance/services/transaction.serv
 import { ingestionService } from '../services/ingestion.service';
 import { ImportPreviewModal } from './ImportPreviewModal';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Props {
   onSuccess: () => void;
@@ -41,12 +42,13 @@ export function ImportButton({ onSuccess, className }: Props) {
       if (data.length > 0) {
         setPreviewData(data);
         setShowPreview(true);
+        toast.success(`${data.length} vistorias identificadas!`);
       } else {
-        alert('Nenhuma vistoria válida foi encontrada neste documento.');
+        toast.error('Nenhuma vistoria válida foi encontrada neste documento.');
       }
     } catch (err: any) {
       console.error(err);
-      alert(`Erro: ${err.message}`);
+      toast.error(`Erro: ${err.message}`);
     } finally {
       setImporting(false);
       if (e.target) e.target.value = '';
@@ -88,15 +90,15 @@ export function ImportButton({ onSuccess, className }: Props) {
       await Promise.all(promises);
 
       if (failedItems.length > 0) {
-        alert(`Atenção: ${failedItems.length} registro(s) falhou(aram). Eles continuam na tela para você corrigir os dados (ex: datas inválidas, placa muito longa) e tentar salvar novamente.`);
-        setPreviewData(failedItems); // Atualiza o modal só com os erros
+        toast.warning(`${finalData.length - failedItems.length} importados, ${failedItems.length} falharam.`);
+        setPreviewData(failedItems); 
       } else {
-        alert('Sucesso! Todos os registros foram importados.');
-        setShowPreview(false); // Só fecha se tudo deu certo
+        toast.success(`Sucesso! ${finalData.length} registros importados.`);
+        setShowPreview(false);
         onSuccess();
       }
     } catch (err: any) {
-      alert(`Erro ao salvar: ${err.message}`);
+      toast.error(`Erro ao salvar: ${err.message}`);
     } finally {
       setImporting(false);
       setStatusText('Importar PDF');

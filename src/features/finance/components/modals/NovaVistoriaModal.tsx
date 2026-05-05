@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BaseModal } from '@/core/components/BaseModal';
 import { transactionService } from '@/features/finance/services/transaction.service';
+import { toast } from 'sonner';
 import { Transaction } from '@/core/types/finance';
 import { format } from 'date-fns';
 import { PlacaInput } from '@/core/components/ui/PlacaInput';
@@ -56,8 +57,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.placa.length < 7) return alert('Placa inválida.');
-    if (formData.cliente.trim().length < 2) return alert('Nome do cliente muito curto.');
+    if (formData.placa.length < 7) return toast.error('Placa inválida.');
+    if (formData.cliente.trim().length < 2) return toast.error('Nome do cliente muito curto.');
 
     const selectedDate = new Date(formData.data + 'T12:00:00');
     const dataCompMonth = formData.data.substring(0, 7);
@@ -93,11 +94,12 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
         }
       }, user.id);
 
+      toast.success('Vistoria registrada com sucesso!');
       onSuccess(selectedDate);
       onClose();
     } catch (err: any) {
       console.error('[NovaVistoriaModal] Error:', err);
-      alert('Erro ao salvar o laudo: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao salvar o laudo: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
