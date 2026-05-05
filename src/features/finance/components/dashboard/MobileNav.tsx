@@ -26,8 +26,7 @@ const MENU_ITEMS = [
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { logout, session } = useAuth();
-  const user = session?.user;
+  const { logout, user } = useAuth();
 
   return (
     <div className="lg:hidden">
@@ -87,10 +86,10 @@ export function MobileNav() {
             <div className="p-6 border-t border-slate-100 bg-slate-50/50">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white font-bold">
-                  {user?.email?.[0].toUpperCase() || 'A'}
+                  {user?.username?.[0].toUpperCase() || 'A'}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-slate-900 truncate">{user?.email || 'Usuário'}</span>
+                  <span className="text-sm font-bold text-slate-900 truncate">{user?.username || 'Usuário'}</span>
                   <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Online</span>
                 </div>
               </div>

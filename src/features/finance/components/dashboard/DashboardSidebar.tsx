@@ -30,8 +30,7 @@ const MENU_ITEMS = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { logout, session } = useAuth();
-  const user = session?.user;
+  const { logout, user } = useAuth();
 
   return (
     <aside className="w-64 h-screen bg-white border-r border-slate-200 flex flex-col fixed left-0 top-0 z-50">
@@ -82,7 +81,7 @@ export function DashboardSidebar() {
         <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-primary to-blue-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-sm">
-              {user?.email?.[0].toUpperCase() || 'A'}
+              {user?.username?.[0].toUpperCase() || 'A'}
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-slate-900 truncate">

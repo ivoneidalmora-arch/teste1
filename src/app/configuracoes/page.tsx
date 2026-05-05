@@ -25,24 +25,49 @@ export default function ConfigPage() {
     e.target.value = '';
   };
 
-  const handleReset = async () => {
-    const confirm1 = window.confirm('⚠️ AVISO CRÍTICO: Você está prestes a APAGAR TODOS os dados do sistema. Esta ação NÃO pode ser desfeita. Tem certeza?');
-    if (!confirm1) return;
+  const handleDeleteAll = async () => {
+    try {
+      const confirm1 = window.confirm('⚠️ AVISO CRÍTICO: Você está prestes a APAGAR TODOS os dados do sistema. Esta ação NÃO pode ser desfeita. Tem certeza?');
+      if (!confirm1) return;
 
-    const confirm2 = window.prompt('Para confirmar a exclusão total, digite "LIMPAR TUDO" no campo abaixo:');
-    if (confirm2 !== 'LIMPAR TUDO') {
-      alert('Confirmação incorreta. Operação cancelada.');
-      return;
-    }
+      const confirm2 = window.prompt('Para confirmar a exclusão total, digite "LIMPAR TUDO" no campo abaixo:');
+      if (confirm2 !== 'LIMPAR TUDO') {
+        alert('Confirmação incorreta. Operação cancelada.');
+        return;
+      }
 
-    setLoading(true);
-    const success = await transactionService.deleteAll(user?.id || '');
-    if (success) {
-      setStatus({ type: 'success', msg: 'Banco de dados zerado com sucesso!' });
-    } else {
-      setStatus({ type: 'error', msg: 'Erro ao zerar o banco. Tente novamente.' });
+      setLoading(true);
+
+      if (!user?.id) {
+        setStatus({
+          type: "error",
+          msg: "Usuário não autenticado.",
+        });
+        return;
+      }
+
+      const success = await transactionService.deleteAll(user.id);
+
+      if (success) {
+        setStatus({
+          type: "success",
+          msg: "Banco de dados zerado com sucesso!",
+        });
+      } else {
+        setStatus({
+          type: "error",
+          msg: "Não foi possível zerar o banco de dados.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao zerar banco de dados:", error);
+      setStatus({
+        type: "error",
+        msg: "Erro inesperado ao zerar o banco de dados.",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -101,7 +126,7 @@ export default function ConfigPage() {
               A opção abaixo apaga permanentemente todos os registros de Receitas e Despesas do banco de dados. 
             </p>
             <button 
-              onClick={handleReset}
+              onClick={handleDeleteAll}
               disabled={loading}
               className="w-full md:w-auto px-8 py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
