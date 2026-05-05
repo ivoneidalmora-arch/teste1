@@ -1,11 +1,14 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { supabase } from "@/services/supabase";
+import { supabaseAdmin } from "@/services/supabase-admin";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET || "alfa-secret-key-2026-dashboard-premium";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("Variável de ambiente JWT_SECRET não configurada.");
+}
 const key = new TextEncoder().encode(JWT_SECRET);
 
 export async function encrypt(payload: any) {
@@ -25,7 +28,7 @@ export async function decrypt(input: string): Promise<any> {
 
 export async function registerUser(formData: FormData) {
   try {
-    const username = formData.get("username") as string;
+    const username = (formData.get("username") as string)?.trim();
     const password = formData.get("password") as string;
 
     if (!username || username.length < 3) {
@@ -35,12 +38,12 @@ export async function registerUser(formData: FormData) {
       return { error: "Senha deve ter pelo menos 6 caracteres." };
     }
 
-    // Verificar se usuário já existe
-    const { data: existing } = await supabase
+    // Verificar se usuário já existe usando Admin (ignora RLS)
+    const { data: existing } = await supabaseAdmin
       .from("app_users")
       .select("id")
       .eq("username", username.toLowerCase())
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return { error: "Usuário já existe." };
@@ -48,7 +51,7 @@ export async function registerUser(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("app_users")
       .insert([
         { 
@@ -72,7 +75,7 @@ export async function registerUser(formData: FormData) {
     cookieStore.set("alfa_session", session, { 
       expires, 
       httpOnly: true, 
-      secure: true, 
+      secure: process.env.NODE_ENV === "production", 
       sameSite: "lax",
       path: "/"
     });
@@ -86,21 +89,21 @@ export async function registerUser(formData: FormData) {
 
 export async function loginUser(formData: FormData) {
   try {
-    const username = formData.get("username") as string;
+    const username = (formData.get("username") as string)?.trim();
     const password = formData.get("password") as string;
 
     if (!username || !password) {
       return { error: "Usuário e senha são obrigatórios." };
     }
 
-    const { data: user, error: dbError } = await supabase
+    const { data: user, error: dbError } = await supabaseAdmin
       .from("app_users")
       .select("*")
       .eq("username", username.toLowerCase())
-      .single();
+      .maybeSingle();
 
     if (dbError || !user) {
-      console.error("[Login] User not found or DB error:", dbError);
+      if (dbError) console.error("[Login] DB error:", dbError);
       return { error: "Usuário ou senha inválidos." };
     }
 
@@ -117,7 +120,7 @@ export async function loginUser(formData: FormData) {
     cookieStore.set("alfa_session", session, { 
       expires, 
       httpOnly: true, 
-      secure: true, // Vercel sempre usa HTTPS
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/"
     });
@@ -125,12 +128,19 @@ export async function loginUser(formData: FormData) {
     return { success: true, user: { id: user.id, username: user.username } };
   } catch (error: any) {
     console.error("[Login] Critical error:", error);
-    return { error: "Erro interno no servidor. Verifique a conexão com o banco." };
+    return { error: "Erro interno no servidor." };
   }
 }
 
 export async function logoutUser() {
-  (await cookies()).set("alfa_session", "", { expires: new Date(0) });
+  const cookieStore = await cookies();
+  cookieStore.set("alfa_session", "", { 
+    expires: new Date(0),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/"
+  });
   return { success: true };
 }
 

@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Alfa Perícia e Vistoria - Dashboard Financeiro Premium
 
-## Getting Started
+Sistema avançado de gestão financeira e inteligência de dados para empresas de vistoria automotiva.
 
-First, run the development server:
+## 🚀 Tecnologias
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
+- **Backend**: [Supabase](https://supabase.com/)
+- **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Gráficos**: [Recharts](https://recharts.org/)
+- **Segurança**: JWT, bcryptjs, Cookies HTTP-Only, Middleware Server-side
+
+## 🛠️ Configuração do Ambiente
+
+### 1. Variáveis de Ambiente
+
+Crie um arquivo `.env.local` na raiz do projeto com as seguintes chaves:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon_publica
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role_secreta
+
+# Segurança
+JWT_SECRET=uma_string_longa_e_aleatoria
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Banco de Dados (Supabase)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Execute o script SQL abaixo no SQL Editor do seu projeto Supabase para criar a estrutura necessária de usuários:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sql
+CREATE TABLE IF NOT EXISTS public.app_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user',
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-## Learn More
+-- Ativar RLS
+ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
+```
 
-To learn more about Next.js, take a look at the following resources:
+> [!NOTE]
+> O sistema utiliza a `SUPABASE_SERVICE_ROLE_KEY` no servidor para operações de autenticação, garantindo que os hashes de senha nunca sejam expostos publicamente.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📦 Instalação e Desenvolvimento
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Instalar dependências
+npm install
 
-## Deploy on Vercel
+# Iniciar servidor de desenvolvimento
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🏗️ Build e Produção
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Rodar lint
+npm run lint
+
+# Checagem de tipos
+npm run typecheck
+
+# Gerar build de produção
+npm run build
+```
+
+## 🔒 Segurança e Arquitetura
+
+- **Middleware**: Proteção de rotas no nível do servidor.
+- **Isolamento de Dados**: Toda transação financeira é filtrada pelo `app_user_id` do usuário autenticado.
+- **Admin Service**: Operações sensíveis de banco de dados são realizadas via `supabaseAdmin` no servidor.

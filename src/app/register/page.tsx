@@ -39,7 +39,7 @@ export default function RegisterPage() {
         setError(result.error);
       } else {
         await refresh();
-        setSuccess(true);
+        router.push('/');
       }
     } catch (err: any) {
       console.error('Registration error:', err);
