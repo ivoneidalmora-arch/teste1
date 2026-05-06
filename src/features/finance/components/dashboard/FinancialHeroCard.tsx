@@ -1,7 +1,6 @@
 "use client";
 
-import { Wallet, TrendingUp, CheckCircle2, Target, BarChart3 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { Wallet, TrendingUp } from 'lucide-react';
 import { formatBRL } from '@/core/utils/formatters';
 
 interface Props {
@@ -10,80 +9,67 @@ interface Props {
   variation: number;
 }
 
-const DECORATIVE_DATA = [
-  { val: 0 }, { val: 0 }, { val: 0 }, { val: 0 }, 
-  { val: 0 }, { val: 0 }, { val: 0 }, { val: 0 }
-];
-
 export function FinancialHeroCard({ balance, lastUpdate, variation }: Props) {
+  const isPositive = variation >= 0;
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/20 overflow-hidden mb-8 group">
-      <div className="grid grid-cols-1 lg:grid-cols-12">
-        
-        {/* Lado Esquerdo: Saldo Principal */}
-        <div className="lg:col-span-5 p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-              <Wallet className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Saldo Disponível</h2>
-              <p className="text-[10px] font-bold text-slate-400">Atualizado em {lastUpdate}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tighter break-words">
-              {formatBRL(balance)}
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-emerald-600 font-black text-sm">
-                <TrendingUp className="w-4 h-4" />
-                +{variation}%
-              </span>
-              <span className="text-slate-400 text-xs font-semibold">vs. mês anterior</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Centro: Insights Rápidos (Limpando dados fictícios) */}
-        <div className="lg:col-span-4 p-8 lg:p-10 bg-slate-50/30 flex flex-col justify-center gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-              <BarChart3 className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900">Indicadores em Tempo Real</h4>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">O sistema está pronto para processar seus novos lançamentos e gerar insights automáticos.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Lado Direito: Gráfico Decorativo */}
-        <div className="lg:col-span-3 p-8 lg:p-10 flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-slate-300 group-hover:text-blue-500 transition-colors">
-            <BarChart3 className="w-6 h-6" />
-          </div>
+    <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
+      <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid gap-6 lg:grid-cols-2">
           
-          <div className="w-full h-32 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={DECORATIVE_DATA}>
-                <Bar dataKey="val" radius={[4, 4, 0, 0]}>
-                  {DECORATIVE_DATA.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={index === DECORATIVE_DATA.length - 1 ? '#2563eb' : '#e2e8f0'} 
-                      className="transition-all duration-500"
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Atividade Semanal</p>
-        </div>
+          {/* Lado Esquerdo: Saldo */}
+          <div className="min-w-0 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-brand-primary/10 text-brand-primary rounded-xl flex items-center justify-center">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                Saldo Disponível
+              </p>
+            </div>
 
+            <h2 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl break-words">
+              {formatBRL(balance)}
+            </h2>
+
+            <div className="mt-3 flex items-center gap-2">
+              <span className={cn(
+                "flex items-center gap-1 font-black text-sm",
+                isPositive ? "text-emerald-600" : "text-rose-600"
+              )}>
+                <TrendingUp className={cn("w-4 h-4", !isPositive && "rotate-180")} />
+                {isPositive ? '+' : ''}{variation.toFixed(1)}%
+              </span>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-tight">vs. mês anterior</span>
+            </div>
+            <p className="mt-2 text-[10px] font-bold text-slate-300 uppercase tracking-widest">Atualizado em {lastUpdate}</p>
+          </div>
+
+          {/* Lado Direito: Info Contextual */}
+          <div className="min-w-0 rounded-2xl bg-slate-50 p-6 flex flex-col justify-center border border-slate-100">
+            <h3 className="font-bold text-slate-900 text-base">
+              Indicadores em Tempo Real
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600 font-medium">
+              O sistema está pronto para processar seus lançamentos e gerar insights automáticos baseados no período selecionado.
+            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizado com Supabase</span>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
+
+      {/* Espaço para um segundo card ou vazio para manter o grid */}
+      <div className="hidden xl:flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/50 p-6">
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
+          Insights Inteligentes Disponíveis em Breve
+        </p>
+      </div>
+    </section>
   );
 }
+
+import { cn } from '@/core/utils/formatters';

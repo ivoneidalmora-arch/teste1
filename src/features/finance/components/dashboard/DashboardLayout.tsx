@@ -21,7 +21,7 @@ export function DashboardLayout({ children }: Props) {
 
         {/* Main Content Area */}
         <main className="min-w-0 flex-1 overflow-x-hidden">
-          <div className="w-full max-w-full px-4 py-6 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-10">
             {children}
           </div>
         </main>

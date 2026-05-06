@@ -1,16 +1,6 @@
 "use client";
 
-import { DashboardLayout } from './DashboardLayout';
-import { DashboardHeader } from './DashboardHeader';
-import { FinancialHeroCard } from './FinancialHeroCard';
-import { MetricsGrid } from './MetricsGrid';
-import { CashFlowChart } from './CashFlowChart';
-import { AlertsInsightsPanel } from './AlertsInsightsPanel';
-import { RecentTransactionsTable } from './RecentTransactionsTable';
-import { TopClientsCard } from './TopClientsCard';
-import { CategoryDonutCard } from './CategoryDonutCard';
-import { FinancialCalendarCard } from './FinancialCalendarCard';
-
+import { useMemo, useState } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -19,11 +9,26 @@ import {
   ShieldCheck,
   Clock
 } from 'lucide-react';
+
+import { DashboardHeader } from './DashboardHeader';
+import { FinancialHeroCard } from './FinancialHeroCard';
+import { MetricCard } from './MetricCard';
+import { CashFlowChart } from './CashFlowChart';
+import { AlertsInsightsPanel } from './AlertsInsightsPanel';
+import { RecentTransactionsTable } from './RecentTransactionsTable';
+import { TopClientsCard } from './TopClientsCard';
+import { CategoryDonutCard } from './CategoryDonutCard';
+import { FinancialCalendarCard } from './FinancialCalendarCard';
+
 import { useFinance } from '../../hooks/useFinance';
-import { formatBRL, cn } from '@/core/utils/formatters';
-import { useState } from 'react';
-import { Transaction } from '@/core/types/finance';
-import { DashboardMetric } from '../../types/dashboard.types';
+import { cn } from '@/core/utils/formatters';
+import { 
+  calculateFinancialMetrics, 
+  calculatePercentageChange, 
+  filterByMonth,
+  normalizeTransaction 
+} from '@/core/utils/finance';
+import { subMonths } from 'date-fns';
 
 // Modals
 import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
@@ -32,139 +37,134 @@ import { EditTransactionModal } from '@/features/finance/components/modals/EditT
 
 export function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'last30' | 'custom'>('month');
+  const [activePeriod, setActivePeriod] = useState<'today' | 'week' | 'month' | 'last30' | 'custom'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { transactions, metrics: realMetrics, loading, error, refresh } = useFinance(selectedDate);
+  // Buscamos todas as transações (o hook useFinance já traz as transações do usuário logado)
+  const { transactions, loading, error, refresh } = useFinance();
   
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
 
-  // Filtro de Transações por busca
-  const filteredTransactions = transactions.filter(t => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      t.description?.toLowerCase().includes(searchLower) ||
-      t.customer?.toLowerCase().includes(searchLower) ||
-      t.category?.toLowerCase().includes(searchLower)
-    );
-  });
+  // 1. Filtragem por Período e Busca
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
 
-  // KPIs dinâmicos baseados em dados reais
-  const displayMetrics: DashboardMetric[] = [
-    {
-      id: 'revenue-gross',
-      title: 'Receita Bruta',
-      value: realMetrics?.currentIncome || 0,
-      formattedValue: formatBRL(realMetrics?.currentIncome || 0),
-      change: Number(realMetrics?.incomeVariation.toFixed(1)) || 0,
-      trend: (realMetrics?.incomeVariation || 0) >= 0 ? 'up' : 'down',
-      icon: TrendingUp,
-      color: 'green'
-    },
-    {
-      id: 'revenue-net',
-      title: 'Receita Líquida',
-      value: realMetrics?.currentIncome || 0, // Ajustar se houver cálculo de líquido
-      formattedValue: formatBRL(realMetrics?.currentIncome || 0),
-      change: Number(realMetrics?.incomeVariation.toFixed(1)) || 0,
-      trend: (realMetrics?.incomeVariation || 0) >= 0 ? 'up' : 'down',
-      icon: ShieldCheck,
-      color: 'blue'
-    },
-    {
-      id: 'expense-total',
-      title: 'Despesa Total',
-      value: realMetrics?.currentExpense || 0,
-      formattedValue: formatBRL(realMetrics?.currentExpense || 0),
-      change: Number(realMetrics?.expenseVariation.toFixed(1)) || 0,
-      trend: (realMetrics?.expenseVariation || 0) <= 0 ? 'down' : 'up',
-      icon: TrendingDown,
-      color: 'red'
-    },
-    {
-      id: 'expense-pending',
-      title: 'Despesas Pendentes',
-      value: realMetrics?.currentPendingExpense || 0,
-      formattedValue: formatBRL(realMetrics?.currentPendingExpense || 0),
-      change: 0,
-      trend: 'up',
-      icon: Clock,
-      color: 'orange'
-    },
-    {
-      id: 'balance-global',
-      title: 'Saldo Atual',
-      value: realMetrics?.totalGlobalBalance || 0,
-      formattedValue: formatBRL(realMetrics?.totalGlobalBalance || 0),
-      change: Number(realMetrics?.balanceVariation.toFixed(1)) || 0,
-      trend: (realMetrics?.balanceVariation || 0) >= 0 ? 'up' : 'down',
-      icon: Wallet,
-      color: 'purple'
-    },
-    {
-      id: 'profit-month',
-      title: 'Lucro do Mês',
-      value: realMetrics?.currentBalance || 0,
-      formattedValue: formatBRL(realMetrics?.currentBalance || 0),
-      change: Number(realMetrics?.balanceVariation.toFixed(1)) || 0,
-      trend: (realMetrics?.balanceVariation || 0) >= 0 ? 'up' : 'down',
-      icon: Target,
-      color: 'green'
+    let filtered = [...transactions];
+
+    // Filtro por Busca
+    if (searchQuery) {
+      const lowSearch = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        (t.description || t.descricao || '').toLowerCase().includes(lowSearch) ||
+        (t.customer || t.cliente || '').toLowerCase().includes(lowSearch)
+      );
     }
-  ];
 
-  const recentTransactions = (filteredTransactions || []).slice(0, 10).map(t => ({
-    id: String(t.id),
-    date: t.date,
-    description: t.description,
-    customer: t.customer || 'N/A',
-    category: t.category || 'Outros',
-    amount: t.amount,
-    status: t.status as any,
-    origin: t.source || 'supabase',
-    type: t.type
-  }));
+    // Filtro por Período Ativo (Month/Week/etc)
+    const now = new Date();
+    if (activePeriod === 'month') {
+      filtered = filterByMonth(filtered, selectedDate);
+    } else if (activePeriod === 'today') {
+      filtered = filtered.filter(t => {
+        const d = new Date(t.date || t.data);
+        return d.toDateString() === now.toDateString();
+      });
+    } else if (activePeriod === 'week') {
+      const start = new Date(now.setDate(now.getDate() - now.getDay()));
+      const end = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+      filtered = filtered.filter(t => {
+        const d = new Date(t.date || t.data);
+        return d >= start && d <= end;
+      });
+    } else if (activePeriod === 'last30') {
+      const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
+      filtered = filtered.filter(t => new Date(t.date || t.data) >= thirtyDaysAgo);
+    }
 
-  const totalBalance = realMetrics?.totalGlobalBalance ?? 0;
+    return filtered;
+  }, [transactions, searchQuery, activePeriod, selectedDate]);
+
+  // 2. Cálculos Financeiros (Mês Atual e Anterior para Variação)
+  const metrics = useMemo(() => {
+    const current = calculateFinancialMetrics(filteredTransactions);
+    
+    // Calcular mês anterior para variação
+    const prevDate = subMonths(selectedDate, 1);
+    const prevTransactions = filterByMonth(transactions || [], prevDate);
+    const prev = calculateFinancialMetrics(prevTransactions);
+
+    return {
+      current,
+      prev,
+      variations: {
+        income: calculatePercentageChange(current.receitaBruta, prev.receitaBruta),
+        net: calculatePercentageChange(current.receitaLiquida, prev.receitaLiquida),
+        expense: calculatePercentageChange(current.receitaBruta, prev.receitaBruta),
+        balance: calculatePercentageChange(current.lucroMes, prev.lucroMes)
+      }
+    };
+  }, [filteredTransactions, transactions, selectedDate]);
+
+  // 3. Preparação de Dados para Componentes
+  const recentTransactions = useMemo(() => 
+    filteredTransactions.slice(0, 10).map(t => {
+      const norm = normalizeTransaction(t);
+      return {
+        ...norm,
+        date: norm.dateString,
+        status: norm.status as any, // Cast para TransactionStatus
+        origin: (norm.origin === 'supabase' || norm.origin === 'ocr' || norm.origin === 'import' ? norm.origin : 'manual') as any,
+        type: norm.type as any
+      };
+    }),
+  [filteredTransactions]);
+
+  const cashFlowData = useMemo(() => {
+    // Agrupar por dia para o gráfico
+    const days: Record<string, { income: number; expense: number }> = {};
+    filteredTransactions.forEach(t => {
+      const norm = normalizeTransaction(t);
+      const day = norm.date.getDate();
+      if (!days[day]) days[day] = { income: 0, expense: 0 };
+      if (norm.type === 'income') days[day].income += norm.amount;
+      else days[day].expense += norm.amount;
+    });
+    
+    let cumulativeSaldo = 0;
+    return Object.entries(days).map(([day, val]) => {
+      cumulativeSaldo += (val.income - val.expense);
+      return {
+        name: `${day}`,
+        entradas: val.income,
+        saidas: val.expense,
+        saldo: cumulativeSaldo
+      };
+    }).sort((a, b) => Number(a.name) - Number(b.name));
+  }, [filteredTransactions]);
 
   if (loading && (!transactions || transactions.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 font-bold">Carregando Dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="bg-white p-8 rounded-3xl border border-rose-100 shadow-xl text-center max-w-md">
-          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl font-bold">!</span>
-          </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Erro ao carregar dashboard</h2>
-          <p className="text-sm text-slate-500 mb-6">Não conseguimos conectar ao banco de dados. Verifique sua conexão.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="w-full py-3 bg-brand-primary text-white font-bold rounded-xl shadow-lg shadow-brand-primary/20"
-          >
-            Tentar Novamente
-          </button>
+          <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Sincronizando Dados...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-full overflow-x-hidden">
+    <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
+        selectedDate={selectedDate}
+        onDateChange={(d) => {
+          setSelectedDate(d);
+          setActivePeriod('month');
+        }}
         onNewTransaction={() => setIsVistoriaModalOpen(true)}
         onNewExpense={() => setIsDespesaModalOpen(true)}
         onImportFile={() => window.location.href = '/importacoes'} 
@@ -172,80 +172,115 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {/* Filtros de Período - Scroll horizontal em mobile */}
-      <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
-        <div className="flex items-center gap-2 min-w-max">
-          {[
-            { id: 'today', label: 'Hoje' },
-            { id: 'week', label: 'Esta Semana' },
-            { id: 'month', label: 'Este Mês' },
-            { id: 'last30', label: 'Últimos 30 Dias' },
-            { id: 'custom', label: 'Personalizado' },
-          ].map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setPeriodFilter(p.id as any)}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                periodFilter === p.id 
-                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                  : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+      {/* Filtros Rápidos */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {[
+          { id: 'today', label: 'Hoje' },
+          { id: 'week', label: 'Esta Semana' },
+          { id: 'month', label: 'Este Mês' },
+          { id: 'last30', label: 'Últimos 30 Dias' },
+          { id: 'custom', label: 'Personalizado' },
+        ].map((p) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              setActivePeriod(p.id as any);
+              if (p.id === 'month') setSelectedDate(new Date());
+            }}
+            className={cn(
+              "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+              activePeriod === p.id 
+                ? "bg-slate-950 text-white shadow-lg shadow-slate-950/20 border-slate-950" 
+                : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
-      {/* Destaque Saldo - Grid Responsivo */}
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2 min-w-0">
-        <FinancialHeroCard 
-          balance={totalBalance} 
-          lastUpdate="Atualizado agora" 
-          variation={realMetrics?.balanceVariation || 0} 
+      {/* Destaque Saldo */}
+      <FinancialHeroCard 
+        balance={metrics.current.lucroMes} 
+        lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
+        variation={metrics.variations.balance} 
+      />
+
+      {/* KPIs Principais */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 mb-8">
+        <MetricCard 
+          title="Receita Bruta" 
+          value={metrics.current.receitaBruta} 
+          trend={metrics.variations.income} 
+          icon={TrendingUp} 
+          variant="green"
         />
-        
-        {/* Espaço para outro card ou apenas flexibilidade */}
-        <div className="hidden xl:block" />
+        <MetricCard 
+          title="Receita Líquida" 
+          value={metrics.current.receitaLiquida} 
+          trend={metrics.variations.net} 
+          icon={ShieldCheck} 
+          variant="blue"
+          description="Após despesas pagas e ajustes"
+        />
+        <MetricCard 
+          title="Despesa Total" 
+          value={metrics.current.receitaBruta - metrics.current.lucroMes} // Simplificado
+          trend={metrics.variations.expense} 
+          icon={TrendingDown} 
+          variant="red"
+        />
+        <MetricCard 
+          title="Despesas Pendentes" 
+          value={metrics.current.despesasPendentes} 
+          icon={Clock} 
+          variant="orange"
+        />
+        <MetricCard 
+          title="Saldo Atual" 
+          value={metrics.current.lucroMes} 
+          trend={metrics.variations.balance} 
+          icon={Wallet} 
+          variant="purple"
+        />
+        <MetricCard 
+          title="Lucro do Mês" 
+          value={metrics.current.lucroMes} 
+          trend={metrics.variations.balance} 
+          icon={Target} 
+          variant="green"
+        />
       </section>
 
-      {/* KPIs Principais - Grid Responsivo */}
-      <div className="min-w-0">
-        <MetricsGrid metrics={displayMetrics} />
-      </div>
-
-      {/* Gráfico & Alertas - Grid Responsivo */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 min-w-0">
-        <div className="xl:col-span-8 min-w-0">
-          <CashFlowChart data={realMetrics?.cashFlowData || []} />
+      {/* Gráfico & Alertas */}
+      <section className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mb-8">
+        <div className="min-w-0">
+          <CashFlowChart data={cashFlowData} />
         </div>
-        <div className="xl:col-span-4 min-w-0">
+        <div className="min-w-0">
           <AlertsInsightsPanel alerts={[]} />
         </div>
-      </div>
+      </section>
 
       {/* Tabela de Transações */}
-      <div className="min-w-0">
+      <div className="min-w-0 mb-8">
         <RecentTransactionsTable 
           transactions={recentTransactions} 
           onAction={(id) => {}} 
         />
       </div>
 
-      {/* Cards Secundários - Grid Responsivo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 min-w-0">
-        <TopClientsCard clients={realMetrics?.topClients || []} />
+      {/* Cards Secundários */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TopClientsCard clients={[]} />
         <CategoryDonutCard 
-          data={realMetrics?.categoryDistribution || []} 
-          totalValue={realMetrics?.currentExpense || 0} 
+          data={[]} 
+          totalValue={metrics.current.receitaBruta - metrics.current.lucroMes} 
         />
-        <div className="md:col-span-2 xl:col-span-1 min-w-0">
-          <FinancialCalendarCard events={realMetrics?.calendarEvents || []} />
-        </div>
-      </div>
+        <FinancialCalendarCard events={[]} />
+      </section>
 
-      {/* Modais de Operação */}
+      {/* Modais */}
       <NovaVistoriaModal 
         isOpen={isVistoriaModalOpen} 
         onClose={() => setIsVistoriaModalOpen(false)} 

@@ -114,7 +114,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Tipo de Vistoria</label>
             <select name="categoria" value={formData.categoria} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
-              {VISTORIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              {VISTORIA_CATEGORIES.map((cat: VistoriaCategory) => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
           <PlacaInput label="Placa" name="placa" required value={formData.placa} onChange={handleChange} />

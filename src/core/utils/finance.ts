@@ -1,43 +1,106 @@
-export type VistoriaCategory = 
-  | 'Transferência' 
-  | 'Motor' 
-  | 'Especial' 
-  | 'Vistoria de Entrada' 
-  | 'Vistoria de Retorno' 
-  | 'Vistoria Cautelar';
+import { Transaction } from '@/core/types/finance';
+import { isSameMonth, isSameYear, subMonths } from 'date-fns';
+
+/**
+ * Constantes e Tipos Legados para compatibilidade com Modais
+ */
+export const CONVERSAO_VRTE_2025: Record<number, number> = {
+  // VRTE 2025 = 4.67. Exemplo de mapeamento:
+  15: 70.05,
+  20: 93.40,
+  25: 116.75
+};
+
+export type VistoriaCategory = 'Transferência' | 'Entrada' | 'Retorno' | 'Vistoria de Retorno' | 'Vistoria Cautelar' | 'Outros';
 
 export const VISTORIA_CATEGORIES: VistoriaCategory[] = [
   'Transferência',
-  'Motor',
-  'Especial',
-  'Vistoria de Entrada',
+  'Entrada',
+  'Retorno',
   'Vistoria de Retorno',
-  'Vistoria Cautelar'
+  'Vistoria Cautelar',
+  'Outros',
 ];
 
-/**
- * Tabela de Conversão VRTE 2025 (Taxa Detran)
- * Bruto -> Liquido (Após dedução da taxa)
- */
-export const CONVERSAO_VRTE_2025: Record<number, number> = {
-  198.13: 147.41, // Transferência
-  244.38: 193.66, // Motor / Especial
-  138.69: 87.97,  // Vistoria de Entrada
-  0: 0            // Retorno
-};
+export function calculateLiquido(bruto: number, taxa: number = 0, desconto: number = 0) {
+  return bruto - taxa - desconto;
+}
 
 /**
- * Calcula o valor líquido com base no bruto, 
- * subtraindo a taxa VRTE correspondente.
+ * Normaliza dados de transação para um padrão único,
  */
-export function calculateLiquido(bruto: number): number {
-  if (bruto === 0) return 0;
-  
-  if (CONVERSAO_VRTE_2025[bruto] !== undefined) {
-    return CONVERSAO_VRTE_2025[bruto];
-  }
-  
-  // Se não estiver na tabela, assume taxa padrão de 50.72 (VRTE 2025)
-  // Somente se for um valor positivo que pareça uma vistoria paga
-  return Math.max(0, bruto - 50.72);
+export function normalizeTransaction(t: any) {
+  const dateObj = t.date instanceof Date ? t.date : new Date(t.date ?? t.data ?? new Date());
+  return {
+    id: String(t.id),
+    date: dateObj,
+    dateString: dateObj.toISOString(), // Adicionado para compatibilidade com tabelas que esperam string
+    description: t.description ?? t.descricao ?? "Sem descrição",
+    customer: t.customer ?? t.cliente ?? "N/A",
+    category: t.category ?? t.categoria ?? "Outros",
+    amount: Number(t.amount ?? t.valor ?? 0),
+    type: (t.type ?? t.tipo) === 'income' || (t.type ?? t.tipo) === 'receita' ? 'income' : 'expense',
+    status: t.status === 'paid' || t.status === 'pago' ? 'paid' : 
+            t.status === 'pending' || t.status === 'pendente' ? 'pending' :
+            t.status === 'overdue' || t.status === 'atrasado' ? 'overdue' : 'cancelled',
+    origin: t.origin ?? t.origem ?? t.source ?? "sistema",
+    discount: Number(t.discount ?? t.desconto ?? 0),
+    fee: Number(t.fee ?? t.taxa ?? 0),
+  };
+}
+
+/**
+ * Calcula métricas financeiras para um conjunto de transações
+ */
+export function calculateFinancialMetrics(transactions: any[]) {
+  const normalized = transactions.map(normalizeTransaction);
+
+  const receitaBruta = normalized
+    .filter(t => t.type === 'income')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const despesasPagas = normalized
+    .filter(t => t.type === 'expense' && t.status === 'paid')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const despesasPendentes = normalized
+    .filter(t => t.type === 'expense' && t.status === 'pending')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const descontosETaxas = normalized
+    .reduce((acc, t) => acc + t.discount + t.fee, 0);
+
+  const estornos = normalized
+    .filter(t => t.status === 'cancelled') // Assumindo cancelado como estorno para este contexto
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const receitaLiquida = receitaBruta - despesasPagas - descontosETaxas - estornos;
+  const lucroMes = receitaLiquida; // Simplificado conforme pedido
+
+  return {
+    receitaBruta,
+    receitaLiquida,
+    despesasPagas,
+    despesasPendentes,
+    lucroMes,
+    totalTransactions: normalized.length
+  };
+}
+
+/**
+ * Calcula variação percentual entre dois valores
+ */
+export function calculatePercentageChange(current: number, previous: number) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
+
+/**
+ * Filtra transações por mês e ano específicos
+ */
+export function filterByMonth(transactions: any[], selectedDate: Date) {
+  return transactions.filter(t => {
+    const d = new Date(t.date ?? t.data);
+    return isSameMonth(d, selectedDate) && isSameYear(d, selectedDate);
+  });
 }
