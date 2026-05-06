@@ -4,10 +4,19 @@
 
 /**
  * Normaliza a placa: remove espaços, traços e converte para UPPERCASE.
+ * Retorna null se for inválida.
  */
-export const normalizePlaca = (placa: string): string => {
-  if (!placa) return '';
-  return placa.replace(/[\s-]/g, '').toUpperCase();
+export const normalizePlaca = (value: unknown): string | null => {
+  if (!value) return null;
+
+  const plate = String(value)
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+
+  if (!plate) return null;
+
+  return plate;
 };
 
 /**
