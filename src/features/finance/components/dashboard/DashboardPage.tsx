@@ -161,7 +161,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-full overflow-x-hidden">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -172,64 +172,77 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {/* Filtros de Período */}
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { id: 'today', label: 'Hoje' },
-          { id: 'week', label: 'Esta Semana' },
-          { id: 'month', label: 'Este Mês' },
-          { id: 'last30', label: 'Últimos 30 Dias' },
-          { id: 'custom', label: 'Personalizado' },
-        ].map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriodFilter(p.id as any)}
-            className={cn(
-              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-              periodFilter === p.id 
-                ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Filtros de Período - Scroll horizontal em mobile */}
+      <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
+        <div className="flex items-center gap-2 min-w-max">
+          {[
+            { id: 'today', label: 'Hoje' },
+            { id: 'week', label: 'Esta Semana' },
+            { id: 'month', label: 'Este Mês' },
+            { id: 'last30', label: 'Últimos 30 Dias' },
+            { id: 'custom', label: 'Personalizado' },
+          ].map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriodFilter(p.id as any)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                periodFilter === p.id 
+                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                  : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Destaque Saldo */}
-      <FinancialHeroCard 
-        balance={totalBalance} 
-        lastUpdate="Atualizado agora" 
-        variation={realMetrics?.balanceVariation || 0} 
-      />
+      {/* Destaque Saldo - Grid Responsivo */}
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2 min-w-0">
+        <FinancialHeroCard 
+          balance={totalBalance} 
+          lastUpdate="Atualizado agora" 
+          variation={realMetrics?.balanceVariation || 0} 
+        />
+        
+        {/* Espaço para outro card ou apenas flexibilidade */}
+        <div className="hidden xl:block" />
+      </section>
 
-      {/* KPIs Principais */}
-      <MetricsGrid metrics={displayMetrics} />
+      {/* KPIs Principais - Grid Responsivo */}
+      <div className="min-w-0">
+        <MetricsGrid metrics={displayMetrics} />
+      </div>
 
-      {/* Gráfico & Alertas */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        <div className="xl:col-span-8">
+      {/* Gráfico & Alertas - Grid Responsivo */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 min-w-0">
+        <div className="xl:col-span-8 min-w-0">
           <CashFlowChart data={realMetrics?.cashFlowData || []} />
         </div>
-        <div className="xl:col-span-4">
+        <div className="xl:col-span-4 min-w-0">
           <AlertsInsightsPanel alerts={[]} />
         </div>
       </div>
 
       {/* Tabela de Transações */}
-      <RecentTransactionsTable 
-        transactions={recentTransactions} 
-        onAction={(id) => {}} 
-      />
+      <div className="min-w-0">
+        <RecentTransactionsTable 
+          transactions={recentTransactions} 
+          onAction={(id) => {}} 
+        />
+      </div>
 
-      {/* Cards Secundários */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Cards Secundários - Grid Responsivo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 min-w-0">
         <TopClientsCard clients={realMetrics?.topClients || []} />
         <CategoryDonutCard 
           data={realMetrics?.categoryDistribution || []} 
           totalValue={realMetrics?.currentExpense || 0} 
         />
-        <FinancialCalendarCard events={realMetrics?.calendarEvents || []} />
+        <div className="md:col-span-2 xl:col-span-1 min-w-0">
+          <FinancialCalendarCard events={realMetrics?.calendarEvents || []} />
+        </div>
       </div>
 
       {/* Modais de Operação */}

@@ -33,7 +33,7 @@ export function FinancialHeroCard({ balance, lastUpdate, variation }: Props) {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">
+            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tighter break-words">
               {formatBRL(balance)}
             </h3>
             <div className="flex items-center gap-2">

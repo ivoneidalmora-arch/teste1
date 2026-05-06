@@ -53,7 +53,7 @@ export function DashboardSidebar() {
   const { logout, user } = useAuth();
 
   return (
-    <aside className="w-64 h-screen bg-white border-r border-slate-200 flex flex-col fixed left-0 top-0 z-50">
+    <aside className="w-64 h-screen bg-white border-r border-slate-200 flex flex-col shrink-0">
       {/* Branding */}
       <div className="p-8">
         <div className="flex items-center justify-center">

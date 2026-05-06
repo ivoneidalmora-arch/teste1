@@ -9,7 +9,7 @@ interface Props {
 
 export function MetricsGrid({ metrics }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6 mb-8">
       {metrics.map((metric) => (
         <MetricCard key={metric.id} metric={metric} />
       ))}
