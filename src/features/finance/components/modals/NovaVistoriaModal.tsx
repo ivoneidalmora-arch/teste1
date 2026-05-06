@@ -11,14 +11,7 @@ import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025, VistoriaCategory, VISTORIA_CATEGORIES } from '@/core/utils/finance';
 import { cn } from '@/core/utils/formatters';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
-
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (date?: Date) => void;
-  existingTransactions: Transaction[];
-  defaultDate?: Date;
-}
+import { getNetValueFor2025, shouldApplyAutoNetValue } from '@/lib/financial-rules';
 
 export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransactions, defaultDate }: Props) {
   const { user } = useAuthContext();
@@ -29,7 +22,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     cliente: '',
     data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     valorBruto: 198.13,
-    valorLiquido: 147.41,
+    valorLiquido: 147.44,
     pagamento: 'Pix',
     nf: '',
     observacao: ''
@@ -40,11 +33,19 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
       setFormData(prev => ({ ...prev, valorBruto: 0, valorLiquido: 0 }));
       return;
     }
+    
+    // Automação 2025
+    const autoNetValue = getNetValueFor2025(formData.valorBruto, formData.data);
+    if (autoNetValue !== null && shouldApplyAutoNetValue(formData.valorLiquido, formData.valorBruto)) {
+      setFormData(prev => ({ ...prev, valorLiquido: autoNetValue }));
+      return;
+    }
+
     if (formData.categoria === 'Vistoria Cautelar') return;
 
     const liquido = calculateLiquido(formData.valorBruto);
     setFormData(prev => ({ ...prev, valorLiquido: liquido }));
-  }, [formData.valorBruto, formData.categoria]);
+  }, [formData.valorBruto, formData.categoria, formData.data]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -105,7 +106,13 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     }
   };
 
-  const isAutoLiquido = formData.categoria !== 'Vistoria Cautelar' && !!CONVERSAO_VRTE_2025[formData.valorBruto];
+  const automationStatus = getNetValueAutomationStatus({
+    amountBruto: formData.valorBruto,
+    valor_liquido: formData.valorLiquido,
+    date: formData.data
+  });
+
+  const isAutoApplied = automationStatus.status === 'applied';
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Novo Laudo de Vistoria" headerColorContext="success">
@@ -127,7 +134,17 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
           <MoneyInput label="Valor Bruto" name="valorBruto" required value={formData.valorBruto} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno'} />
-          <MoneyInput label="Dedução Líquida" name="valorLiquido" required value={formData.valorLiquido} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno' || isAutoLiquido} className={cn(isAutoLiquido && "bg-emerald-100/50 border-emerald-200 text-emerald-800")} />
+          <div className="flex flex-col">
+            <MoneyInput label="Dedução Líquida" name="valorLiquido" required value={formData.valorLiquido} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno' || isAutoApplied} className={cn(isAutoApplied && "bg-emerald-100/50 border-emerald-200 text-emerald-800")} />
+            {automationStatus.autoNetValue && (
+              <span className={cn(
+                "text-[10px] mt-1 font-bold",
+                isAutoApplied ? "text-emerald-600" : "text-amber-600"
+              )}>
+                {automationStatus.label}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

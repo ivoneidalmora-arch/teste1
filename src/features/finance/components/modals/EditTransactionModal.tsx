@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/core/utils/finance';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
+import { getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
 
 interface Props {
   isOpen: boolean;
@@ -64,12 +65,22 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
     if (formData?.type === 'income') {
       if (formData.categoria === 'Vistoria de Retorno') {
         setFormData(prev => prev ? ({ ...prev, valorBruto: 0, valorLiquido: 0 }) : null);
-      } else if (formData.categoria !== 'Vistoria Cautelar') {
+        return;
+      }
+      
+      // Automação 2025
+      const autoNetValue = getNetValueFor2025(formData.valorBruto, formData.data);
+      if (autoNetValue !== null && shouldApplyAutoNetValue(formData.valorLiquido, formData.valorBruto)) {
+        setFormData(prev => prev ? ({ ...prev, valorLiquido: autoNetValue }) : null);
+        return;
+      }
+
+      if (formData.categoria !== 'Vistoria Cautelar') {
         const liq = calculateLiquido(formData.valorBruto);
         setFormData(prev => prev ? ({ ...prev, valorLiquido: liq }) : null);
       }
     }
-  }, [formData?.valorBruto, formData?.categoria, formData?.type]);
+  }, [formData?.valorBruto, formData?.categoria, formData?.type, formData?.data]);
 
   if (!transaction || !formData) return null;
 
@@ -121,9 +132,13 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
     } finally {
       setLoading(false);
     }
-  };
+  const automationStatus = getNetValueAutomationStatus({
+    amountBruto: formData.valorBruto,
+    valor_liquido: formData.valorLiquido,
+    date: formData.data
+  });
 
-  const isAutoLiquido = isIncome && formData.categoria !== 'Vistoria Cautelar' && !!CONVERSAO_VRTE_2025[formData.valorBruto];
+  const isAutoApplied = automationStatus.status === 'applied';
 
   return (
     <BaseModal 
@@ -189,15 +204,25 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
               <MoneyInput label="Valor Bruto" name="valorBruto" required value={formData.valorBruto} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno'} />
-              <MoneyInput 
-                label="Dedução Líquida" 
-                name="valorLiquido" 
-                required 
-                value={formData.valorLiquido} 
-                onChange={handleChange} 
-                disabled={formData.categoria === 'Vistoria de Retorno' || isAutoLiquido}
-                className={cn(isAutoLiquido && "bg-emerald-100/50 border-emerald-200 text-emerald-800")}
-              />
+              <div className="flex flex-col">
+                <MoneyInput 
+                  label="Dedução Líquida" 
+                  name="valorLiquido" 
+                  required 
+                  value={formData.valorLiquido} 
+                  onChange={handleChange} 
+                  disabled={formData.categoria === 'Vistoria de Retorno' || isAutoApplied}
+                  className={cn(isAutoApplied && "bg-emerald-100/50 border-emerald-200 text-emerald-800")}
+                />
+                {automationStatus.autoNetValue && (
+                  <span className={cn(
+                    "text-[10px] mt-1 font-bold",
+                    isAutoApplied ? "text-emerald-600" : "text-amber-600"
+                  )}>
+                    {automationStatus.label}
+                  </span>
+                )}
+              </div>
             </div>
           </>
         ) : (

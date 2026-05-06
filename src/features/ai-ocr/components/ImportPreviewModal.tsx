@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Trash2 } from 'lucide-react';
+import { X, Check, Trash2, Info } from 'lucide-react';
+import { normalizeCurrencyValue, getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
 
 interface ExtractedData {
   data: string;
@@ -8,7 +9,9 @@ interface ExtractedData {
   cliente: string;
   categoria: string;
   valorBruto: number;
-  valorLiquido?: number;
+  valorLiquido: number;
+  automationLabel?: string;
+  isAutoApplied?: boolean;
 }
 
 interface ImportPreviewModalProps {
@@ -28,7 +31,26 @@ export function ImportPreviewModal({
   rawResponse, 
   logs 
 }: ImportPreviewModalProps) {
-  const [items, setItems] = useState<ExtractedData[]>(initialData);
+  // Inicializar itens com valores líquidos calculados se necessário
+  const [items, setItems] = useState<ExtractedData[]>(() => {
+    return initialData.map(item => {
+      const gross = normalizeCurrencyValue(item.valorBruto);
+      const status = getNetValueAutomationStatus({
+        amountBruto: gross,
+        valor_liquido: item.valorLiquido || 0,
+        date: item.data
+      });
+      
+      return {
+        ...item,
+        valorBruto: gross,
+        valorLiquido: status.status === 'applied' ? status.autoNetValue! : (item.valorLiquido || gross),
+        automationLabel: status.label,
+        isAutoApplied: status.status === 'applied'
+      };
+    });
+  });
+
   const [showDebug, setShowDebug] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -39,7 +61,22 @@ export function ImportPreviewModal({
   // Sincronizar dados iniciais quando o modal abre
   useEffect(() => {
     if (isOpen) {
-      setItems(initialData);
+      setItems(initialData.map(item => {
+        const gross = normalizeCurrencyValue(item.valorBruto);
+        const status = getNetValueAutomationStatus({
+          amountBruto: gross,
+          valor_liquido: item.valorLiquido || 0,
+          date: item.data
+        });
+        
+        return {
+          ...item,
+          valorBruto: gross,
+          valorLiquido: status.status === 'applied' ? status.autoNetValue! : (item.valorLiquido || gross),
+          automationLabel: status.label,
+          isAutoApplied: status.status === 'applied'
+        };
+      }));
     }
   }, [initialData, isOpen]);
 
@@ -68,9 +105,31 @@ export function ImportPreviewModal({
   };
 
   const handleUpdate = (index: number, field: keyof ExtractedData, value: string | number) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
+    setItems(prev => {
+      const newItems = [...prev];
+      const updatedItem = { ...newItems[index], [field]: value };
+      
+      // Recalcular automação se data ou valor bruto mudar
+      if (field === 'data' || field === 'valorBruto') {
+        const gross = normalizeCurrencyValue(updatedItem.valorBruto);
+        const status = getNetValueAutomationStatus({
+          amountBruto: gross,
+          valor_liquido: updatedItem.valorLiquido,
+          date: updatedItem.data
+        });
+
+        if (status.status === 'applied') {
+          updatedItem.valorLiquido = status.autoNetValue!;
+          updatedItem.isAutoApplied = true;
+        } else {
+          updatedItem.isAutoApplied = false;
+        }
+        updatedItem.automationLabel = status.label;
+      }
+
+      newItems[index] = updatedItem;
+      return newItems;
+    });
   };
 
   return createPortal(
@@ -141,7 +200,9 @@ export function ImportPreviewModal({
                   <th className="py-4 px-4 font-semibold">Placa</th>
                   <th className="py-4 px-4 font-semibold">Cliente</th>
                   <th className="py-4 px-4 font-semibold">Serviço</th>
-                  <th className="py-4 px-4 font-semibold">Valor (R$)</th>
+                  <th className="py-4 px-4 font-semibold">Valor Bruto</th>
+                  <th className="py-4 px-4 font-semibold">Valor Líquido</th>
+                  <th className="py-4 px-4 font-semibold">Status Regra</th>
                   <th className="py-4 px-4 font-semibold text-center">Ações</th>
                 </tr>
               </thead>
@@ -160,7 +221,7 @@ export function ImportPreviewModal({
                       <input 
                         type="text" 
                         value={item.placa}
-                        onChange={(e) => handleUpdate(index, 'placa', e.target.value)}
+                        onChange={(e) => handleUpdate(index, 'placa', e.target.value.toUpperCase())}
                         className="bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-mono text-slate-300 w-full"
                       />
                     </td>
@@ -168,7 +229,7 @@ export function ImportPreviewModal({
                       <input 
                         type="text" 
                         value={item.cliente}
-                        onChange={(e) => handleUpdate(index, 'cliente', e.target.value)}
+                        onChange={(e) => handleUpdate(index, 'cliente', e.target.value.toUpperCase())}
                         className="bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm text-slate-300 w-full"
                       />
                     </td>
@@ -189,9 +250,31 @@ export function ImportPreviewModal({
                       <input 
                         type="number" 
                         value={item.valorBruto}
-                        onChange={(e) => handleUpdate(index, 'valorBruto', parseFloat(e.target.value))}
-                        className="bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-semibold text-emerald-400 w-24"
+                        onChange={(e) => handleUpdate(index, 'valorBruto', parseFloat(e.target.value) || 0)}
+                        className="bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-semibold text-white w-24"
                       />
+                    </td>
+                    <td className="py-3 px-4">
+                      <input 
+                        type="number" 
+                        value={item.valorLiquido}
+                        disabled={item.isAutoApplied}
+                        onChange={(e) => handleUpdate(index, 'valorLiquido', parseFloat(e.target.value) || 0)}
+                        className={cn(
+                          "bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-bold w-24",
+                          item.isAutoApplied ? "text-emerald-400" : "text-slate-400"
+                        )}
+                      />
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn(
+                          "text-[10px] font-black uppercase px-2 py-0.5 rounded",
+                          item.isAutoApplied ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800 text-slate-500"
+                        )}>
+                          {item.automationLabel || 'N/A'}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button 
