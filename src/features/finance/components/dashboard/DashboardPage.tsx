@@ -330,12 +330,19 @@ export function DashboardPage() {
 
       {/* Cards Secundários */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
-        <TopClientsCard clients={topClients} />
+        <TopClientsCard 
+          clients={topClients} 
+          onSeeAll={() => window.location.href = '/relatorios'}
+        />
         <ExpensesByCategoryCard 
           total={expensesByCategory.total} 
           categories={expensesByCategory.categories} 
+          onSeeAll={() => window.location.href = '/despesas'}
         />
-        <FinancialCalendarCard events={financialEvents} />
+        <FinancialCalendarCard 
+          events={financialEvents} 
+          onSeeAll={() => window.location.href = '/relatorios'}
+        />
       </section>
 
       {/* Modais */}

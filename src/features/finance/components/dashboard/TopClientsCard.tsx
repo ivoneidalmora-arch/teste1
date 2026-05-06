@@ -10,9 +10,10 @@ interface TopClient {
 
 interface Props {
   clients: TopClient[];
+  onSeeAll?: () => void;
 }
 
-export function TopClientsCard({ clients }: Props) {
+export function TopClientsCard({ clients, onSeeAll }: Props) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col min-h-[260px]">
       <div className="mb-5 flex items-start justify-between gap-4">
@@ -25,7 +26,10 @@ export function TopClientsCard({ clients }: Props) {
           </p>
         </div>
 
-        <button className="text-xs font-bold text-blue-600 hover:text-blue-700">
+        <button 
+          onClick={onSeeAll}
+          className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+        >
           Ver todos
         </button>
       </div>

@@ -11,9 +11,10 @@ interface Category {
 interface Props {
   total: number;
   categories: Category[];
+  onSeeAll?: () => void;
 }
 
-export function ExpensesByCategoryCard({ total, categories }: Props) {
+export function ExpensesByCategoryCard({ total, categories, onSeeAll }: Props) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col min-h-[260px]">
       <div className="mb-5 flex items-start justify-between gap-4">
@@ -26,7 +27,10 @@ export function ExpensesByCategoryCard({ total, categories }: Props) {
           </p>
         </div>
 
-        <button className="text-xs font-bold text-blue-600 hover:text-blue-700">
+        <button 
+          onClick={onSeeAll}
+          className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+        >
           Ver todos
         </button>
       </div>
