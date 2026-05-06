@@ -13,6 +13,7 @@ interface ExtractedData {
   valorLiquido: number;
   automationLabel?: string;
   isAutoApplied?: boolean;
+  errors?: string[];
 }
 
 interface ImportPreviewModalProps {
@@ -110,6 +111,16 @@ export function ImportPreviewModal({
       const newItems = [...prev];
       const updatedItem = { ...newItems[index], [field]: value };
       
+      // Validar placa
+      if (field === 'placa') {
+        const val = String(value).trim();
+        if (!val) {
+          updatedItem.errors = ["Placa obrigatória"];
+        } else {
+          updatedItem.errors = [];
+        }
+      }
+
       // Recalcular automação se data ou valor bruto mudar
       if (field === 'data' || field === 'valorBruto') {
         const gross = normalizeCurrencyValue(updatedItem.valorBruto);
@@ -219,12 +230,24 @@ export function ImportPreviewModal({
                       />
                     </td>
                     <td className="py-3 px-4">
-                      <input 
-                        type="text" 
-                        value={item.placa}
-                        onChange={(e) => handleUpdate(index, 'placa', e.target.value.toUpperCase())}
-                        className="bg-transparent border-none focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-mono text-slate-300 w-full"
-                      />
+                      <div className="flex flex-col gap-1">
+                        <input 
+                          type="text" 
+                          value={item.placa || ''}
+                          onChange={(e) => handleUpdate(index, 'placa', e.target.value.toUpperCase())}
+                          className={cn(
+                            "bg-transparent border focus:ring-2 focus:ring-emerald-500 rounded p-1 text-sm font-mono transition-all w-full",
+                            !item.placa ? "border-rose-500 text-rose-400 bg-rose-500/5" : "border-transparent text-slate-300"
+                          )}
+                          placeholder="ABC1234"
+                        />
+                        {!item.placa && (
+                          <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1">
+                            <Info className="w-2.5 h-2.5" />
+                            Placa obrigatória
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <input 
@@ -300,10 +323,22 @@ export function ImportPreviewModal({
         </main>
 
         {/* Footer - Fixo */}
-        <footer className="shrink-0 p-6 border-t border-slate-800 bg-slate-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-400 font-medium order-2 sm:order-1 text-center sm:text-left">
-            Total de itens: <span className="text-white font-bold">{items.length}</span>
+        <footer className="shrink-0 p-6 border-t border-slate-800 bg-slate-950 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-6 order-2 sm:order-1">
+            <div className="text-sm text-slate-400 font-medium">
+              Total: <span className="text-white font-bold">{items.length}</span>
+            </div>
+            
+            {items.some(it => !it.placa) && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+                <span className="text-xs font-bold text-rose-500">
+                  {items.filter(it => !it.placa).length} itens com erro (placa ausente)
+                </span>
+              </div>
+            )}
           </div>
+
           <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2">
             <button 
               onClick={onClose}
@@ -313,8 +348,13 @@ export function ImportPreviewModal({
             </button>
             <button 
               onClick={() => onConfirm(items)}
-              disabled={items.length === 0}
-              className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              disabled={items.length === 0 || items.some(it => !it.placa)}
+              className={cn(
+                "px-8 py-2.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95",
+                (items.length === 0 || items.some(it => !it.placa))
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed shadow-none"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
+              )}
             >
               <Check className="w-5 h-5" />
               Confirmar Importação

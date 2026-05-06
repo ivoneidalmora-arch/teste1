@@ -104,14 +104,17 @@ export const ingestionService = {
            return obj;
         });
       
-      const normalized = jsonData.map(row => this.mapToStandard(row));
-      const filtered = normalized.filter(item => !!item.placa && item.placa !== 'undefined');
+      const normalized = jsonData.map((row, index) => {
+        const standard = this.mapToStandard(row);
+        addLog(`Linha ${index + 1}: Placa identificada: "${standard.placa || 'NÃO ENCONTRADA'}"`);
+        return standard;
+      });
       
-      addLog(`Sucesso: ${filtered.length} itens normalizados.`);
+      addLog(`Sucesso: ${normalized.length} itens normalizados para conferência.`);
       
       return {
-        data: filtered,
-        rawResponse: 'Dados processados localmente (ExcelJS)',
+        data: normalized,
+        rawResponse: 'Dados processados localmente (SheetJS)',
         logs: logs
       };
     } catch (err: any) {
@@ -175,9 +178,25 @@ export const ingestionService = {
     };
 
     // Tenta encontrar campos por palavras-chave
-    const rawPlaca = getVal(['placa', 'veiculo', 'carro']) ?? '';
-    const rawData = getVal(['data', 'vistoria', 'dia', 'periodo']) ?? '';
-    let rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante']) ?? '';
+    const plateKeywords = ['placa', 'veiculo', 'veículo', 'identificacao', 'identificação', 'chassi', 'plate', 'vehicle'];
+    const rawPlaca = getVal(plateKeywords);
+    
+    // Fallback: Busca agressiva em todas as colunas usando Regex se rawPlaca estiver vazio
+    let placa = normalizePlaca(rawPlaca);
+    if (!placa) {
+      const plateRegex = /\b[A-Z]{3}[-\s]?\d[A-Z0-9]\d{2}\b|\b[A-Z]{3}[-\s]?\d{4}\b/gi;
+      for (const key of keys) {
+        const val = String(row[key] || '');
+        const matches = val.match(plateRegex);
+        if (matches && matches.length > 0) {
+          placa = normalizePlaca(matches[0]);
+          break;
+        }
+      }
+    }
+
+    const rawData = getVal(['data', 'vistoria', 'dia', 'periodo', 'data_vistoria']) ?? '';
+    let rawCliente = getVal(['cliente', 'proprietario', 'nome', 'solicitante', 'nome_cliente']) ?? '';
     
     // Padroniza cliente específico
     if (typeof rawCliente === 'string' && rawCliente.toUpperCase().includes('PARTICULAR S')) {
@@ -261,7 +280,7 @@ export const ingestionService = {
 
     return {
       data: normalizeDate(rawData),
-      placa: normalizePlaca(String(rawPlaca)),
+      placa: placa || '', // Garantir string para o estado do componente
       cliente: capitalizeName(String(rawCliente)),
       categoria: serviceName,
       valorBruto: isNaN(valorNumerico) ? 0 : valorNumerico,

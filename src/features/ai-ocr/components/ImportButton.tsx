@@ -59,30 +59,41 @@ export function ImportButton({ onSuccess, className, label, accept, variant = 'p
   };
 
   const handleConfirmImport = async (finalData: any[]) => {
+    // Filtrar apenas itens válidos (garantia extra)
+    const validItems = finalData.filter(item => item.placa);
+    
+    if (validItems.length === 0) {
+      toast.error('Nenhum registro válido para importar (placa obrigatória).');
+      return;
+    }
+
+    console.log(`[IMPORT] Iniciando importação de ${validItems.length} registros.`);
+    console.table(validItems.map(it => ({ data: it.data, placa: it.placa, valor: it.valorBruto })));
+
     setImporting(true);
     setStatusText('Salvando dados...');
 
     try {
       const failedItems: any[] = [];
       
-      const promises = finalData.map(async (item) => {
+      const promises = validItems.map(async (item) => {
         const result = await transactionService.save({
           type: 'income',
           category: item.categoria || 'Transferência',
-          amount: item.valorBruto || 0,
-          grossAmount: item.valorBruto || 0,
-          netAmount: item.valorLiquido || 0,
+          amount: Number(item.valorBruto || 0),
+          grossAmount: Number(item.valorBruto || 0),
+          netAmount: Number(item.valorLiquido || 0),
           date: item.data,
-          description: `Placa: ${item.placa || 'S/N'} - ${item.cliente || 'CLIENTE'}`,
+          description: `Placa: ${item.placa} - ${item.cliente || 'CLIENTE'}`,
           customer: item.cliente || 'CLIENTE',
           status: 'paid',
           source: 'import',
-            metadata: {
-              placa: item.placa,
-              observacao: item.observacao || 'IMPORTADO VIA IA',
-              pagamento: 'Pix'
-            }
-          }, user?.id || '');
+          metadata: {
+            placa: item.placa,
+            observacao: item.observacao || 'IMPORTADO VIA IA',
+            pagamento: 'Pix'
+          }
+        }, user?.id || '');
         
         if (result === null) {
           failedItems.push(item);
@@ -93,10 +104,10 @@ export function ImportButton({ onSuccess, className, label, accept, variant = 'p
       await Promise.all(promises);
 
       if (failedItems.length > 0) {
-        toast.warning(`${finalData.length - failedItems.length} importados, ${failedItems.length} falharam.`);
+        toast.warning(`${validItems.length - failedItems.length} importados, ${failedItems.length} falharam.`);
         setPreviewData(failedItems); 
       } else {
-        toast.success(`Sucesso! ${finalData.length} registros importados.`);
+        toast.success(`Sucesso! ${validItems.length} registros importados.`);
         setShowPreview(false);
         onSuccess();
       }

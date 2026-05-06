@@ -49,7 +49,14 @@ export const transactionService = {
     }
     
     const { data, error } = await supabase.from(table).insert([payload]).select().single();
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('placa') && error.message.includes('not-null')) {
+        throw new Error(
+          "Não foi possível salvar: a placa do veículo é obrigatória para receitas."
+        );
+      }
+      throw error;
+    }
     
     return transaction.type === 'income' 
       ? TransactionMapper.toIncome(data) 
