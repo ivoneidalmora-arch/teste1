@@ -129,7 +129,12 @@ export const transactionService = {
 
     if (incomes.length > 0) {
       const { error } = await supabase.from('Receitas').insert(incomes);
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('placa') && error.message.includes('not-null')) {
+          throw new Error("Erro de integridade: Alguns registros de receita no backup estão sem a placa obrigatória.");
+        }
+        throw error;
+      }
     }
 
     if (expenses.length > 0) {

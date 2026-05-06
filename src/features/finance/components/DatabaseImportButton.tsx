@@ -6,6 +6,7 @@ import { cn } from '@/core/utils/formatters';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { toast } from 'sonner';
+import { normalizePlaca } from '@/features/ai-ocr/utils/normalization';
 
 interface Props {
   onSuccess: () => void;
@@ -38,8 +39,24 @@ export function DatabaseImportButton({ onSuccess, className }: Props) {
           }
 
           if (!user?.id) throw new Error('Usuário não autenticado.');
+          
+          // Validar e normalizar dados antes do bulk insert
+          const normalizedData = data.map((item: any, index: number) => {
+            // No backup, receitas podem vir da tabela 'Receitas'
+            const isIncome = item.type === 'income' || item.cliente || item.placa;
+            
+            if (isIncome) {
+              const placa = normalizePlaca(item.placa || item.metadata?.placa);
+              if (!placa) {
+                throw new Error(`O registro #${index + 1} (${item.cliente || 'Sem Nome'}) está sem placa válida.`);
+              }
+              // Garantir que a placa esteja no nível superior para o bulkInsert
+              return { ...item, placa };
+            }
+            return item;
+          });
 
-          const success = await transactionService.bulkInsert(data, user.id);
+          const success = await transactionService.bulkInsert(normalizedData, user.id);
           
           if (success) {
             toast.success(`${data.length} registros importados do banco de dados com sucesso!`);
