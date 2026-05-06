@@ -6,8 +6,9 @@ import { useMemo } from 'react';
 interface Props {
   title: string;
   subtitle?: string;
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
+  selectedDate: Date | 'global';
+  availableMonths: string[];
+  onDateChange: (date: Date | 'global') => void;
   onNewTransaction?: () => void;
   onNewExpense?: () => void;
   onImportFile?: () => void;
@@ -19,6 +20,7 @@ export function DashboardHeader({
   title, 
   subtitle,
   selectedDate,
+  availableMonths,
   onDateChange,
   onNewTransaction, 
   onNewExpense, 
@@ -28,22 +30,35 @@ export function DashboardHeader({
 }: Props) {
   
   const monthOptions = useMemo(() => {
-    const options = [];
-    const now = new Date();
-    for (let i = 0; i < 24; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const options = [
+      { value: 'global', label: 'Tudo (Global)' }
+    ];
+
+    availableMonths.forEach(monthStr => {
+      const [year, month] = monthStr.split('-').map(Number);
+      const d = new Date(year, month, 1);
       options.push({
-        value: `${d.getFullYear()}-${d.getMonth()}`,
+        value: monthStr,
         label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
       });
-    }
+    });
+
     return options;
-  }, []);
+  }, [availableMonths]);
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [year, month] = e.target.value.split('-').map(Number);
+    const val = e.target.value;
+    if (val === 'global') {
+      onDateChange('global');
+      return;
+    }
+    const [year, month] = val.split('-').map(Number);
     onDateChange(new Date(year, month, 1));
   };
+
+  const selectValue = selectedDate === 'global' 
+    ? 'global' 
+    : `${selectedDate.getFullYear()}-${selectedDate.getMonth()}`;
 
   return (
     <header className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -73,7 +88,7 @@ export function DashboardHeader({
           <div className="relative w-full sm:w-auto">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <select
-              value={`${selectedDate.getFullYear()}-${selectedDate.getMonth()}`}
+              value={selectValue}
               onChange={handleMonthChange}
               className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 appearance-none"
             >
