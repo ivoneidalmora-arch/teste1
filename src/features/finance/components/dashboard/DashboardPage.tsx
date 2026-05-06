@@ -128,8 +128,8 @@ export function DashboardPage() {
       variations: {
         income: calculatePercentageChange(current.receitaBruta, prev.receitaBruta),
         net: calculatePercentageChange(current.receitaLiquida, prev.receitaLiquida),
-        expense: calculatePercentageChange(current.receitaBruta, prev.receitaBruta),
-        balance: calculatePercentageChange(current.lucroMes, prev.lucroMes)
+        expense: calculatePercentageChange(current.despesasTotal, prev.despesasTotal),
+        balance: calculatePercentageChange(current.saldoDisponivel, prev.saldoDisponivel)
       }
     };
   }, [filteredTransactions, transactions, selectedDate]);
@@ -140,9 +140,9 @@ export function DashboardPage() {
       const norm = normalizeTransaction(t);
       return {
         ...norm,
-        date: norm.dateString,
-        status: norm.status as any, // Cast para TransactionStatus
-        origin: (norm.origin === 'supabase' || norm.origin === 'ocr' || norm.origin === 'import' ? norm.origin : 'manual') as any,
+        date: norm.date,
+        status: norm.status as any,
+        origin: norm.source as any,
         type: norm.type as any
       };
     }),
@@ -151,12 +151,12 @@ export function DashboardPage() {
   const cashFlowData = useMemo(() => {
     // Agrupar por dia para o gráfico
     const days: Record<string, { income: number; expense: number }> = {};
-    filteredTransactions.forEach(t => {
-      const norm = normalizeTransaction(t);
-      const day = norm.date.getDate();
+    filteredTransactions.forEach(rawT => {
+      const t = normalizeTransaction(rawT);
+      const day = new Date(t.date).getUTCDate(); // Usar getUTCDate para evitar problemas de timezone
       if (!days[day]) days[day] = { income: 0, expense: 0 };
-      if (norm.type === 'income') days[day].income += norm.amount;
-      else days[day].expense += norm.amount;
+      if (t.type === 'income') days[day].income += t.netAmount || 0;
+      else days[day].expense += t.amount;
     });
     
     let cumulativeSaldo = 0;
@@ -231,7 +231,7 @@ export function DashboardPage() {
 
       {/* Destaque Saldo */}
       <FinancialHeroCard 
-        balance={metrics.current.lucroMes} 
+        balance={metrics.current.saldoDisponivel} 
         lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
         variation={metrics.variations.balance} 
       />
@@ -243,35 +243,39 @@ export function DashboardPage() {
           value={metrics.current.receitaBruta} 
           trend={metrics.variations.income} 
           icon={TrendingUp} 
-          variant="green"
+          variant="blue"
+          description="Soma dos valores brutos"
         />
         <MetricCard 
           title="Receita Líquida" 
           value={metrics.current.receitaLiquida} 
           trend={metrics.variations.net} 
           icon={ShieldCheck} 
-          variant="blue"
-          description="Após despesas pagas e ajustes"
+          variant="green"
+          description="Soma dos valores líquidos"
         />
         <MetricCard 
           title="Despesa Total" 
-          value={metrics.current.receitaBruta - metrics.current.lucroMes} // Simplificado
+          value={metrics.current.despesasTotal} 
           trend={metrics.variations.expense} 
           icon={TrendingDown} 
           variant="red"
+          description="Despesas do período"
         />
         <MetricCard 
           title="Despesas Pendentes" 
           value={metrics.current.despesasPendentes} 
           icon={Clock} 
           variant="orange"
+          description="Aguardando pagamento"
         />
         <MetricCard 
-          title="Saldo Atual" 
-          value={metrics.current.lucroMes} 
+          title="Saldo Disponível" 
+          value={metrics.current.saldoDisponivel} 
           trend={metrics.variations.balance} 
           icon={Wallet} 
           variant="purple"
+          description="Receita Líq. - Despesas"
         />
         <MetricCard 
           title="Lucro do Mês" 
@@ -279,6 +283,7 @@ export function DashboardPage() {
           trend={metrics.variations.balance} 
           icon={Target} 
           variant="green"
+          description="Resultado líquido"
         />
       </section>
 

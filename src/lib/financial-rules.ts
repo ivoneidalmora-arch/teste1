@@ -27,15 +27,14 @@ export function normalizeCurrencyValue(value: string | number | null | undefined
     return Number(value.toFixed(2));
   }
 
-  const normalized = value
-    .toString()
-    .trim()
-    .replace(/\s/g, "")
-    .replace("R$", "")
-    .replace(/\./g, "")
-    .replace(",", ".");
-
-  const numericValue = Number(normalized);
+  let str = value.toString().trim().replace(/\s/g, "").replace("R$", "");
+  
+  // Se tem vírgula, assume formato BR (1.234,56)
+  if (str.includes(",")) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  }
+  
+  const numericValue = Number(str);
   return Number.isNaN(numericValue) ? 0 : Number(numericValue.toFixed(2));
 }
 
@@ -69,10 +68,13 @@ export function getNetValueFor2025(
  * Determina se a regra automática deve ser aplicada ou se um valor manual deve ser preservado.
  */
 export function shouldApplyAutoNetValue(currentNetValue: number, grossValue: number): boolean {
+  const autoNetValue = NET_VALUE_BY_GROSS_VALUE_2025[grossValue.toFixed(2)];
+  
   return (
     !currentNetValue ||
     currentNetValue === 0 ||
-    currentNetValue === grossValue
+    currentNetValue === grossValue ||
+    (!!autoNetValue && Math.abs(currentNetValue - autoNetValue) < 0.01)
   );
 }
 

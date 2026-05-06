@@ -1,23 +1,23 @@
 import { format, subMonths } from 'date-fns';
 import { Transaction } from '@/core/types/finance';
+import { 
+  calculateFinancialMetrics, 
+  calculatePercentageChange,
+  normalizeTransaction 
+} from '@/core/utils/finance';
 
 export const metricsService = {
   calculateMetrics(transactions: Transaction[]) {
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let totalPendingExpense = 0;
-    let validIncomesCount = 0;
+    const coreMetrics = calculateFinancialMetrics(transactions);
     
     const incomeByCategory: Record<string, { total: number, count: number }> = {};
     const expenseByCategory: Record<string, { total: number, count: number }> = {};
     const rankingMap: Record<string, { count: number, bruto: number, liquido: number, categories: Record<string, number> }> = {};
 
-    transactions.forEach(t => {
-      const tValue = t.type === 'income' 
-        ? (t.netAmount || t.amount || 0) 
-        : (t.amount || 0);
-
+    transactions.forEach(rawT => {
+      const t = normalizeTransaction(rawT);
       let cat = t.category || 'Outros';
+      
       // Normalização de Casing para evitar duplicidade
       const catLower = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (catLower.includes('transferencia')) cat = 'Transferência';
@@ -28,11 +28,8 @@ export const metricsService = {
       else cat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
 
       if (t.type === 'income') {
-        totalIncome += tValue;
-        validIncomesCount++;
-        
         if (!incomeByCategory[cat]) incomeByCategory[cat] = { total: 0, count: 0 };
-        incomeByCategory[cat].total += tValue;
+        incomeByCategory[cat].total += t.netAmount || 0;
         incomeByCategory[cat].count += 1;
 
         const cliente = (t.customer || '').trim().toUpperCase();
@@ -41,18 +38,15 @@ export const metricsService = {
             rankingMap[cliente] = { count: 0, bruto: 0, liquido: 0, categories: {} };
           }
           rankingMap[cliente].count += 1;
-          rankingMap[cliente].bruto += (t.grossAmount || t.amount || 0);
-          rankingMap[cliente].liquido += tValue;
+          rankingMap[cliente].bruto += t.grossAmount || 0;
+          rankingMap[cliente].liquido += t.netAmount || 0;
           rankingMap[cliente].categories[cat] = (rankingMap[cliente].categories[cat] || 0) + 1;
         }
       } else {
         if (t.status === 'paid') {
-          totalExpense += tValue;
           if (!expenseByCategory[cat]) expenseByCategory[cat] = { total: 0, count: 0 };
-          expenseByCategory[cat].total += tValue;
+          expenseByCategory[cat].total += t.amount || 0;
           expenseByCategory[cat].count += 1;
-        } else if (t.status === 'pending') {
-          totalPendingExpense += tValue;
         }
       }
     });
@@ -70,15 +64,16 @@ export const metricsService = {
       .sort((a, b) => b.total - a.total);
 
     return {
-      totalIncome,
-      totalExpense,
-      totalPendingExpense,
-      netBalance: totalIncome - totalExpense,
-      ticketMedio: validIncomesCount > 0 ? totalIncome / validIncomesCount : 0,
+      totalIncome: coreMetrics.receitaLiquida,
+      totalGrossIncome: coreMetrics.receitaBruta,
+      totalExpense: coreMetrics.despesasTotal,
+      totalPendingExpense: coreMetrics.despesasPendentes,
+      netBalance: coreMetrics.saldoDisponivel,
+      ticketMedio: coreMetrics.totalTransactions > 0 ? coreMetrics.receitaLiquida / coreMetrics.totalTransactions : 0,
       incomeChart,
       expenseChart,
       clientRanking,
-      validIncomesCount
+      validIncomesCount: coreMetrics.totalTransactions // Simplificado
     };
   },
 
@@ -86,30 +81,34 @@ export const metricsService = {
     const currentMonthKey = format(selectedDate, 'yyyy-MM');
     const prevMonthKey = format(subMonths(selectedDate, 1), 'yyyy-MM');
 
-    const currentMonthTransactions = transactions.filter(t => 
-      t.date && t.date.length >= 7 && t.date.substring(0, 7) === currentMonthKey
-    );
+    const currentMonthTransactions = transactions.filter(t => {
+      const d = normalizeTransaction(t).date;
+      return d && d.startsWith(currentMonthKey);
+    });
     
-    const prevMonthTransactions = transactions.filter(t => 
-      t.date && t.date.length >= 7 && t.date.substring(0, 7) === prevMonthKey
-    );
+    const prevMonthTransactions = transactions.filter(t => {
+      const d = normalizeTransaction(t).date;
+      return d && d.startsWith(prevMonthKey);
+    });
 
     const currentMetrics = this.calculateMetrics(currentMonthTransactions);
     const prevMetrics = this.calculateMetrics(prevMonthTransactions);
 
     const calcVariation = (curr: number, prev: number) => {
-      if (prev === 0) return curr > 0 ? 100 : (curr < 0 ? -100 : 0);
-      return ((curr - prev) / Math.abs(prev)) * 100;
+      return calculatePercentageChange(curr, prev);
     };
 
     const monthsSet = new Set<string>();
     transactions.forEach(t => {
-      const monthKey = t.date && t.date.length >= 7 ? t.date.substring(0, 7) : null;
-      if (monthKey && /^\d{4}-\d{2}$/.test(monthKey)) monthsSet.add(monthKey);
+      const d = normalizeTransaction(t).date;
+      if (d && d.length >= 7) {
+        const monthKey = d.substring(0, 7);
+        if (/^\d{4}-\d{2}$/.test(monthKey)) monthsSet.add(monthKey);
+      }
     });
 
-    const totalGlobalIncome = transactions.reduce((acc, t) => acc + (t.type === 'income' ? (t.netAmount || t.amount || 0) : 0), 0);
-    const totalGlobalExpense = transactions.reduce((acc, t) => acc + (t.type === 'expense' && t.status === 'paid' ? t.amount : 0), 0);
+    // Cálculos Globais
+    const globalMetrics = calculateFinancialMetrics(transactions);
 
     // Fluxo de Caixa (últimos 6 meses)
     const cashFlowData = [];
@@ -119,15 +118,17 @@ export const metricsService = {
       const monthKey = format(d, 'yyyy-MM');
       const monthLabel = monthNames[d.getMonth()];
       
-      const mTs = transactions.filter(t => t.date && t.date.startsWith(monthKey));
-      const mInc = mTs.reduce((acc, t) => acc + (t.type === 'income' ? (t.netAmount || t.amount || 0) : 0), 0);
-      const mExp = mTs.reduce((acc, t) => acc + (t.type === 'expense' && t.status === 'paid' ? t.amount : 0), 0);
+      const mTs = transactions.filter(t => {
+        const td = normalizeTransaction(t).date;
+        return td && td.startsWith(monthKey);
+      });
+      const mMetrics = calculateFinancialMetrics(mTs);
       
       cashFlowData.push({
         name: monthLabel,
-        entradas: mInc,
-        saidas: mExp,
-        saldo: mInc - mExp
+        entradas: mMetrics.receitaLiquida,
+        saidas: mMetrics.despesasTotal,
+        saldo: mMetrics.saldoDisponivel
       });
     }
 
@@ -153,26 +154,28 @@ export const metricsService = {
 
     // Calendar Events
     const calendarEvents = currentMonthTransactions
-      .filter(t => t.date)
+      .map(normalizeTransaction)
       .slice(0, 5)
       .map(t => ({
         id: String(t.id || Math.random().toString()),
         date: t.date!,
         title: t.description || 'Transação',
-        amount: t.amount || 0,
+        amount: t.type === 'income' ? (t.netAmount || t.amount) : t.amount,
         type: t.type
       }));
 
     return {
       ...currentMetrics,
       currentIncome: currentMetrics.totalIncome,
+      currentGrossIncome: currentMetrics.totalGrossIncome,
       currentExpense: currentMetrics.totalExpense,
       currentPendingExpense: currentMetrics.totalPendingExpense,
       currentBalance: currentMetrics.netBalance,
       incomeVariation: calcVariation(currentMetrics.totalIncome, prevMetrics.totalIncome),
+      grossVariation: calcVariation(currentMetrics.totalGrossIncome, prevMetrics.totalGrossIncome),
       expenseVariation: calcVariation(currentMetrics.totalExpense, prevMetrics.totalExpense),
       balanceVariation: calcVariation(currentMetrics.netBalance, prevMetrics.netBalance),
-      totalGlobalBalance: totalGlobalIncome - totalGlobalExpense,
+      totalGlobalBalance: globalMetrics.saldoDisponivel,
       availableMonths: Array.from(monthsSet).sort((a, b) => b.localeCompare(a)),
       inspectionSummary: currentMetrics.incomeChart.map(i => ({ name: i.name, total: i.value, count: i.count })),
       cashFlowData,

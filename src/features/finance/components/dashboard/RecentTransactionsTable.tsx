@@ -92,12 +92,19 @@ export function RecentTransactionsTable({ transactions, onAction }: Props) {
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <span className={cn(
-                        "text-sm font-black",
-                        isIncome ? "text-emerald-600" : "text-rose-600"
-                      )}>
-                        {isIncome ? '+' : '-'} {formatBRL(t.amount)}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={cn(
+                          "text-sm font-black leading-none",
+                          isIncome ? "text-emerald-600" : "text-rose-600"
+                        )}>
+                          {isIncome ? '+' : '-'} {formatBRL(isIncome ? (t.netAmount || t.amount) : t.amount)}
+                        </span>
+                        {isIncome && t.grossAmount && t.grossAmount !== t.netAmount && (
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            Bruto: {formatBRL(t.grossAmount)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-8 py-5 text-center">
                       <span className={cn(

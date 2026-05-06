@@ -5,8 +5,32 @@ export const TransactionMapper = {
    * Converte um registro bruto da tabela 'Receitas' para o tipo Transaction padronizado
    */
   toIncome(raw: Record<string, any>): Transaction {
-    const amountBruto = parseFloat(raw.amountBruto) || parseFloat(raw.amount) || 0;
-    const amountLiquido = parseFloat(raw.amountLiquido) || amountBruto || 0;
+    const amount = parseFloat(raw.amount) || parseFloat(raw.valor) || 0;
+    
+    // Prioridade Bruto: amountBruto, valor_bruto, gross_value, valor, amount
+    const amountBruto = parseFloat(
+      raw.amountBruto ?? 
+      raw.valor_bruto ?? 
+      raw.gross_value ?? 
+      raw.grossAmount ??
+      raw.valor ?? 
+      raw.amount ?? 
+      0
+    );
+
+    // Prioridade Líquido: amountLiquido, valor_liquido, net_value, liquid_value, amountBruto...
+    const amountLiquido = parseFloat(
+      raw.amountLiquido ?? 
+      raw.valor_liquido ?? 
+      raw.net_value ?? 
+      raw.netAmount ??
+      raw.liquid_value ??
+      raw.amountBruto ?? 
+      raw.valor_bruto ?? 
+      raw.valor ?? 
+      raw.amount ?? 
+      0
+    );
     
     return {
       id: String(raw.id),
