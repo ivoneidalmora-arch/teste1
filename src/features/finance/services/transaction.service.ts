@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import { Transaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
+import { normalizePlaca } from '@/features/ai-ocr/utils/normalization';
 
 export const transactionService = {
   async getAll(app_user_id: string): Promise<Transaction[]> {
@@ -37,7 +38,7 @@ export const transactionService = {
       payload.amountBruto = transaction.grossAmount || transaction.amount;
       payload.amountLiquido = transaction.netAmount || transaction.amount;
       payload.cliente = transaction.customer;
-      payload.placa = transaction.metadata?.placa;
+      payload.placa = normalizePlaca((transaction as any).placa ?? transaction.metadata?.placa) || '';
       payload.nf = transaction.metadata?.nf;
       payload.pagamento = transaction.metadata?.pagamento;
       payload.observacao = transaction.metadata?.observacao;
@@ -110,7 +111,7 @@ export const transactionService = {
       date: t.date,
       category: t.category,
       cliente: t.customer,
-      placa: t.metadata?.placa,
+      placa: normalizePlaca((t as any).placa ?? t.metadata?.placa) || '', 
       nf: t.metadata?.nf,
       pagamento: t.metadata?.pagamento,
       observacao: t.metadata?.observacao,

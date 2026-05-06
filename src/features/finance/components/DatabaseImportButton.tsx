@@ -42,19 +42,27 @@ export function DatabaseImportButton({ onSuccess, className }: Props) {
           
           // Validar e normalizar dados antes do bulk insert
           const normalizedData = data.map((item: any, index: number) => {
-            // No backup, receitas podem vir da tabela 'Receitas'
-            const isIncome = item.type === 'income' || item.cliente || item.placa;
+            // No backup, receitas podem vir da tabela 'Receitas' (colunas raw) ou Transaction (mapeado)
+            const isIncome = 
+              item.type === 'income' || 
+              item.cliente || 
+              item.placa || 
+              item.metadata?.placa ||
+              item.customer;
             
             if (isIncome) {
-              const placa = normalizePlaca(item.placa || item.metadata?.placa);
+              const placa = normalizePlaca(item.placa || item.metadata?.placa || item.vehicle_plate);
               if (!placa) {
-                throw new Error(`O registro #${index + 1} (${item.cliente || 'Sem Nome'}) está sem placa válida.`);
+                console.error(`Erro na linha ${index + 1}:`, item);
+                throw new Error(`O registro #${index + 1} (${item.cliente || item.customer || 'Sem Nome'}) está sem placa válida.`);
               }
               // Garantir que a placa esteja no nível superior para o bulkInsert
               return { ...item, placa };
             }
             return item;
           });
+
+          console.log('[DATABASE IMPORT] Primeiro item normalizado:', normalizedData[0]);
 
           const success = await transactionService.bulkInsert(normalizedData, user.id);
           
