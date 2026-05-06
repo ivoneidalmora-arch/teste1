@@ -363,6 +363,7 @@ export function DashboardPage() {
           onClose={() => setEditingTransaction(null)}
           transaction={editingTransaction}
           onSuccess={refresh}
+          existingTransactions={transactions || []}
         />
       )}
     </div>

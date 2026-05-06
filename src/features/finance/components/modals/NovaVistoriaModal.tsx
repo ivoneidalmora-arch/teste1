@@ -12,6 +12,8 @@ import { calculateLiquido, CONVERSAO_VRTE_2025, VistoriaCategory, VISTORIA_CATEG
 import { cn } from '@/core/utils/formatters';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
+import { checkDuplicateLaunch } from '../../utils/duplicate-check';
+import { DuplicateAlertModal } from './DuplicateAlertModal';
 
 interface Props {
   isOpen: boolean;
@@ -35,6 +37,8 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     nf: '',
     observacao: ''
   });
+  const [duplicateFound, setDuplicateFound] = useState<Transaction | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   useEffect(() => {
     if (formData.categoria === 'Vistoria de Retorno') {
@@ -69,16 +73,27 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
     if (formData.placa.length < 7) return toast.error('Placa inválida.');
     if (formData.cliente.trim().length < 2) return toast.error('Nome do cliente muito curto.');
 
-    const selectedDate = new Date(formData.data + 'T12:00:00');
-    const dataCompMonth = formData.data.substring(0, 7);
-    const hasDuplicate = existingTransactions.some((t) => 
-      t.type === 'income' && 
-      t.metadata?.placa === formData.placa && 
-      t.category === formData.categoria && 
-      t.date.substring(0, 7) === dataCompMonth
+    // Validar duplicidade
+    const duplicate = checkDuplicateLaunch(
+      { 
+        placa: formData.placa, 
+        categoria: formData.categoria, 
+        data: formData.data 
+      }, 
+      existingTransactions
     );
 
-    if (hasDuplicate && !window.confirm('Já existe um lançamento similar este mês. Continuar?')) return;
+    if (duplicate) {
+      setDuplicateFound(duplicate);
+      setShowDuplicateModal(true);
+      return;
+    }
+
+    await executeSave();
+  };
+
+  const executeSave = async () => {
+    const selectedDate = new Date(formData.data + 'T12:00:00');
 
     setLoading(true);
     try {
@@ -179,6 +194,16 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
           {loading ? <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span> : 'Registrar Laudo'}
         </button>
       </form>
+
+      <DuplicateAlertModal 
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        onConfirm={() => {
+          setShowDuplicateModal(false);
+          executeSave();
+        }}
+        duplicate={duplicateFound}
+      />
     </BaseModal>
   );
 }

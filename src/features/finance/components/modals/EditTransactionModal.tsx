@@ -10,12 +10,15 @@ import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/core/utils/finance';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
+import { checkDuplicateLaunch } from '../../utils/duplicate-check';
+import { DuplicateAlertModal } from './DuplicateAlertModal';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (date?: Date) => void;
   transaction: Transaction | null;
+  existingTransactions?: Transaction[];
 }
 
 interface FormData {
@@ -39,6 +42,8 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [duplicateFound, setDuplicateFound] = useState<Transaction | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   useEffect(() => {
     if (transaction) {
@@ -99,6 +104,32 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData) return;
+
+    // Se for entrada, validar duplicidade
+    if (isIncome && existingTransactions) {
+      const duplicate = checkDuplicateLaunch(
+        { 
+          placa: formData.placa, 
+          categoria: formData.categoria, 
+          data: formData.data,
+          id: transaction.id
+        }, 
+        existingTransactions
+      );
+
+      if (duplicate) {
+        setDuplicateFound(duplicate);
+        setShowDuplicateModal(true);
+        return;
+      }
+    }
+
+    await executeSave();
+  };
+
+  const executeSave = async () => {
+    if (!formData) return;
     setLoading(true);
 
     try {
@@ -265,6 +296,16 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
           </button>
         </div>
       </form>
+
+      <DuplicateAlertModal 
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        onConfirm={() => {
+          setShowDuplicateModal(false);
+          executeSave();
+        }}
+        duplicate={duplicateFound}
+      />
     </BaseModal>
   );
 }

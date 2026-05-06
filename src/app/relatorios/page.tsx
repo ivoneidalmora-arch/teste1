@@ -201,6 +201,7 @@ export default function RelatoriosPage() {
           onClose={() => setEditingTransaction(null)}
           onSuccess={refresh}
           transaction={editingTransaction}
+          existingTransactions={transactions}
         />
       )}
     </div>

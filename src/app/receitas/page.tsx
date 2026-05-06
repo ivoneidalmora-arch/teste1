@@ -123,6 +123,7 @@ export default function ReceitasPage() {
           onClose={() => setEditingTransaction(null)}
           onSuccess={refresh}
           transaction={editingTransaction}
+          existingTransactions={transactions}
         />
       )}
 
