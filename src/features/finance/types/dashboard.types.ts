@@ -24,6 +24,8 @@ export interface RecentTransaction {
   customer: string;
   category: string;
   amount: number;
+  netAmount?: number;
+  grossAmount?: number;
   status: TransactionStatus;
   origin: "manual" | "import" | "ocr" | "supabase";
   type: TransactionType;

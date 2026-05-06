@@ -139,10 +139,16 @@ export function DashboardPage() {
     filteredTransactions.slice(0, 10).map(t => {
       const norm = normalizeTransaction(t);
       return {
-        ...norm,
+        id: String(norm.id),
         date: norm.date,
+        description: norm.description,
+        customer: norm.customer || 'N/A',
+        category: norm.category || 'Outros',
+        amount: norm.amount,
+        netAmount: norm.netAmount,
+        grossAmount: norm.grossAmount,
         status: norm.status as any,
-        origin: norm.source as any,
+        origin: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source) ? norm.source : 'manual') as any,
         type: norm.type as any
       };
     }),

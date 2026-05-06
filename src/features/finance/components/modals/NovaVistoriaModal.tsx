@@ -11,7 +11,15 @@ import { MoneyInput } from '@/core/components/ui/MoneyInput';
 import { calculateLiquido, CONVERSAO_VRTE_2025, VistoriaCategory, VISTORIA_CATEGORIES } from '@/core/utils/finance';
 import { cn } from '@/core/utils/formatters';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
-import { getNetValueFor2025, shouldApplyAutoNetValue } from '@/lib/financial-rules';
+import { getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (date?: Date) => void;
+  existingTransactions: Transaction[];
+  defaultDate?: Date;
+}
 
 export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransactions, defaultDate }: Props) {
   const { user } = useAuthContext();

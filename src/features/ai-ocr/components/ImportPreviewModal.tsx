@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Check, Trash2, Info } from 'lucide-react';
 import { normalizeCurrencyValue, getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
+import { cn } from '@/core/utils/formatters';
 
 interface ExtractedData {
   data: string;

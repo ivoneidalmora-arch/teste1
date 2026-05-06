@@ -132,6 +132,8 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
     } finally {
       setLoading(false);
     }
+  };
+
   const automationStatus = getNetValueAutomationStatus({
     amountBruto: formData.valorBruto,
     valor_liquido: formData.valorLiquido,
