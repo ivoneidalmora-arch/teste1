@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 
@@ -13,7 +14,11 @@ interface BaseModalProps {
 }
 
 export function BaseModal({ isOpen, onClose, title, children, headerColorContext = 'neutral' }: BaseModalProps) {
-  const [shouldRender, setShouldRender] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -21,7 +26,6 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
 
   useEffect(() => {
     if (isOpen) {
-      setShouldRender(true);
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleEscape);
     } else {
@@ -35,7 +39,7 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
     };
   }, [isOpen, handleEscape]);
 
-  if (!shouldRender && !isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const contextMap = {
     neutral: 'bg-slate-900 text-white border-slate-800',
@@ -45,37 +49,28 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
     info: 'bg-blue-950/30 text-blue-400 border-blue-900/50'
   };
 
-  return (
+  return createPortal(
     <div 
-      className={cn(
-        "fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-300",
-        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-      )}
-      onTransitionEnd={() => {
-        if (!isOpen) setShouldRender(false);
-      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="base-modal-title"
     >
-      {/* Overlay */}
+      {/* Overlay Background */}
       <div 
-        className={cn(
-          "absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0"
-        )}
+        className="absolute inset-0 transition-opacity duration-300"
         onClick={onClose}
       />
       
-      {/* Container */}
+      {/* Modal Container */}
       <div 
         className={cn(
-          "relative bg-slate-950 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform border border-slate-800",
-          isOpen ? "scale-100 translate-y-0 opacity-100" : "scale-95 translate-y-4 opacity-0"
+          "relative bg-slate-950 rounded-2xl shadow-2xl w-full max-w-[1100px] max-h-[90vh] md:max-w-2xl flex flex-col overflow-hidden transition-all duration-300 transform border border-slate-800 animate-in fade-in zoom-in duration-200",
+          "max-sm:max-w-[95vw] max-sm:max-h-[92vh]"
         )}
       >
-        {/* Header */}
-        <header className={cn("px-6 py-5 flex items-center justify-between border-b shrink-0", contextMap[headerColorContext])}>
+        {/* Header - Fixo */}
+        <header className={cn("px-6 py-4 flex items-center justify-between border-b shrink-0", contextMap[headerColorContext])}>
           <h2 id="base-modal-title" className="text-xl font-bold tracking-tight">{title}</h2>
           <button 
             onClick={onClose}
@@ -86,11 +81,12 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
           </button>
         </header>
         
-        {/* Content */}
+        {/* Content - Scrollable */}
         <div className="p-6 md:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 flex-1 bg-slate-950">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

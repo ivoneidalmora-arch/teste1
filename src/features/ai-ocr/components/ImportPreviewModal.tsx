@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Trash2 } from 'lucide-react';
 
 interface ExtractedData {
@@ -29,6 +30,11 @@ export function ImportPreviewModal({
 }: ImportPreviewModalProps) {
   const [items, setItems] = useState<ExtractedData[]>(initialData);
   const [showDebug, setShowDebug] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Sincronizar dados iniciais quando o modal abre
   useEffect(() => {
@@ -39,22 +45,23 @@ export function ImportPreviewModal({
 
   // Bloquear scroll do body e fechar no Escape
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      
-      window.addEventListener('keydown', handleEscape);
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener('keydown', handleEscape);
-      };
-    }
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleEscape);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const handleRemove = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
@@ -66,19 +73,22 @@ export function ImportPreviewModal({
     setItems(newItems);
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-labelledby="import-modal-title"
     >
-      <div className="w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-2xl bg-slate-950 shadow-2xl flex flex-col border border-slate-800 animate-in fade-in zoom-in duration-200">
+      {/* Overlay Background */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      <div className="relative w-full max-w-[1100px] max-h-[90vh] max-sm:max-w-[95vw] max-sm:max-h-[92vh] overflow-hidden rounded-2xl bg-slate-950 shadow-2xl flex flex-col border border-slate-800 animate-in fade-in zoom-in duration-200">
         
         {/* Header - Fixo */}
         <header className="shrink-0 p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
           <div>
-            <h2 id="modal-title" className="text-xl font-bold text-white">Conferir Importação</h2>
+            <h2 id="import-modal-title" className="text-xl font-bold text-white">Conferir Importação</h2>
             <p className="text-sm text-slate-400">Verifique os dados extraídos pela IA antes de salvar no sistema.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -99,29 +109,31 @@ export function ImportPreviewModal({
           </div>
         </header>
 
-        {/* Diagnóstico (Debug) - Scrollable se necessário */}
-        {showDebug && (
-          <div className="shrink-0 bg-slate-900 p-4 text-xs font-mono text-emerald-400 overflow-auto max-h-[300px] border-b border-slate-800">
-            <h2 className="text-pink-500 font-bold mb-2 border-b border-pink-900/50 pb-1 flex justify-between">
-              <span>PAINEL DE DIAGNÓSTICO</span>
-              <span className="text-[10px] text-slate-500">V3 - Estabilizado</span>
-            </h2>
-            <h3 className="text-slate-400 mb-1 uppercase">Dados Brutos / Fonte:</h3>
-            <pre className="whitespace-pre-wrap mb-4 bg-black/40 p-2 rounded border border-slate-800">{rawResponse || 'Nenhum dado bruto capturado.'}</pre>
-            <h3 className="text-slate-400 mb-1 uppercase">Logs de Processamento:</h3>
-            <ul className="space-y-1 bg-black/20 p-2 rounded border border-slate-800">
-              {logs?.length ? logs.map((log, i) => (
-                <li key={i} className={log.includes('Inversão') || log.includes('ERRO') ? 'text-amber-400 font-bold' : ''}>
-                  {log}
-                </li>
-              )) : <li className="text-slate-600 italic">Nenhum log disponível.</li>}
-            </ul>
-          </div>
-        )}
+        {/* Conteúdo Central com Scroll */}
+        <main className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-thumb-slate-700 bg-slate-950">
+          
+          {/* Diagnóstico (Debug) se visível */}
+          {showDebug && (
+            <div className="mb-6 bg-slate-900 p-4 text-xs font-mono text-emerald-400 rounded-xl border border-slate-800">
+              <h2 className="text-pink-500 font-bold mb-2 border-b border-pink-900/50 pb-1 flex justify-between">
+                <span>PAINEL DE DIAGNÓSTICO</span>
+                <span className="text-[10px] text-slate-500">V3 - Estabilizado</span>
+              </h2>
+              <h3 className="text-slate-400 mb-1 uppercase">Dados Brutos:</h3>
+              <pre className="whitespace-pre-wrap mb-4 bg-black/40 p-2 rounded border border-slate-800">{rawResponse || 'Nenhum dado bruto capturado.'}</pre>
+              <h3 className="text-slate-400 mb-1 uppercase">Logs:</h3>
+              <ul className="space-y-1 bg-black/20 p-2 rounded border border-slate-800">
+                {logs?.length ? logs.map((log, i) => (
+                  <li key={i} className={log.includes('Inversão') || log.includes('ERRO') ? 'text-amber-400 font-bold' : ''}>
+                    {log}
+                  </li>
+                )) : <li className="text-slate-600 italic">Nenhum log disponível.</li>}
+              </ul>
+            </div>
+          )}
 
-        {/* Content - Flex-1 e Scrollable */}
-        <main className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
-          <div className="overflow-x-auto rounded-lg border border-slate-800">
+          {/* Tabela Responsiva */}
+          <div className="w-full overflow-x-auto rounded-xl border border-slate-800">
             <table className="w-full min-w-[900px] text-left border-collapse">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800 bg-slate-900/30">
@@ -203,8 +215,8 @@ export function ImportPreviewModal({
           )}
         </main>
 
-        {/* Footer - Fixo e Responsivo */}
-        <footer className="shrink-0 p-6 border-t border-slate-800 bg-slate-950 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Footer - Fixo */}
+        <footer className="shrink-0 p-6 border-t border-slate-800 bg-slate-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-slate-400 font-medium order-2 sm:order-1 text-center sm:text-left">
             Total de itens: <span className="text-white font-bold">{items.length}</span>
           </div>
@@ -226,6 +238,7 @@ export function ImportPreviewModal({
           </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
