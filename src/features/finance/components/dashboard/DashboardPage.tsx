@@ -17,8 +17,13 @@ import { CashFlowChart } from './CashFlowChart';
 import { AlertsInsightsPanel } from './AlertsInsightsPanel';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { TopClientsCard } from './TopClientsCard';
-import { CategoryDonutCard } from './CategoryDonutCard';
+import { ExpensesByCategoryCard } from './ExpensesByCategoryCard';
 import { FinancialCalendarCard } from './FinancialCalendarCard';
+import { 
+  getTopClients, 
+  getExpensesByCategory, 
+  getFinancialCalendarEvents 
+} from '@/lib/dashboard-metrics';
 
 import { useFinance } from '../../hooks/useFinance';
 import { cn } from '@/core/utils/formatters';
@@ -135,6 +140,18 @@ export function DashboardPage() {
   }, [filteredTransactions, transactions, selectedDate]);
 
   // 3. Preparação de Dados para Componentes
+  const topClients = useMemo(() => 
+    getTopClients(filteredTransactions), 
+  [filteredTransactions]);
+
+  const expensesByCategory = useMemo(() => 
+    getExpensesByCategory(filteredTransactions), 
+  [filteredTransactions]);
+
+  const financialEvents = useMemo(() => 
+    getFinancialCalendarEvents(filteredTransactions), 
+  [filteredTransactions]);
+
   const recentTransactions = useMemo(() => 
     filteredTransactions.slice(0, 10).map(t => {
       const norm = normalizeTransaction(t);
@@ -312,13 +329,13 @@ export function DashboardPage() {
       </div>
 
       {/* Cards Secundários */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TopClientsCard clients={[]} />
-        <CategoryDonutCard 
-          data={[]} 
-          totalValue={metrics.current.receitaBruta - metrics.current.lucroMes} 
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
+        <TopClientsCard clients={topClients} />
+        <ExpensesByCategoryCard 
+          total={expensesByCategory.total} 
+          categories={expensesByCategory.categories} 
         />
-        <FinancialCalendarCard events={[]} />
+        <FinancialCalendarCard events={financialEvents} />
       </section>
 
       {/* Modais */}

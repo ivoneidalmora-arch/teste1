@@ -1,9 +1,15 @@
 "use client";
 
-import { CalendarDays, ChevronRight, PlusCircle } from 'lucide-react';
-import { formatBRL } from '@/core/utils/formatters';
-import { CalendarEvent } from '../../types/dashboard.types';
-import { cn } from '@/core/utils/formatters';
+import { PlusCircle } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/dashboard-metrics';
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  value: number;
+  type: 'income' | 'expense';
+}
 
 interface Props {
   events: CalendarEvent[];
@@ -11,57 +17,58 @@ interface Props {
 
 export function FinancialCalendarCard({ events }: Props) {
   return (
-    <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/60 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-brand-primary" />
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">Calendário Financeiro</h3>
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col min-h-[260px]">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">
+            Agenda Financeira
+          </h2>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Próximos compromissos
+          </p>
         </div>
-        <button className="text-xs font-bold text-brand-primary hover:underline">Ver agenda</button>
+
+        <button className="text-xs font-bold text-blue-600 hover:text-blue-700">
+          Ver todos
+        </button>
       </div>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-3 flex-1">
         {events.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center py-10">
-            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mb-3">
-              <CalendarDays className="w-6 h-6" />
-            </div>
-            <p className="text-slate-500 text-sm font-bold">Sem eventos este mês</p>
-            <p className="text-slate-400 text-xs font-semibold">Suas próximas receitas e despesas aparecerão aqui.</p>
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center flex flex-col items-center justify-center h-full min-h-[140px]">
+            <p className="text-sm font-black text-slate-700">
+              Sem eventos este mês
+            </p>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Despesas pendentes e receitas previstas aparecerão aqui.
+            </p>
           </div>
         ) : (
-          events.map((event) => {
-            const date = new Date(event.date + 'T12:00:00');
-            const day = date.getDate();
-            const month = date.toLocaleString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '');
-
-            return (
-              <div key={event.id} className="flex items-center gap-4 p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all cursor-pointer group">
-                <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center shadow-sm shrink-0">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-tight">{month}</span>
-                  <span className="text-sm font-black text-slate-900 leading-none">{day}</span>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-slate-900 truncate">{event.title}</h4>
-                  <p className={cn(
-                    "text-xs font-black",
-                    event.type === 'income' ? "text-emerald-600" : "text-rose-600"
-                  )}>
-                    {event.type === 'income' ? '+' : '-'} {formatBRL(event.amount)}
-                  </p>
-                </div>
-
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-all" />
+          events.map((event) => (
+            <div
+              key={event.id}
+              className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 hover:bg-slate-100 transition-colors group cursor-pointer"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-slate-950 group-hover:text-blue-600 transition-colors">
+                  {event.title}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                  {formatDate(event.date)}
+                </p>
               </div>
-            );
-          })
+
+              <p className={`shrink-0 text-sm font-black ${event.type === 'income' ? 'text-emerald-600' : 'text-slate-950'}`}>
+                {event.type === 'income' ? '+' : ''}{formatCurrency(event.value)}
+              </p>
+            </div>
+          ))
         )}
       </div>
 
-      <button className="mt-8 py-3 w-full border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5 transition-all flex items-center justify-center gap-2 text-xs font-bold">
-        <PlusCircle className="w-4 h-4" />
-        Agendar compromisso futuro
+      <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-sm font-bold text-slate-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600">
+        <PlusCircle className="h-4 w-4" />
+        Agendar compromisso
       </button>
     </div>
   );

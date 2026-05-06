@@ -1,8 +1,12 @@
 "use client";
 
-import { User, ChevronRight } from 'lucide-react';
-import { formatBRL } from '@/core/utils/formatters';
-import { TopClient } from '../../types/dashboard.types';
+import { formatCurrency } from '@/lib/dashboard-metrics';
+
+interface TopClient {
+  name: string;
+  total: number;
+  count: number;
+}
 
 interface Props {
   clients: TopClient[];
@@ -10,57 +14,59 @@ interface Props {
 
 export function TopClientsCard({ clients }: Props) {
   return (
-    <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/60 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-lg font-black text-slate-900 tracking-tight">Top Clientes</h3>
-        <button className="text-xs font-bold text-brand-primary hover:underline">Ver ranking</button>
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col min-h-[260px]">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">
+            Top Clientes
+          </h2>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Principais fontes de receita
+          </p>
+        </div>
+
+        <button className="text-xs font-bold text-blue-600 hover:text-blue-700">
+          Ver todos
+        </button>
       </div>
 
-      <div className="space-y-6 flex-1">
+      <div className="space-y-3 flex-1">
         {clients.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center py-10">
-            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-3">
-              <User className="w-6 h-6" />
-            </div>
-            <p className="text-slate-500 text-sm font-bold">Nenhum cliente no ranking</p>
-            <p className="text-slate-400 text-xs font-semibold">Os principais clientes aparecerão aqui conforme o volume de vistorias.</p>
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center flex flex-col items-center justify-center h-full min-h-[140px]">
+            <p className="text-sm font-black text-slate-700">
+              Nenhum cliente encontrado
+            </p>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Os principais clientes aparecerão aqui conforme novas receitas forem registradas.
+            </p>
           </div>
         ) : (
-          clients.map((client) => (
-            <div key={client.id} className="flex items-center justify-between group cursor-pointer">
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-all overflow-hidden border-2 border-white shadow-sm">
-                  {client.avatar ? (
-                    <img src={client.avatar} alt={client.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-5 h-5" />
-                  )}
+          clients.map((client, index) => (
+            <div
+              key={client.name}
+              className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 hover:bg-slate-100 transition-colors group cursor-pointer"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-black text-blue-600">
+                  {index + 1}
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-slate-900 truncate">{client.name}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-brand-primary rounded-full transition-all duration-1000" 
-                        style={{ width: `${client.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-black text-slate-400">{client.percentage}%</span>
-                  </div>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-slate-950 group-hover:text-blue-600 transition-colors">
+                    {client.name}
+                  </p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                    {client.count} lançamento(s)
+                  </p>
                 </div>
               </div>
-              <div className="text-right ml-4">
-                <p className="text-sm font-black text-slate-900">{formatBRL(client.amount)}</p>
-              </div>
+
+              <p className="shrink-0 text-sm font-black text-emerald-600">
+                {formatCurrency(client.total)}
+              </p>
             </div>
           ))
         )}
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-slate-100">
-        <button className="w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2">
-          Análise Completa de Clientes <ChevronRight className="w-3 h-3" />
-        </button>
       </div>
     </div>
   );
