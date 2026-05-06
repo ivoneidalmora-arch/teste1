@@ -57,8 +57,8 @@ export function DashboardPage() {
     if (searchQuery) {
       const lowSearch = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
-        (t.description || t.descricao || '').toLowerCase().includes(lowSearch) ||
-        (t.customer || t.cliente || '').toLowerCase().includes(lowSearch)
+        (t.description || '').toLowerCase().includes(lowSearch) ||
+        (t.customer || '').toLowerCase().includes(lowSearch)
       );
     }
 
@@ -68,19 +68,19 @@ export function DashboardPage() {
       filtered = filterByMonth(filtered, selectedDate);
     } else if (activePeriod === 'today') {
       filtered = filtered.filter(t => {
-        const d = new Date(t.date || t.data);
+        const d = new Date(t.date);
         return d.toDateString() === now.toDateString();
       });
     } else if (activePeriod === 'week') {
       const start = new Date(now.setDate(now.getDate() - now.getDay()));
       const end = new Date(now.setDate(now.getDate() - now.getDay() + 6));
       filtered = filtered.filter(t => {
-        const d = new Date(t.date || t.data);
+        const d = new Date(t.date);
         return d >= start && d <= end;
       });
     } else if (activePeriod === 'last30') {
       const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
-      filtered = filtered.filter(t => new Date(t.date || t.data) >= thirtyDaysAgo);
+      filtered = filtered.filter(t => new Date(t.date) >= thirtyDaysAgo);
     }
 
     return filtered;
