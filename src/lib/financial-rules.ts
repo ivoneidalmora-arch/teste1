@@ -13,6 +13,7 @@ export const NET_VALUE_BY_GROSS_VALUE_2025: Record<string, number> = {
   "141.52": 105.86,
   "108.50": 75.96,
   "92.35": 63.99,
+  "94.35": 63.49,
 };
 
 /**

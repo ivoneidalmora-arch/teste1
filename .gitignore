@@ -42,3 +42,11 @@ next-env.d.ts
 
 # scratch
 /scratch/
+
+# backups
+/backups
+*.bak
+*.dump
+*.sql
+project-backup-*.tar.gz
+database-backup-*.bak
