@@ -12,9 +12,12 @@ import { toast } from 'sonner';
 interface Props {
   onSuccess: () => void;
   className?: string;
+  label?: string;
+  accept?: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'emerald';
 }
 
-export function ImportButton({ onSuccess, className }: Props) {
+export function ImportButton({ onSuccess, className, label, accept, variant = 'primary' }: Props) {
   const { user } = useAuthContext();
   const [importing, setImporting] = useState(false);
   const [statusText, setStatusText] = useState('Processando IA...');
@@ -108,7 +111,10 @@ export function ImportButton({ onSuccess, className }: Props) {
   return (
     <>
       <label className={cn(
-        "flex items-center justify-center gap-2 px-4 h-11 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-all cursor-pointer",
+        "flex items-center justify-center gap-2 px-4 h-11 font-bold rounded-xl shadow-lg transition-all cursor-pointer",
+        variant === 'primary' && "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10",
+        variant === 'emerald' && "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/10",
+        variant === 'secondary' && "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/10",
         importing && "opacity-50 cursor-not-allowed pointer-events-none",
         className
       )}>
@@ -117,11 +123,11 @@ export function ImportButton({ onSuccess, className }: Props) {
         ) : (
           <Sparkles className="w-4 h-4 text-amber-400" />
         )}
-        <span className="text-sm">{importing ? statusText : 'Importar PDF'}</span>
+        <span className="text-sm">{importing ? statusText : (label || 'Importar PDF')}</span>
         <input 
           type="file" 
           className="hidden" 
-          accept=".pdf,.xlsx,.xls,.csv,image/*" 
+          accept={accept || ".pdf,.xlsx,.xls,.csv,image/*"} 
           onChange={handleImportPDF} 
           disabled={importing} 
         />

@@ -15,7 +15,30 @@ export default function ConfigPage() {
   const [confirmText, setConfirmText] = useState('');
 
   const handleExport = async () => {
-    toast.info('Funcionalidade de backup automático ativa. Exportação manual em breve.');
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      const data = await transactionService.getAll(user.id);
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `backup_financeiro_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Backup exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar backup.');
+      console.error(error);
+    } finally {
+      setLoading(true);
+      setLoading(false);
+    }
   };
 
   const handleDeleteAll = async () => {
