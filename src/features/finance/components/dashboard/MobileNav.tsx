@@ -1,146 +1,78 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  Menu, 
-  X, 
-  LayoutDashboard, 
-  TrendingUp,
-  TrendingDown,
-  Upload,
-  Scan,
-  FileText, 
-  Settings, 
-  LogOut,
-  ShieldCheck
-} from 'lucide-react';
-import { cn } from '@/core/utils/formatters';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-
+import { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
-
-const MENU_GROUPS = [
-  {
-    title: 'Principal',
-    items: [
-      { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-    ]
-  },
-  {
-    title: 'Financeiro',
-    items: [
-      { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
-      { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
-      { icon: FileText, label: 'Relatórios', href: '/relatorios' },
-    ]
-  },
-  {
-    title: 'Automação',
-    items: [
-      { icon: Upload, label: 'Importações', href: '/importacoes' },
-      { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
-    ]
-  },
-  {
-    title: 'Sistema',
-    items: [
-      { icon: Settings, label: 'Configurações', href: '/configuracoes' },
-    ]
-  }
-];
+import { SidebarContent } from './SidebarContent';
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const { logout, user } = useAuth();
+
+  // Fechar ao pressionar Escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  // Impedir scroll do body quando o menu está aberto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isOpen]);
 
   return (
     <div className="lg:hidden">
-      {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between sticky top-0 z-[60]">
+      {/* Top Bar Mobile */}
+      <div className="flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4">
         <div className="flex items-center">
           <Image 
             src="/logo.png" 
             alt="Alfa Logo" 
-            width={120} 
+            width={100} 
             height={40} 
-            className="object-contain"
+            className="h-8 w-auto object-contain"
           />
         </div>
         
         <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+          onClick={() => setIsOpen(true)}
+          className="rounded-xl p-2 text-slate-600 hover:bg-slate-50 transition-colors"
+          aria-label="Abrir menu"
         >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <Menu className="h-6 w-6" />
         </button>
       </div>
 
-      {/* Overlay Menu */}
+      {/* Drawer Mobile */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <span className="text-lg font-black text-slate-900">Menu</span>
-              <button onClick={() => setIsOpen(false)} className="p-2 text-slate-400">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[9998]">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
 
-            <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-              {MENU_GROUPS.map((group) => (
-                <div key={group.title} className="space-y-2">
-                  <h3 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {group.title}
-                  </h3>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const isActive = item.href === '/' 
-                        ? pathname === '/' 
-                        : pathname.startsWith(item.href);
-                      return (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          onClick={() => setIsOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                            isActive 
-                              ? "bg-brand-primary/10 text-brand-primary font-bold shadow-sm shadow-brand-primary/5" 
-                              : "text-slate-500 hover:bg-slate-50"
-                          )}
-                        >
-                          <item.icon className="w-5 h-5" />
-                          <span className="text-sm">{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </nav>
-
-            <div className="p-6 border-t border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white font-bold">
-                  {user?.username?.[0].toUpperCase() || 'A'}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-slate-900 truncate">{user?.username || 'Usuário'}</span>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Online</span>
-                </div>
-              </div>
+          {/* Aside Drawer */}
+          <aside className="relative z-[9999] h-full w-[280px] max-w-[85vw] bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
+            <div className="absolute right-4 top-4">
               <button 
-                onClick={logout}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-rose-600 font-bold rounded-xl hover:bg-rose-50 transition-all"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                aria-label="Fechar menu"
               >
-                <LogOut className="w-4 h-4" />
-                Sair do Sistema
+                <X className="h-5 w-5" />
               </button>
             </div>
-          </div>
+
+            <SidebarContent onItemClick={() => setIsOpen(false)} />
+          </aside>
         </div>
       )}
     </div>

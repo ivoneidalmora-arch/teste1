@@ -12,19 +12,20 @@ export function DashboardLayout({ children }: Props) {
     <div className="min-h-screen w-full overflow-x-hidden bg-slate-50">
       <div className="flex min-h-screen w-full overflow-x-hidden">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:flex lg:w-64 lg:shrink-0">
-          <DashboardSidebar />
-        </aside>
+        <DashboardSidebar />
 
-        {/* Navigation - Mobile */}
-        <MobileNav />
+        {/* Layout Mobile + Main Content */}
+        <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
+          {/* Navigation - Mobile */}
+          <MobileNav />
 
-        {/* Main Content Area */}
-        <main className="min-w-0 flex-1 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-10">
-            {children}
-          </div>
-        </main>
+          {/* Main Content Area */}
+          <main className="min-w-0 flex-1 overflow-x-hidden">
+            <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-10">
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
