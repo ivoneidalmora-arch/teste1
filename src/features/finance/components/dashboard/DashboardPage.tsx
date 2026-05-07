@@ -192,7 +192,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
+    <div className="space-y-6">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -203,125 +203,61 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {/* Filtros Rápidos */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        {[
-          { id: 'today', label: 'Hoje' },
-          { id: 'week', label: 'Esta Semana' },
-          { id: 'month', label: 'Este Mês' },
-          { id: 'last30', label: 'Últimos 30 Dias' },
-          { id: 'global', label: 'Global' },
-          { id: 'custom', label: 'Personalizado' },
-        ].map((p) => (
-          <button
-            key={p.id}
-            onClick={() => {
-              setActivePeriod(p.id as any);
-              if (p.id === 'month') setPeriod(new Date().toISOString().substring(0, 7));
-              if (p.id === 'global') setPeriod('global');
-            }}
-            className={cn(
-              "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-              activePeriod === p.id 
-                ? "bg-slate-950 text-white shadow-lg shadow-slate-950/20 border-slate-950" 
-                : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Grid Principal */}
+      <div className="grid grid-cols-12 gap-6">
+        
+        {/* 1. KPIs de Performance (Linha Superior) */}
+        <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <FinancialHeroCard 
+            balance={metrics.current.saldoDisponivel} 
+            lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
+            variation={metrics.variations.balance} 
+          />
+          <MetricCard title="Receita Bruta" value={metrics.current.receitaBruta} trend={metrics.variations.income} icon={TrendingUp} variant="blue" />
+          <MetricCard title="Receita Líquida" value={metrics.current.receitaLiquida} trend={metrics.variations.net} icon={ShieldCheck} variant="green" />
+          <MetricCard title="Despesa Total" value={metrics.current.despesasTotal} trend={metrics.variations.expense} icon={TrendingDown} variant="red" />
+          <MetricCard title="Despesas Pendentes" value={metrics.current.despesasPendentes} icon={Clock} variant="orange" />
+        </div>
+
+        {/* 2. Área Central (Esquerda) e Coluna de Insights (Direita) */}
+        <div className="col-span-12 xl:col-span-9 space-y-6">
+          
+          {/* Gráfico + Top Clientes */}
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-8">
+              <CashFlowChart data={cashFlowData} />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <TopClientsCard 
+                clients={topClients} 
+                onSeeAll={() => window.location.href = '/relatorios'}
+              />
+            </div>
+          </div>
+
+          {/* Tabela de Transações Recentes (Compacta) */}
+          <div className="min-w-0">
+            <RecentTransactionsTable 
+              transactions={recentTransactions.slice(0, 5)} 
+              onAction={(id) => {}} 
+            />
+          </div>
+        </div>
+
+        {/* 3. Coluna Direita (Insights e Resumos) */}
+        <div className="col-span-12 xl:col-span-3 space-y-6">
+          <FinancialInsightsCard />
+          <ExpensesByCategoryCard 
+            total={expensesByCategory.total} 
+            categories={expensesByCategory.categories} 
+            onSeeAll={() => window.location.href = '/despesas'}
+          />
+          <FinancialCalendarCard 
+            events={financialEvents} 
+            onSeeAll={() => window.location.href = '/relatorios'}
+          />
+        </div>
       </div>
-
-      {/* Destaque Saldo & Insights */}
-      <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <FinancialHeroCard 
-          balance={metrics.current.saldoDisponivel} 
-          lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
-          variation={metrics.variations.balance} 
-        />
-        <FinancialInsightsCard />
-      </section>
-
-      {/* KPIs Principais */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 mb-8">
-        <MetricCard 
-          title="Receita Bruta" 
-          value={metrics.current.receitaBruta} 
-          trend={metrics.variations.income} 
-          icon={TrendingUp} 
-          variant="blue"
-          description="Soma dos valores brutos"
-        />
-        <MetricCard 
-          title="Receita Líquida" 
-          value={metrics.current.receitaLiquida} 
-          trend={metrics.variations.net} 
-          icon={ShieldCheck} 
-          variant="green"
-          description="Soma dos valores líquidos"
-        />
-        <MetricCard 
-          title="Despesa Total" 
-          value={metrics.current.despesasTotal} 
-          trend={metrics.variations.expense} 
-          icon={TrendingDown} 
-          variant="red"
-          description="Despesas do período"
-        />
-        <MetricCard 
-          title="Despesas Pendentes" 
-          value={metrics.current.despesasPendentes} 
-          icon={Clock} 
-          variant="orange"
-          description="Aguardando pagamento"
-        />
-        <MetricCard 
-          title="Saldo Disponível" 
-          value={metrics.current.saldoDisponivel} 
-          trend={metrics.variations.balance} 
-          icon={Wallet} 
-          variant="purple"
-          description="Receita Líq. - Despesas"
-        />
-        <MetricCard 
-          title="Lucro do Mês" 
-          value={metrics.current.lucroMes} 
-          trend={metrics.variations.balance} 
-          icon={Target} 
-          variant="green"
-          description="Resultado líquido"
-        />
-      </section>
-
-      {/* Gráfico de Fluxo de Caixa */}
-      <section className="mb-8">
-        <CashFlowChart data={cashFlowData} />
-      </section>
-
-      {/* Tabela de Transações */}
-      <div className="min-w-0 mb-8">
-        <RecentTransactionsTable 
-          transactions={recentTransactions} 
-          onAction={(id) => {}} 
-        />
-      </div>
-
-      {/* Cards Secundários */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
-        <TopClientsCard 
-          clients={topClients} 
-          onSeeAll={() => window.location.href = '/relatorios'}
-        />
-        <ExpensesByCategoryCard 
-          total={expensesByCategory.total} 
-          categories={expensesByCategory.categories} 
-          onSeeAll={() => window.location.href = '/despesas'}
-        />
-        <FinancialCalendarCard 
-          events={financialEvents} 
-          onSeeAll={() => window.location.href = '/relatorios'}
-        />
-      </section>
 
       {/* Modais */}
       <NovaVistoriaModal 

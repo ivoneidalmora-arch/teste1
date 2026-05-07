@@ -43,12 +43,12 @@ export function FinancialPeriodFilter() {
   }, [availableMonths]);
 
   return (
-    <div className="relative w-full sm:w-auto min-w-[200px] z-10">
-      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+    <div className="relative w-full sm:w-auto min-w-[160px] z-10">
+      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
       <select
         value={selectedPeriod || 'global'}
         onChange={(e) => setPeriod(e.target.value)}
-        className="w-full h-11 pl-10 pr-10 bg-white border-2 border-slate-200 rounded-xl text-sm font-black text-slate-700 shadow-md outline-none transition hover:border-brand-primary focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 appearance-none capitalize cursor-pointer"
+        className="w-full h-10 pl-9 pr-9 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm outline-none transition hover:border-blue-600 focus:border-blue-600 appearance-none capitalize cursor-pointer"
       >
         {monthOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -56,7 +56,7 @@ export function FinancialPeriodFilter() {
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
     </div>
   );
 }

@@ -39,36 +39,32 @@ export function MetricCard({
 
   return (
     <div className={cn(
-      "min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md group",
+      "min-w-0 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md group",
       className
     )}>
-      <div className={cn("mb-5 flex h-10 w-10 items-center justify-center rounded-2xl transition-transform group-hover:scale-110", styles.iconBg, styles.text)}>
-        <Icon className="h-5 w-5" />
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          {title}
+        </p>
+        <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg", styles.iconBg, styles.text)}>
+          <Icon className="h-4 w-4" />
+        </div>
       </div>
 
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-        {title}
-      </p>
+      <div className="flex items-end justify-between gap-2">
+        <h3 className="truncate text-lg font-black tracking-tight text-[#0F172A]">
+          {formattedValue}
+        </h3>
 
-      <h3 className="mt-2 truncate text-2xl font-black tracking-tight text-slate-950">
-        {formattedValue}
-      </h3>
-
-      {description && (
-        <p className="mt-2 line-clamp-2 text-[10px] font-bold text-slate-500 uppercase tracking-tight">
-          {description}
-        </p>
-      )}
-
-      {trend !== undefined && (
-        <div className={cn(
-          "mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tight",
-          isPositive ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-        )}>
-          <span>{isPositive ? '↑' : '↓'}</span>
-          <span>{Math.abs(trend).toFixed(1)}%</span>
-        </div>
-      )}
+        {trend !== undefined && (
+          <div className={cn(
+            "flex items-center gap-0.5 text-[10px] font-bold",
+            isPositive ? "text-emerald-500" : "text-rose-500"
+          )}>
+            <span>{isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

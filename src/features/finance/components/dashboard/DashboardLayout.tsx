@@ -9,19 +9,19 @@ interface Props {
 
 export function DashboardLayout({ children }: Props) {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50">
-      <div className="flex min-h-screen w-full overflow-x-hidden">
+    <div className="h-screen w-full overflow-hidden bg-[#F8FAFC]">
+      <div className="flex h-full w-full">
         {/* Sidebar - Desktop */}
         <DashboardSidebar />
 
         {/* Layout Mobile + Main Content */}
-        <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
+        <div className="flex flex-1 flex-col min-w-0 h-full overflow-hidden">
           {/* Navigation - Mobile */}
           <MobileNav />
 
           {/* Main Content Area */}
-          <main className="min-w-0 flex-1 overflow-x-hidden">
-            <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-10">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+            <div className="mx-auto w-full max-w-[1600px] px-6 py-6 lg:px-8">
               {children}
             </div>
           </main>

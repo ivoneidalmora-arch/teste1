@@ -24,54 +24,53 @@ export function DashboardHeader({
 }: Props) {
   
   return (
-    <header className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-8">
       <div className="min-w-0">
-        <h1 className="text-3xl font-black tracking-tight text-slate-950">
+        <h1 className="text-2xl font-black tracking-tight text-[#0F172A]">
           {title}
         </h1>
-        <p className="mt-1 flex items-center gap-2 text-sm text-slate-600 font-bold uppercase tracking-tight">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <p className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           {subtitle || 'Visão Geral Corporativa'}
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
-        {/* Filtros e Busca */}
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap xl:justify-end">
-          <div className="relative group w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-brand-primary transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Buscar transações..." 
-              onChange={(e) => onSearch?.(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary transition-all shadow-sm"
-            />
-          </div>
-
-          <FinancialPeriodFilter />
+      <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+        {/* Busca Compacta */}
+        <div className="relative group w-full lg:w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Buscar..." 
+            onChange={(e) => onSearch?.(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-600/5 focus:border-blue-600 transition-all"
+          />
         </div>
 
-        {/* Botões de Ação */}
-        <div className="flex w-full flex-wrap gap-2 xl:justify-end">
+        {/* Filtro de Período */}
+        <FinancialPeriodFilter />
+
+        {/* Grupo de Botões */}
+        <div className="flex items-center gap-2">
           <button 
             onClick={onGenerateReport}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex-1 sm:flex-none"
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+            title="Relatório"
           >
-            <FileText className="w-4 h-4 text-slate-400" />
-            Relatório
+            <FileText className="w-4 h-4" />
           </button>
 
           <button 
             onClick={onImportFile}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex-1 sm:flex-none"
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+            title="Importar"
           >
-            <Upload className="w-4 h-4 text-slate-400" />
-            Importar
+            <Upload className="w-4 h-4" />
           </button>
           
           <button 
             onClick={onNewExpense}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 flex-1 sm:flex-none"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#E11D48] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Despesa
@@ -79,7 +78,7 @@ export function DashboardHeader({
 
           <button 
             onClick={onNewTransaction}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex-1 sm:flex-none"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#059669] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Vistoria
