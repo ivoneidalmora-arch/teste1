@@ -92,7 +92,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
               <option value="Suprimentos">Suprimentos</option>
               <option value="Aluguel">Aluguel</option>
               <option value="Folha">Folha de Pagamento</option>
-              <option value="Sistema">Sistema</option>
+              <option value="Sistema/Software">Sistema/Software</option>
               <option value="Outros">Outros</option>
             </select>
           </div>
