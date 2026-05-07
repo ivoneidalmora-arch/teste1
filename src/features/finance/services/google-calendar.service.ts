@@ -30,12 +30,15 @@ class GoogleCalendarService {
 
     const decryptedRefreshToken = decrypt(connection.refresh_token);
 
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.ID_DO_CLIENTE_DO_GOOGLE;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID as string,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        client_id: clientId as string,
+        client_secret: clientSecret as string,
         refresh_token: decryptedRefreshToken,
         grant_type: 'refresh_token',
       }),

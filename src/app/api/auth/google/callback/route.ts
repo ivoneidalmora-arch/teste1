@@ -20,14 +20,17 @@ export async function GET(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
     const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.ID_DO_CLIENTE_DO_GOOGLE;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
     // Exchange code for tokens
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: process.env.GOOGLE_CLIENT_ID as string,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        client_id: clientId as string,
+        client_secret: clientSecret as string,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       }),

@@ -9,17 +9,20 @@ export async function GET(request: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
   
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.ID_DO_CLIENTE_DO_GOOGLE;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
     return NextResponse.json({ 
       error: 'Configuração Incompleta no Vercel',
-      details: 'As chaves GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET não foram encontradas nas variáveis de ambiente.',
-      hint: 'Adicione-as no painel do Vercel e faça um novo Deploy.'
+      details: 'As chaves de ambiente não foram encontradas (GOOGLE_CLIENT_ID ou ID_DO_CLIENTE_DO_GOOGLE).',
+      hint: 'Verifique se os nomes das variáveis no Vercel estão corretos e faça um novo Deploy.'
     }, { status: 500 });
   }
 
   const options = {
     redirect_uri: redirectUri,
-    client_id: process.env.GOOGLE_CLIENT_ID,
+    client_id: clientId,
     access_type: 'offline',
     response_type: 'code',
     prompt: 'consent',
