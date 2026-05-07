@@ -71,9 +71,11 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
     }
   };
 
+  const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
+
   return (
-    <Card className="p-0 overflow-hidden border-slate-100">
-      <div className="overflow-x-auto">
+    <Card className="p-0 border-slate-100">
+      <div className="overflow-x-auto scrollbar-thin">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -87,8 +89,10 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
           <tbody className="divide-y divide-slate-50">
             {transactions.map((t) => {
               const isIncome = t.type === 'income';
+              const isMenuOpen = openMenuId === t.id;
+
               return (
-                <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
+                <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group relative">
                   <td className="px-6 py-4">
                     <span className="text-xs font-bold text-slate-500">{formatDisplayDate(t.date)}</span>
                   </td>
@@ -125,29 +129,70 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-1">
-                      <div className="relative group/menu">
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(isMenuOpen ? null : t.id);
+                          }}
+                          className={cn(
+                            "p-2 rounded-lg transition-all",
+                            isMenuOpen ? "bg-slate-900 text-white" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                          )}
+                        >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                         
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-100 rounded-xl shadow-xl shadow-slate-200/50 py-2 z-20 hidden group-hover/menu:block animate-in fade-in zoom-in-95 duration-100">
-                          <button onClick={() => onEdit(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                            <Edit className="w-4 h-4 text-slate-400" /> Editar Registro
-                          </button>
-                          {!isIncome && (
-                            <button onClick={() => handleToggleStatus(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                              <CheckCircle className={cn("w-4 h-4", t.status === 'paid' ? "text-emerald-500" : "text-slate-400")} /> 
-                              {t.status === 'paid' ? 'Marcar Pendente' : 'Marcar como Pago'}
-                            </button>
-                          )}
-                          <button onClick={() => handleDuplicate(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                            <Copy className="w-4 h-4 text-slate-400" /> Duplicar Lançamento
-                          </button>
-                          <div className="h-px bg-slate-50 my-1" />
-                          <button onClick={() => setDeletingTransaction(t)} className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">
-                            <Trash className="w-4 h-4 text-rose-400" /> Excluir Registro
-                          </button>
-                        </div>
+                        {isMenuOpen && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-100 rounded-xl shadow-2xl shadow-slate-300/50 py-2 z-20 animate-in fade-in zoom-in-95 duration-100">
+                              <button 
+                                onClick={() => {
+                                  onEdit(t);
+                                  setOpenMenuId(null);
+                                }} 
+                                className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left"
+                              >
+                                <Edit className="w-4 h-4 text-slate-400" /> Editar Registro
+                              </button>
+                              {!isIncome && (
+                                <button 
+                                  onClick={() => {
+                                    handleToggleStatus(t);
+                                    setOpenMenuId(null);
+                                  }} 
+                                  className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left"
+                                >
+                                  <CheckCircle className={cn("w-4 h-4", t.status === 'paid' ? "text-emerald-500" : "text-slate-400")} /> 
+                                  {t.status === 'paid' ? 'Marcar Pendente' : 'Marcar como Pago'}
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => {
+                                  handleDuplicate(t);
+                                  setOpenMenuId(null);
+                                }} 
+                                className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left"
+                              >
+                                <Copy className="w-4 h-4 text-slate-400" /> Duplicar Lançamento
+                              </button>
+                              <div className="h-px bg-slate-50 my-1" />
+                              <button 
+                                onClick={() => {
+                                  setDeletingTransaction(t);
+                                  setOpenMenuId(null);
+                                }} 
+                                className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                              >
+                                <Trash className="w-4 h-4 text-rose-400" /> Excluir Registro
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </td>
