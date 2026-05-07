@@ -18,6 +18,17 @@ import {
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
+const ICON_STYLES: Record<string, { bg: string; text: string }> = {
+  'Dashboard': { bg: 'bg-blue-50 group-hover:bg-blue-100', text: 'text-blue-600' },
+  'Receitas': { bg: 'bg-emerald-50 group-hover:bg-emerald-100', text: 'text-emerald-600' },
+  'Despesas': { bg: 'bg-rose-50 group-hover:bg-rose-100', text: 'text-rose-600' },
+  'Relatórios': { bg: 'bg-violet-50 group-hover:bg-violet-100', text: 'text-violet-600' },
+  'Importações': { bg: 'bg-blue-50 group-hover:bg-blue-100', text: 'text-blue-600' },
+  'OCR / IA': { bg: 'bg-purple-50 group-hover:bg-purple-100', text: 'text-purple-600' },
+  'Insights IA': { bg: 'bg-amber-50 group-hover:bg-amber-100', text: 'text-amber-600' },
+  'Configurações': { bg: 'bg-teal-50 group-hover:bg-teal-100', text: 'text-teal-600' },
+};
+
 const MENU_GROUPS = [
   {
     title: 'Principal',
@@ -60,7 +71,7 @@ export function SidebarContent({ onItemClick }: Props) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* 1. Topo: Logo fixo */}
-      <div className="shrink-0 px-6 py-6 flex justify-center">
+      <div className="shrink-0 px-6 py-6 flex justify-center border-b border-slate-50 mb-2">
         <Image 
           src="/logo.png" 
           alt="Alfa Perícia e Vistoria Veicular" 
@@ -78,15 +89,17 @@ export function SidebarContent({ onItemClick }: Props) {
       >
         {MENU_GROUPS.map((group) => (
           <div key={group.title} className="mb-4">
-            <p className="mb-1 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <p className="mb-2 px-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60">
               {group.title}
             </p>
 
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {group.items.map((item) => {
                 const isActive = item.href === '/' 
                   ? pathname === '/' 
                   : pathname.startsWith(item.href);
+                
+                const styles = ICON_STYLES[item.label] || { bg: 'bg-slate-50', text: 'text-slate-600' };
                 
                 return (
                   <Link
@@ -95,13 +108,19 @@ export function SidebarContent({ onItemClick }: Props) {
                     onClick={onItemClick}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "group flex h-10 items-center gap-3 rounded-xl px-3 text-xs font-bold transition",
+                      "group flex h-10 items-center gap-3 rounded-xl px-2.5 text-xs font-bold transition-all duration-200",
                       isActive
-                        ? "bg-blue-50 text-blue-600 shadow-sm"
+                        ? "bg-slate-50 text-slate-900 shadow-sm"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <item.icon className="h-4.5 w-4.5 shrink-0" />
+                    <div className={cn(
+                      "flex h-7.5 w-7.5 items-center justify-center rounded-lg shadow-sm transition-all duration-300 group-hover:scale-110",
+                      isActive ? "bg-white text-blue-600" : styles.bg,
+                      isActive && item.label !== 'Dashboard' ? styles.text : (isActive ? 'text-blue-600' : styles.text)
+                    )}>
+                      <item.icon className="h-4 w-4 shrink-0" />
+                    </div>
                     <span className="min-w-0 flex-1 truncate">
                       {item.label}
                     </span>
@@ -115,23 +134,23 @@ export function SidebarContent({ onItemClick }: Props) {
 
       {/* 3. Rodapé: Usuário fixo */}
       <div className="shrink-0 border-t border-slate-100 bg-white p-3">
-        <div className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50 transition-colors group">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-black text-white shadow-sm">
+        <div className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100 shadow-sm hover:shadow-md">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-[10px] font-black text-white shadow-md">
             {user?.username?.[0].toUpperCase() || 'A'}
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-black text-[#0F172A]">
+            <p className="truncate text-[11px] font-black text-[#0F172A]">
               {user?.username || 'admin'}
             </p>
-            <p className="truncate text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+            <p className="truncate text-[8px] font-black text-slate-400 uppercase tracking-tighter">
               Operador Alfa
             </p>
           </div>
 
           <button 
             onClick={logout}
-            className="shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-slate-100 hover:text-rose-600 transition-colors"
+            className="shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-90"
             aria-label="Sair"
           >
             <LogOut className="h-3.5 w-3.5" />

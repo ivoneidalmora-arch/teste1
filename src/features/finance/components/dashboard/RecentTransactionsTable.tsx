@@ -1,115 +1,114 @@
 "use client";
 
-import { MoreVertical, ArrowUpRight, ArrowDownRight, ExternalLink } from 'lucide-react';
-import { formatBRL } from '@/core/utils/formatters';
-import { formatDisplayDate } from '@/core/utils/date';
-import { cn } from '@/core/utils/formatters';
-import { RecentTransaction } from '../../types/dashboard.types';
-
-interface Props {
-  transactions: RecentTransaction[];
-  onAction?: (id: string) => void;
-}
-
-const STATUS_MAP = {
-  paid: { label: 'Pago', class: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-  pending: { label: 'Pendente', class: 'bg-amber-50 text-amber-600 border-amber-100' },
-  overdue: { label: 'Atrasado', class: 'bg-rose-50 text-rose-600 border-rose-100' },
-  cancelled: { label: 'Cancelado', class: 'bg-slate-100 text-slate-500 border-slate-200' },
-};
-
+import { 
+  MoreVertical, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  ExternalLink,
+  Car,
+  User,
+  CreditCard,
+  Briefcase
+} from 'lucide-react';
+...
 export function RecentTransactionsTable({ transactions, onAction }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-white">
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-white">
         <div>
-          <h3 className="text-sm font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
-          <p className="text-[10px] font-bold text-slate-400">Últimas atividades financeiras registradas</p>
+          <h3 className="text-base font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
+          <p className="text-[11px] font-bold text-slate-400">Últimas atividades financeiras registradas</p>
         </div>
         <button 
           onClick={() => window.location.href = '/relatorios'}
-          className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+          className="px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-blue-600 hover:bg-blue-50 transition-all uppercase tracking-widest border border-slate-100"
         >
-          Ver todas <ExternalLink className="w-2.5 h-2.5" />
+          Ver todas
         </button>
       </div>
 
       <div className="overflow-x-auto scrollbar-none">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="w-full text-left border-collapse min-w-[800px]">
           <thead>
-            <tr className="bg-slate-50/50">
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Cliente / Placa</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Categoria</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Origem</th>
-              <th className="px-5 py-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+            <tr className="bg-slate-50/30">
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Data</th>
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Detalhes / Cliente</th>
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Categoria</th>
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Valor</th>
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>
+              <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-xs font-bold text-slate-400">Nenhuma transação encontrada</td>
+                <td colSpan={6} className="px-6 py-12 text-center text-xs font-bold text-slate-400 italic">Nenhuma transação para exibir</td>
               </tr>
             ) : (
               transactions.map((t) => {
                 const isIncome = t.type === 'income';
                 const status = STATUS_MAP[t.status as keyof typeof STATUS_MAP] || STATUS_MAP.pending;
+                
+                // Escolha de ícone baseada na descrição
+                const Icon = t.description.toLowerCase().includes('vistoria') ? Car : (isIncome ? ArrowUpRight : ArrowDownRight);
+                const iconColor = t.description.toLowerCase().includes('vistoria') ? 'bg-blue-50 text-blue-500' : (isIncome ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500');
 
                 return (
-                  <tr key={t.id} className="group hover:bg-slate-50/30 transition-colors">
-                    <td className="px-5 py-3 text-[11px] font-bold text-slate-500">
-                      {formatDisplayDate(t.date)}
+                  <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-200 cursor-default">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-black text-slate-900 leading-tight">{formatDisplayDate(t.date).split(' ')[0]}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">{formatDisplayDate(t.date).split(' ')[1]}</span>
+                      </div>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
                         <div className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                          isIncome ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                          "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110",
+                          iconColor
                         )}>
-                          {isIncome ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[11px] font-black text-[#0F172A] truncate leading-tight">{t.description}</span>
-                          <span className="text-[9px] font-bold text-slate-400 truncate uppercase">{t.customer}</span>
+                          <span className="text-[12px] font-black text-[#0F172A] truncate leading-tight group-hover:text-blue-600 transition-colors">{t.description}</span>
+                          <span className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tight flex items-center gap-1.5 mt-0.5">
+                            <User className="w-2.5 h-2.5" />
+                            {t.customer}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-center">
-                      <span className="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[8px] font-black text-slate-400 uppercase">
+                    <td className="px-6 py-4 text-center">
+                      <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-tighter">
                         {t.category}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className={cn(
-                          "text-[11px] font-black leading-tight",
+                          "text-[12px] font-black leading-tight",
                           isIncome ? "text-emerald-600" : "text-rose-600"
                         )}>
                           {isIncome ? '+' : '-'} {formatBRL(isIncome ? (t.netAmount || t.amount) : t.amount)}
                         </span>
                         {isIncome && t.grossAmount && t.grossAmount !== t.netAmount && (
-                          <span className="text-[8px] font-bold text-slate-300">
-                            Bruto: {formatBRL(t.grossAmount)}
+                          <span className="text-[9px] font-bold text-slate-300 line-through">
+                            {formatBRL(t.grossAmount)}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-center">
+                    <td className="px-6 py-4 text-center">
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
+                        "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
                         status.class
                       )}>
                         {status.label}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-center">
-                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.origin}</span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button className="p-1 text-slate-300 hover:text-slate-900 transition-colors">
-                        <MoreVertical className="w-3.5 h-3.5" />
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 rounded-xl text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
