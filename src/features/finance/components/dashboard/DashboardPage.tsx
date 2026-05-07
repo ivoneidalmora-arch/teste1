@@ -232,12 +232,15 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* Destaque Saldo */}
-      <FinancialHeroCard 
-        balance={metrics.current.saldoDisponivel} 
-        lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
-        variation={metrics.variations.balance} 
-      />
+      {/* Destaque Saldo & Insights */}
+      <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
+        <FinancialHeroCard 
+          balance={metrics.current.saldoDisponivel} 
+          lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
+          variation={metrics.variations.balance} 
+        />
+        <FinancialInsightsCard />
+      </section>
 
       {/* KPIs Principais */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 mb-8">
@@ -290,14 +293,9 @@ export function DashboardPage() {
         />
       </section>
 
-      {/* Gráfico & Alertas */}
-      <section className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mb-8">
-        <div className="min-w-0">
-          <CashFlowChart data={cashFlowData} />
-        </div>
-        <div className="min-w-0">
-          <FinancialInsightsCard />
-        </div>
+      {/* Gráfico de Fluxo de Caixa */}
+      <section className="mb-8">
+        <CashFlowChart data={cashFlowData} />
       </section>
 
       {/* Tabela de Transações */}
