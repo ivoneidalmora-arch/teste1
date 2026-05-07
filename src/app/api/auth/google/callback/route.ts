@@ -12,7 +12,8 @@ export async function GET(request: Request) {
 
   try {
     const { origin } = new URL(request.url);
-    const redirectUri = `${origin}/api/auth/google/callback`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
+    const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
     // Exchange code for tokens
     const response = await fetch('https://oauth2.googleapis.com/token', {
