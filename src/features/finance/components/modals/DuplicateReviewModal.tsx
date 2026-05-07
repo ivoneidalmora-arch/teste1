@@ -49,9 +49,10 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
       toast.success('Duplicidade aprovada com sucesso.');
       await refresh();
       setApprovingGroup(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Erro ao aprovar duplicidade');
+      const errorMsg = err.message || 'Erro desconhecido ao aprovar';
+      toast.error(`Erro ao aprovar duplicidade: ${errorMsg}`);
     } finally {
       setIsApproving(false);
     }
