@@ -39,31 +39,40 @@ export function MetricCard({
 
   return (
     <div className={cn(
-      "min-w-0 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md group",
+      "min-w-0 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group relative overflow-hidden",
       className
     )}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          {title}
-        </p>
-        <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg", styles.iconBg, styles.text)}>
-          <Icon className="h-4 w-4" />
+      <div className="flex items-center justify-between mb-3">
+        <div className={cn("flex h-8 w-8 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-110", styles.iconBg, styles.text)}>
+          <Icon className="h-4.5 w-4.5" />
         </div>
-      </div>
-
-      <div className="flex items-end justify-between gap-2">
-        <h3 className="truncate text-lg font-black tracking-tight text-[#0F172A]">
-          {formattedValue}
-        </h3>
-
         {trend !== undefined && (
           <div className={cn(
-            "flex items-center gap-0.5 text-[10px] font-bold",
-            isPositive ? "text-emerald-500" : "text-rose-500"
+            "px-1.5 py-0.5 rounded-md text-[9px] font-black tracking-tighter uppercase border flex items-center gap-0.5",
+            isPositive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
           )}>
-            <span>{isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%</span>
+            {isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%
           </div>
         )}
+      </div>
+
+      <div className="space-y-0.5">
+        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+          {title}
+        </p>
+        <h3 className="truncate text-xl font-black tracking-tighter text-[#0F172A] leading-tight">
+          {formattedValue}
+        </h3>
+        {description && (
+          <p className="text-[9px] font-bold text-slate-400 truncate mt-1">
+            {description}
+          </p>
+        )}
+      </div>
+      
+      {/* Decoração sutil no fundo */}
+      <div className={cn("absolute -right-2 -bottom-2 w-12 h-12 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity", styles.text)}>
+        <Icon className="w-full h-full rotate-12" />
       </div>
     </div>
   );

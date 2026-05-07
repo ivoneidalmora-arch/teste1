@@ -10,6 +10,7 @@ import {
   FileText, 
   Upload, 
   Scan, 
+  Sparkles,
   Settings, 
   LogOut,
   MoreVertical
@@ -37,6 +38,7 @@ const MENU_GROUPS = [
     items: [
       { icon: Upload, label: 'Importações', href: '/importacoes' },
       { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
+      { icon: Sparkles, label: 'Insights IA', href: '/insights-ia' },
     ]
   },
   {

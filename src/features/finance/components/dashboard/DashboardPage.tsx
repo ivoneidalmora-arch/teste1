@@ -11,14 +11,11 @@ import {
 } from 'lucide-react';
 
 import { DashboardHeader } from './DashboardHeader';
-import { FinancialHeroCard } from './FinancialHeroCard';
 import { MetricCard } from './MetricCard';
 import { CashFlowChart } from './CashFlowChart';
-import { FinancialInsightsCard } from './FinancialInsightsCard';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { TopClientsCard } from './TopClientsCard';
-import { ExpensesByCategoryCard } from './ExpensesByCategoryCard';
-import { FinancialCalendarCard } from './FinancialCalendarCard';
+import { MonthlyCalendar } from './MonthlyCalendar';
 import { 
   getTopClients, 
   getExpensesByCategory, 
@@ -192,7 +189,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-8">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -203,15 +200,18 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {/* Grid Principal */}
+      {/* Grid Principal Compacto */}
       <div className="grid grid-cols-12 gap-6">
         
-        {/* 1. KPIs de Performance (Linha Superior) */}
+        {/* 1. KPIs de Performance (Linha Superior - 5 colunas) */}
         <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <FinancialHeroCard 
-            balance={metrics.current.saldoDisponivel} 
-            lastUpdate={new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
-            variation={metrics.variations.balance} 
+          <MetricCard 
+            title="Saldo Disponível" 
+            value={metrics.current.saldoDisponivel} 
+            trend={metrics.variations.balance} 
+            icon={Wallet} 
+            variant="blue" 
+            description={`Atualizado: ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
           />
           <MetricCard title="Receita Bruta" value={metrics.current.receitaBruta} trend={metrics.variations.income} icon={TrendingUp} variant="blue" />
           <MetricCard title="Receita Líquida" value={metrics.current.receitaLiquida} trend={metrics.variations.net} icon={ShieldCheck} variant="green" />
@@ -219,43 +219,26 @@ export function DashboardPage() {
           <MetricCard title="Despesas Pendentes" value={metrics.current.despesasPendentes} icon={Clock} variant="orange" />
         </div>
 
-        {/* 2. Área Central (Esquerda) e Coluna de Insights (Direita) */}
-        <div className="col-span-12 xl:col-span-9 space-y-6">
-          
-          {/* Gráfico + Top Clientes */}
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-8">
-              <CashFlowChart data={cashFlowData} />
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <TopClientsCard 
-                clients={topClients} 
-                onSeeAll={() => window.location.href = '/relatorios'}
-              />
-            </div>
-          </div>
-
-          {/* Tabela de Transações Recentes (Compacta) */}
-          <div className="min-w-0">
-            <RecentTransactionsTable 
-              transactions={recentTransactions.slice(0, 5)} 
-              onAction={(id) => {}} 
-            />
-          </div>
+        {/* 2. Fluxo de Caixa + Top Clientes (8/4) */}
+        <div className="col-span-12 lg:col-span-8">
+          <CashFlowChart data={cashFlowData} />
         </div>
-
-        {/* 3. Coluna Direita (Insights e Resumos) */}
-        <div className="col-span-12 xl:col-span-3 space-y-6">
-          <FinancialInsightsCard />
-          <ExpensesByCategoryCard 
-            total={expensesByCategory.total} 
-            categories={expensesByCategory.categories} 
-            onSeeAll={() => window.location.href = '/despesas'}
-          />
-          <FinancialCalendarCard 
-            events={financialEvents} 
+        <div className="col-span-12 lg:col-span-4">
+          <TopClientsCard 
+            clients={topClients} 
             onSeeAll={() => window.location.href = '/relatorios'}
           />
+        </div>
+
+        {/* 3. Transações Recentes + Calendário Google (7/5) */}
+        <div className="col-span-12 lg:col-span-7">
+          <RecentTransactionsTable 
+            transactions={recentTransactions.slice(0, 5)} 
+            onAction={(id) => {}} 
+          />
+        </div>
+        <div className="col-span-12 lg:col-span-5">
+          <MonthlyCalendar />
         </div>
       </div>
 

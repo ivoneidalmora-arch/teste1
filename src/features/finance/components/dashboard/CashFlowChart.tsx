@@ -75,8 +75,8 @@ export function CashFlowChart({ data }: Props) {
             <ComposedChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorEntradas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
@@ -104,14 +104,14 @@ export function CashFlowChart({ data }: Props) {
                 name="Entradas" 
                 dataKey="entradas" 
                 fill="url(#colorEntradas)" 
-                stroke="#10b981"
+                stroke="#059669"
                 radius={[4, 4, 0, 0]} 
                 barSize={20}
               />
               <Bar 
                 name="Saídas" 
                 dataKey="saidas" 
-                fill="#f43f5e" 
+                fill="#E11D48" 
                 radius={[4, 4, 0, 0]} 
                 barSize={20}
               />
