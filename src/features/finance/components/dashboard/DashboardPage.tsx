@@ -15,7 +15,7 @@ import { MetricCard } from './MetricCard';
 import { CashFlowChart } from './CashFlowChart';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { TopClientsCard } from './TopClientsCard';
-import { MonthlyCalendar } from './MonthlyCalendar';
+import { GoogleCalendarCard } from '@/features/calendar/components/GoogleCalendarCard';
 import { 
   getTopClients, 
   getExpensesByCategory, 
@@ -238,7 +238,7 @@ export function DashboardPage() {
           />
         </div>
         <div className="col-span-12 lg:col-span-5">
-          <MonthlyCalendar />
+          <GoogleCalendarCard />
         </div>
       </div>
 
