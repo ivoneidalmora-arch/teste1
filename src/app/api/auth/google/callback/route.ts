@@ -7,10 +7,13 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
 
   if (!code) {
-    return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
+    return NextResponse.redirect(new URL('/?error=no_code', request.url));
   }
 
   try {
+    const { origin } = new URL(request.url);
+    const redirectUri = `${origin}/api/auth/google/callback`;
+
     // Exchange code for tokens
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -19,7 +22,7 @@ export async function GET(request: Request) {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID as string,
         client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI as string,
+        redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       }),
     });
@@ -28,7 +31,7 @@ export async function GET(request: Request) {
 
     if (tokens.error) {
       console.error('Google Auth Error:', tokens);
-      return NextResponse.redirect(new URL('/dashboard?error=auth_failed', request.url));
+      return NextResponse.redirect(new URL('/?error=auth_failed', request.url));
     }
 
     // Get user info to get the email
@@ -46,7 +49,7 @@ export async function GET(request: Request) {
 
     if (userError || !user) {
       console.error('Supabase User Error:', userError);
-      return NextResponse.redirect(new URL('/dashboard?error=no_session', request.url));
+      return NextResponse.redirect(new URL('/?error=no_session', request.url));
     }
 
     // Encrypt tokens
@@ -70,12 +73,12 @@ export async function GET(request: Request) {
 
     if (dbError) {
       console.error('DB Error:', dbError);
-      return NextResponse.redirect(new URL('/dashboard?error=db_failed', request.url));
+      return NextResponse.redirect(new URL('/?error=db_failed', request.url));
     }
 
-    return NextResponse.redirect(new URL('/dashboard?success=google_connected', request.url));
+    return NextResponse.redirect(new URL('/?success=google_connected', request.url));
   } catch (err) {
     console.error('Callback Error:', err);
-    return NextResponse.redirect(new URL('/dashboard?error=internal_error', request.url));
+    return NextResponse.redirect(new URL('/?error=internal_error', request.url));
   }
 }
