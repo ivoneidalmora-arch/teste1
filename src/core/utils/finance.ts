@@ -12,12 +12,11 @@ export const CONVERSAO_VRTE_2025: Record<number, number> = {
   25: 116.75
 };
 
-export type VistoriaCategory = 'Transferência' | 'Entrada' | 'Retorno' | 'Vistoria de Retorno' | 'Vistoria Cautelar' | 'Outros';
+export type VistoriaCategory = 'Vistoria de Transferência' | 'Vistoria de Entrada' | 'Vistoria de Retorno' | 'Vistoria Cautelar' | 'Outros';
 
 export const VISTORIA_CATEGORIES: VistoriaCategory[] = [
-  'Transferência',
-  'Entrada',
-  'Retorno',
+  'Vistoria de Transferência',
+  'Vistoria de Entrada',
   'Vistoria de Retorno',
   'Vistoria Cautelar',
   'Outros',

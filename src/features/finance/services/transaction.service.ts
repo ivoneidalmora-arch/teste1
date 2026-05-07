@@ -2,6 +2,7 @@ import { supabase } from '@/services/supabase';
 import { Transaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 import { normalizePlaca } from '@/features/ai-ocr/utils/normalization';
+import { normalizeRevenueName } from '../utils/normalization';
 
 export const transactionService = {
   async getAll(app_user_id: string): Promise<Transaction[]> {
@@ -31,7 +32,7 @@ export const transactionService = {
       app_user_id,
       amount: transaction.amount,
       date: transaction.date,
-      category: transaction.category,
+      category: transaction.type === 'income' ? normalizeRevenueName(transaction.category || '') : (transaction.category || ''),
     };
 
     if (transaction.type === 'income') {
@@ -70,7 +71,9 @@ export const transactionService = {
     const payload: Record<string, any> = {};
     if (transaction.amount !== undefined) payload.amount = transaction.amount;
     if (transaction.date !== undefined) payload.date = transaction.date;
-    if (transaction.category !== undefined) payload.category = transaction.category;
+    if (transaction.category !== undefined) {
+      payload.category = type === 'income' ? normalizeRevenueName(transaction.category) : transaction.category;
+    }
     
     if (type === 'income') {
       if (transaction.grossAmount !== undefined) payload.amountBruto = transaction.grossAmount;
@@ -109,7 +112,7 @@ export const transactionService = {
       amountBruto: t.grossAmount || t.amount,
       amountLiquido: t.netAmount || t.amount,
       date: t.date,
-      category: t.category,
+      category: normalizeRevenueName(t.category || ''),
       cliente: t.customer,
       placa: normalizePlaca((t as any).placa ?? t.metadata?.placa) || '', 
       nf: t.metadata?.nf,

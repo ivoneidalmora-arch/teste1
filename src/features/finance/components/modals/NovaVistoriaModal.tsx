@@ -27,7 +27,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    categoria: 'Transferência' as VistoriaCategory,
+    categoria: 'Vistoria de Transferência' as VistoriaCategory,
     placa: '',
     cliente: '',
     data: format(defaultDate || new Date(), 'yyyy-MM-dd'),

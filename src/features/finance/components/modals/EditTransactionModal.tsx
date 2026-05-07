@@ -7,7 +7,7 @@ import { Save } from 'lucide-react';
 import { PlacaInput } from '@/core/components/ui/PlacaInput';
 import { toast } from 'sonner';
 import { MoneyInput } from '@/core/components/ui/MoneyInput';
-import { calculateLiquido, CONVERSAO_VRTE_2025 } from '@/core/utils/finance';
+import { calculateLiquido, CONVERSAO_VRTE_2025, VISTORIA_CATEGORIES, VistoriaCategory } from '@/core/utils/finance';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { getNetValueFor2025, shouldApplyAutoNetValue, getNetValueAutomationStatus } from '@/lib/financial-rules';
 import { checkDuplicateLaunch } from '../../utils/duplicate-check';
@@ -199,14 +199,9 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
             <label className="block text-sm font-semibold text-slate-700 mb-1">Categoria</label>
             <select name="categoria" value={formData.categoria} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
               {isIncome ? (
-                <>
-                  <option value="Transferência">Transferência</option>
-                  <option value="Vistoria Cautelar">Vistoria Cautelar</option>
-                  <option value="Motor">Motor</option>
-                  <option value="Especial">Especial</option>
-                  <option value="Vistoria de Entrada">Vistoria de Entrada</option>
-                  <option value="Vistoria de Retorno">Vistoria de Retorno</option>
-                </>
+                VISTORIA_CATEGORIES.map((cat: VistoriaCategory) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))
               ) : (
                 <>
                   <option value="Operacional">Custo Operacional</option>

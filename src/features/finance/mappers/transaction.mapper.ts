@@ -1,4 +1,5 @@
 import { Transaction } from '@/core/types/finance';
+import { normalizeRevenueName } from '../utils/normalization';
 
 export const TransactionMapper = {
   /**
@@ -36,7 +37,7 @@ export const TransactionMapper = {
       id: String(raw.id),
       app_user_id: raw.app_user_id,
       type: 'income',
-      category: raw.category || 'Outros',
+      category: normalizeRevenueName(raw.category || 'Outros'),
       amount: amountBruto,
       grossAmount: amountBruto,
       netAmount: amountLiquido,
