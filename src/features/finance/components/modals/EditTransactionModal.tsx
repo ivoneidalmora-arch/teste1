@@ -210,6 +210,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
                   <option value="Suprimentos">Suprimentos</option>
                   <option value="Aluguel">Aluguel</option>
                   <option value="Folha">Folha de Pagamento</option>
+                  <option value="Sistema">Sistema</option>
                   <option value="Outros">Outros</option>
                 </>
               )}
