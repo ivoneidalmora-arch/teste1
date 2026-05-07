@@ -8,11 +8,15 @@ export async function GET(request: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
   
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    return NextResponse.json({ error: 'GOOGLE_CLIENT_ID is missing in environment variables' }, { status: 500 });
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return NextResponse.json({ 
+      error: 'Configuração Incompleta no Vercel',
+      details: 'As chaves GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET não foram encontradas nas variáveis de ambiente.',
+      hint: 'Adicione-as no painel do Vercel e faça um novo Deploy.'
+    }, { status: 500 });
   }
 
-  const options = {
+  console.log('Iniciando Google Auth com Redirect:', redirectUri);
     redirect_uri: redirectUri,
     client_id: process.env.GOOGLE_CLIENT_ID,
     access_type: 'offline',
