@@ -2,8 +2,10 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import React from "react";
 import { AuthGuard } from "@/features/auth/components/AuthGuard";
 import { AuthProvider } from "@/features/auth/contexts/AuthContext";
+import { FinanceProvider } from "@/features/finance/contexts/FinanceContext";
 import { Toaster } from "sonner";
 
 const outfit = Outfit({
@@ -26,7 +28,11 @@ export default function RootLayout({
       <body className="font-sans min-h-screen bg-slate-50 text-slate-900 selection:bg-brand-primary selection:text-white">
         <AuthProvider>
           <AuthGuard>
-            {children}
+            <React.Suspense fallback={null}>
+              <FinanceProvider>
+                {children}
+              </FinanceProvider>
+            </React.Suspense>
           </AuthGuard>
         </AuthProvider>
         <Toaster position="top-right" richColors />

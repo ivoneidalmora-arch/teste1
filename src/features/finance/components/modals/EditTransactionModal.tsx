@@ -239,7 +239,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }
               <MoneyInput label="Valor Bruto" name="valorBruto" required value={formData.valorBruto} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno'} />
               <div className="flex flex-col">
                 <MoneyInput 
-                  label="Dedução Líquida" 
+                  label="Valor Líquido" 
                   name="valorLiquido" 
                   required 
                   value={formData.valorLiquido} 

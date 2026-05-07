@@ -1,14 +1,11 @@
 "use client";
 
 import { Search, Calendar, Plus, Upload, FileText, ChevronDown } from 'lucide-react';
-import { useMemo } from 'react';
+import { FinancialPeriodFilter } from '../filters/FinancialPeriodFilter';
 
 interface Props {
   title: string;
   subtitle?: string;
-  selectedDate: Date | 'global';
-  availableMonths: string[];
-  onDateChange: (date: Date | 'global') => void;
   onNewTransaction?: () => void;
   onNewExpense?: () => void;
   onImportFile?: () => void;
@@ -19,9 +16,6 @@ interface Props {
 export function DashboardHeader({ 
   title, 
   subtitle,
-  selectedDate,
-  availableMonths,
-  onDateChange,
   onNewTransaction, 
   onNewExpense, 
   onImportFile, 
@@ -29,37 +23,6 @@ export function DashboardHeader({
   onSearch 
 }: Props) {
   
-  const monthOptions = useMemo(() => {
-    const options = [
-      { value: 'global', label: 'Tudo (Global)' }
-    ];
-
-    availableMonths.forEach(monthStr => {
-      const [year, month] = monthStr.split('-').map(Number);
-      const d = new Date(year, month, 1);
-      options.push({
-        value: monthStr,
-        label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-      });
-    });
-
-    return options;
-  }, [availableMonths]);
-
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (val === 'global') {
-      onDateChange('global');
-      return;
-    }
-    const [year, month] = val.split('-').map(Number);
-    onDateChange(new Date(year, month, 1));
-  };
-
-  const selectValue = selectedDate === 'global' 
-    ? 'global' 
-    : `${selectedDate.getFullYear()}-${selectedDate.getMonth()}`;
-
   return (
     <header className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
       <div className="min-w-0">
@@ -85,19 +48,7 @@ export function DashboardHeader({
             />
           </div>
 
-          <div className="relative w-full sm:w-auto">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <select
-              value={selectValue}
-              onChange={handleMonthChange}
-              className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 appearance-none"
-            >
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="capitalize">{opt.label}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
+          <FinancialPeriodFilter />
         </div>
 
         {/* Botões de Ação */}

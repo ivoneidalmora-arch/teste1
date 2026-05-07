@@ -40,42 +40,31 @@ import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVist
 import { NovaDespesaModal } from '@/features/finance/components/modals/NovaDespesaModal';
 import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
 
+import { useFinanceContext } from '../../contexts/FinanceContext';
+
 export function DashboardPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | 'global'>(new Date());
+  const { 
+    transactions, 
+    loading, 
+    error, 
+    refresh, 
+    selectedPeriod, 
+    availableMonths, 
+    setPeriod,
+    filteredTransactions 
+  } = useFinanceContext();
+  
   const [activePeriod, setActivePeriod] = useState<'today' | 'week' | 'month' | 'last30' | 'custom' | 'global'>('month');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Buscamos todas as transações (o hook useFinance já traz as transações do usuário logado)
-  const { transactions, loading, error, refresh } = useFinance();
   
   const [isVistoriaModalOpen, setIsVistoriaModalOpen] = useState(false);
   const [isDespesaModalOpen, setIsDespesaModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
 
-  // 0. Calcular Meses Disponíveis (com lançamentos)
-  const availableMonths = useMemo(() => {
-    if (!transactions) return [];
-    const months = new Set<string>();
-    transactions.forEach(t => {
-      const d = new Date(t.date);
-      if (!isNaN(d.getTime())) {
-        months.add(`${d.getFullYear()}-${d.getMonth()}`);
-      }
-    });
-    return Array.from(months).sort((a, b) => {
-      const [yearA, monthA] = a.split('-').map(Number);
-      const [yearB, monthB] = b.split('-').map(Number);
-      return yearB !== yearA ? yearB - yearA : monthB - monthA;
-    });
-  }, [transactions]);
+  // Filtro por Busca (adicional ao filtro de período do context)
+  const dashboardTransactions = useMemo(() => {
+    let filtered = [...filteredTransactions];
 
-  // 1. Filtragem por Período e Busca
-  const filteredTransactions = useMemo(() => {
-    if (!transactions) return [];
-
-    let filtered = [...transactions];
-
-    // Filtro por Busca
     if (searchQuery) {
       const lowSearch = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
@@ -84,13 +73,9 @@ export function DashboardPage() {
       );
     }
 
-    // Filtro por Período Ativo (Month/Week/etc)
+    // Filtros rápidos locais (Today, Week, etc)
     const now = new Date();
-    if (activePeriod === 'month' && selectedDate instanceof Date) {
-      filtered = filterByMonth(filtered, selectedDate);
-    } else if (activePeriod === 'global' || selectedDate === 'global') {
-      // Sem filtro de data
-    } else if (activePeriod === 'today') {
+    if (activePeriod === 'today') {
       filtered = filtered.filter(t => {
         const d = new Date(t.date);
         return d.toDateString() === now.toDateString();
@@ -108,14 +93,14 @@ export function DashboardPage() {
     }
 
     return filtered;
-  }, [transactions, searchQuery, activePeriod, selectedDate]);
+  }, [filteredTransactions, searchQuery, activePeriod]);
 
-  // 2. Cálculos Financeiros (Mês Atual e Anterior para Variação)
+  // Cálculos Financeiros
   const metrics = useMemo(() => {
-    const current = calculateFinancialMetrics(filteredTransactions);
+    const current = calculateFinancialMetrics(dashboardTransactions);
     
-    // Calcular mês anterior para variação (apenas se não for global)
-    if (selectedDate === 'global') {
+    // Para variação, usamos o mês anterior com base no selectedPeriod (se não for global)
+    if (selectedPeriod === 'global') {
       return {
         current,
         prev: current,
@@ -123,7 +108,9 @@ export function DashboardPage() {
       };
     }
 
-    const prevDate = subMonths(selectedDate as Date, 1);
+    const [year, month] = selectedPeriod.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    const prevDate = subMonths(date, 1);
     const prevTransactions = filterByMonth(transactions || [], prevDate);
     const prev = calculateFinancialMetrics(prevTransactions);
 
@@ -137,23 +124,23 @@ export function DashboardPage() {
         balance: calculatePercentageChange(current.saldoDisponivel, prev.saldoDisponivel)
       }
     };
-  }, [filteredTransactions, transactions, selectedDate]);
+  }, [dashboardTransactions, transactions, selectedPeriod]);
 
-  // 3. Preparação de Dados para Componentes
+  // Preparação de Dados para Componentes
   const topClients = useMemo(() => 
-    getTopClients(filteredTransactions), 
-  [filteredTransactions]);
+    getTopClients(dashboardTransactions), 
+  [dashboardTransactions]);
 
   const expensesByCategory = useMemo(() => 
-    getExpensesByCategory(filteredTransactions), 
-  [filteredTransactions]);
+    getExpensesByCategory(dashboardTransactions), 
+  [dashboardTransactions]);
 
   const financialEvents = useMemo(() => 
-    getFinancialCalendarEvents(filteredTransactions), 
-  [filteredTransactions]);
+    getFinancialCalendarEvents(dashboardTransactions), 
+  [dashboardTransactions]);
 
   const recentTransactions = useMemo(() => 
-    filteredTransactions.slice(0, 10).map(t => {
+    dashboardTransactions.slice(0, 10).map(t => {
       const norm = normalizeTransaction(t);
       return {
         id: String(norm.id),
@@ -169,14 +156,13 @@ export function DashboardPage() {
         type: norm.type as any
       };
     }),
-  [filteredTransactions]);
+  [dashboardTransactions]);
 
   const cashFlowData = useMemo(() => {
-    // Agrupar por dia para o gráfico
     const days: Record<string, { income: number; expense: number }> = {};
-    filteredTransactions.forEach(rawT => {
+    dashboardTransactions.forEach(rawT => {
       const t = normalizeTransaction(rawT);
-      const day = new Date(t.date).getUTCDate(); // Usar getUTCDate para evitar problemas de timezone
+      const day = new Date(t.date).getUTCDate();
       if (!days[day]) days[day] = { income: 0, expense: 0 };
       if (t.type === 'income') days[day].income += t.netAmount || 0;
       else days[day].expense += t.amount;
@@ -192,7 +178,7 @@ export function DashboardPage() {
         saldo: cumulativeSaldo
       };
     }).sort((a, b) => Number(a.name) - Number(b.name));
-  }, [filteredTransactions]);
+  }, [dashboardTransactions]);
 
   if (loading && (!transactions || transactions.length === 0)) {
     return (
@@ -210,12 +196,6 @@ export function DashboardPage() {
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
-        selectedDate={selectedDate}
-        availableMonths={availableMonths}
-        onDateChange={(d) => {
-          setSelectedDate(d);
-          setActivePeriod(d === 'global' ? 'global' : 'month');
-        }}
         onNewTransaction={() => setIsVistoriaModalOpen(true)}
         onNewExpense={() => setIsDespesaModalOpen(true)}
         onImportFile={() => window.location.href = '/importacoes'} 
@@ -237,8 +217,8 @@ export function DashboardPage() {
             key={p.id}
             onClick={() => {
               setActivePeriod(p.id as any);
-              if (p.id === 'month') setSelectedDate(new Date());
-              if (p.id === 'global') setSelectedDate('global');
+              if (p.id === 'month') setPeriod(new Date().toISOString().substring(0, 7));
+              if (p.id === 'global') setPeriod('global');
             }}
             className={cn(
               "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",

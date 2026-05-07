@@ -7,7 +7,7 @@ import { EditTransactionModal } from '@/features/finance/components/modals/EditT
 import { TrendingDown, Plus, Search } from 'lucide-react';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { Transaction } from '@/core/types/finance';
-import { NovaDespesaModal } from '@/features/finance/components/modals/NovaDespesaModal';
+import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 
 export default function DespesasPage() {
   const { loading, transactions, metrics, refresh, filters } = useReports();
@@ -24,9 +24,8 @@ export default function DespesasPage() {
   if (!mounted) return null;
 
   const expenseTransactions = transactions.filter(t => {
-    const isExpense = t.type === 'expense';
     const searchLower = searchQuery.toLowerCase();
-    return isExpense && (
+    return (
       t.description?.toLowerCase().includes(searchLower) ||
       t.category?.toLowerCase().includes(searchLower)
     );
@@ -48,13 +47,16 @@ export default function DespesasPage() {
           <p className="text-slate-500 mt-1">Controle seus custos operacionais, impostos e manutenções.</p>
         </div>
         
-        <button 
-          onClick={() => setIsNewExpenseOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Nova Despesa
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <FinancialPeriodFilter />
+          <button 
+            onClick={() => setIsNewExpenseOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all active:scale-95 w-full sm:w-auto justify-center"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Despesa
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4">

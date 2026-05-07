@@ -22,12 +22,14 @@ import { EditTransactionModal } from '@/features/finance/components/modals/EditT
 import { Download, Filter } from 'lucide-react';
 import { cn, formatBRL } from '@/core/utils/formatters';
 import { formatDisplayDate } from '@/core/utils/date';
-import { Transaction } from '@/core/types/finance';
+import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
+import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
 
 export const dynamic = 'force-dynamic';
 
 export default function RelatoriosPage() {
   const { loading, error, transactions, metrics, filters, refresh } = useReports();
+  const { selectedPeriod } = useFinanceContext();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -62,9 +64,7 @@ export default function RelatoriosPage() {
       totalExpense: safeMetrics.totalExpense,
       netBalance: safeMetrics.netBalance,
       ticketMedio: safeMetrics.ticketMedio,
-      dateRange: (filters.startDate || filters.endDate) 
-        ? `${filters.startDate ? formatDisplayDate(filters.startDate) : 'Início'} Até ${filters.endDate ? formatDisplayDate(filters.endDate) : 'Hoje'}`
-        : 'Todos os Lançamentos'
+      dateRange: selectedPeriod === 'global' ? 'Todos os Lançamentos' : `Período: ${selectedPeriod}`
     });
   };
 
@@ -83,12 +83,14 @@ export default function RelatoriosPage() {
           </h1>
           <p className="text-slate-500 mt-1">Busca avançada, gráficos modulares e documentos em PDF.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <span className="text-xs font-bold text-slate-400">Filtrar Período:</span>
+          <FinancialPeriodFilter />
           <ImportButton onSuccess={refresh} />
           <button 
             onClick={handleExportPDF}
             disabled={transactions.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all w-full sm:w-auto"
           >
             <Download className="w-5 h-5" />
             Exportar PDF

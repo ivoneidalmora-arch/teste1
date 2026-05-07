@@ -1,10 +1,13 @@
-import { useTransactions } from "./useTransactions";
+import { useFinanceContext } from '../contexts/FinanceContext';
 
 export function useFinance() {
-  const { transactions, loading, error, refresh } = useTransactions();
+  const { transactions, loading, error, refresh, selectedPeriod, availableMonths, filteredTransactions } = useFinanceContext();
 
   return {
-    transactions: transactions || [],
+    transactions,
+    filteredTransactions,
+    selectedPeriod,
+    availableMonths,
     loading,
     error,
     refresh

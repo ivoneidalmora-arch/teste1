@@ -7,10 +7,10 @@ import { EditTransactionModal } from '@/features/finance/components/modals/EditT
 import { TrendingUp, Plus, Search } from 'lucide-react';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { Transaction } from '@/core/types/finance';
-import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
+import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 
 export default function ReceitasPage() {
-  const { loading, transactions, metrics, refresh, filters } = useReports();
+  const { loading, transactions, metrics, refresh, filters, allTransactions } = useReports();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isNewVistoriaOpen, setIsNewVistoriaOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,14 +24,12 @@ export default function ReceitasPage() {
   if (!mounted) return null;
 
   const incomeTransactions = transactions.filter(t => {
-    const isIncome = t.type === 'income';
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = 
+    return (
       t.description?.toLowerCase().includes(searchLower) ||
       t.customer?.toLowerCase().includes(searchLower) ||
-      String(t.metadata?.placa || '').toLowerCase().includes(searchLower);
-    
-    return isIncome && matchesSearch;
+      String(t.metadata?.placa || '').toLowerCase().includes(searchLower)
+    );
   });
 
   return (
@@ -50,13 +48,17 @@ export default function ReceitasPage() {
           <p className="text-slate-500 mt-1">Visualize e gerencie todos os recebimentos e vistorias.</p>
         </div>
         
-        <button 
-          onClick={() => setIsNewVistoriaOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Nova Receita
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <span className="text-xs font-bold text-slate-400">Filtrar Período:</span>
+          <FinancialPeriodFilter />
+          <button 
+            onClick={() => setIsNewVistoriaOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 w-full sm:w-auto justify-center"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Receita
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4">

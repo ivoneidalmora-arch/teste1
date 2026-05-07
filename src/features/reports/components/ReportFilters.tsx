@@ -6,10 +6,6 @@ import { cn } from '@/core/utils/formatters';
 
 interface Props {
   filters: {
-    startDate: string;
-    setStartDate: (v: string) => void;
-    endDate: string;
-    setEndDate: (v: string) => void;
     filterType: 'all' | 'income' | 'expense';
     setFilterType: (v: 'all' | 'income' | 'expense') => void;
     searchPlaca: string;
@@ -24,7 +20,7 @@ interface Props {
 export function ReportFilters({ filters }: Props) {
   return (
     <Card className="p-4 bg-slate-50/50 border-slate-200">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         
         {/* Filtro de Tipo */}
         <div className="flex p-1 bg-white border border-slate-200 rounded-xl">
@@ -65,26 +61,22 @@ export function ReportFilters({ filters }: Props) {
           />
         </div>
 
-        {/* Datas */}
-        <div className="grid grid-cols-2 gap-2 lg:col-span-2">
-           <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input 
-                type="date" 
-                value={filters.startDate}
-                onChange={(e) => filters.setStartDate(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-2 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-primary/20"
-              />
-           </div>
-           <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input 
-                type="date" 
-                value={filters.endDate}
-                onChange={(e) => filters.setEndDate(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-2 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-primary/20"
-              />
-           </div>
+        {/* Filtro de Status */}
+        <div className="flex p-1 bg-white border border-slate-200 rounded-xl">
+          {(['all', 'paid', 'pending'] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => filters.setFilterStatus(status)}
+              className={cn(
+                "flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                filters.filterStatus === status 
+                  ? "bg-brand-primary text-white shadow-sm" 
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              {status === 'all' ? 'Status' : (status === 'paid' ? 'Pago' : 'Pendente')}
+            </button>
+          ))}
         </div>
 
       </div>

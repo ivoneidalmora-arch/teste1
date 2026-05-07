@@ -158,7 +158,7 @@ export function NovaVistoriaModal({ isOpen, onClose, onSuccess, existingTransact
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
           <MoneyInput label="Valor Bruto" name="valorBruto" required value={formData.valorBruto} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno'} />
           <div className="flex flex-col">
-            <MoneyInput label="Dedução Líquida" name="valorLiquido" required value={formData.valorLiquido} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno' || isAutoApplied} className={cn(isAutoApplied && "bg-emerald-100/50 border-emerald-200 text-emerald-800")} />
+            <MoneyInput label="Valor Líquido" name="valorLiquido" required value={formData.valorLiquido} onChange={handleChange} disabled={formData.categoria === 'Vistoria de Retorno' || isAutoApplied} className={cn(isAutoApplied && "bg-emerald-100/50 border-emerald-200 text-emerald-800")} />
             {automationStatus.autoNetValue && (
               <span className={cn(
                 "text-[10px] mt-1 font-bold",
