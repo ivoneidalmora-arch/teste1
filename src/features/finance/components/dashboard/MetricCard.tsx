@@ -84,5 +84,3 @@ export function MetricCard({
     </div>
   );
 }
-  );
-}
