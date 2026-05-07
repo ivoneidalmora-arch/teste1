@@ -83,6 +83,7 @@ export const transactionService = {
     } else {
       if (transaction.description !== undefined) payload.description = transaction.description;
       if (transaction.status !== undefined) payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
+      if (transaction.dueDate !== undefined) payload.vencimento = transaction.dueDate;
     }
     
     const { error } = await supabase.from(table).update(payload).eq('id', id).eq('app_user_id', app_user_id);

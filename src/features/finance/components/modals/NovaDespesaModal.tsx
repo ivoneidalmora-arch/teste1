@@ -21,16 +21,26 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
     descricao: '',
     valor: 0,
     data: format(defaultDate || new Date(), 'yyyy-MM-dd'),
+    dueDate: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     status: 'paid' as 'paid' | 'pending',
     observacao: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'valor' ? parseFloat(value) || 0 : value
-    }));
+    setFormData(prev => {
+      const newState = {
+        ...prev,
+        [name]: name === 'valor' ? parseFloat(value) || 0 : value
+      };
+      
+      // Auto-sync vencimento if it matches the current date being changed
+      if (name === 'data' && prev.dueDate === prev.data) {
+        newState.dueDate = value;
+      }
+      
+      return newState;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +60,7 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
         grossAmount: formData.valor,
         netAmount: formData.valor,
         date: formData.data,
-        dueDate: formData.data,
+        dueDate: formData.dueDate,
         status: formData.status,
         source: 'manual',
         metadata: {
@@ -85,9 +95,15 @@ export function NovaDespesaModal({ isOpen, onClose, onSuccess, defaultDate }: Pr
               <option value="Outros">Outros</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Data do Gasto</label>
-            <input type="date" name="data" required value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500" />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Data do Gasto</label>
+              <input type="date" name="data" required value={formData.data} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1 text-rose-600">Vencimento</label>
+              <input type="date" name="dueDate" required value={formData.dueDate} onChange={handleChange} className="w-full bg-rose-50/50 border border-rose-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-500" />
+            </div>
           </div>
         </div>
 
