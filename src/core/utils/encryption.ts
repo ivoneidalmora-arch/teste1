@@ -3,7 +3,7 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
-const KEY = process.env.ENCRYPTION_KEY;
+const KEY = process.env.ENCRYPTION_KEY || process.env.CHAVE_DE_CRIPTURA;
 
 export function encrypt(text: string): string {
   if (!KEY) throw new Error('ENCRYPTION_KEY is not defined in environment variables');
