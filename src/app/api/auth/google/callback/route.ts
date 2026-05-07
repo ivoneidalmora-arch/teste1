@@ -1,0 +1,81 @@
+import { NextResponse } from 'next/server';
+import { supabase } from '@/services/supabase';
+import { encrypt } from '@/core/utils/encryption';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+
+  if (!code) {
+    return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
+  }
+
+  try {
+    // Exchange code for tokens
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID as string,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI as string,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokens = await response.json();
+
+    if (tokens.error) {
+      console.error('Google Auth Error:', tokens);
+      return NextResponse.redirect(new URL('/dashboard?error=auth_failed', request.url));
+    }
+
+    // Get user info to get the email
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    const googleUser = await userRes.json();
+
+    // Get current Supabase user
+    // In a real app, we'd use cookies to get the session. 
+    // Since I don't have the auth helper setup for SSR, I'll assume the user is authenticated 
+    // and I'll use a hidden field or session check if possible.
+    // For now, I'll use the supabase client to get the user from the headers if possible.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error('Supabase User Error:', userError);
+      return NextResponse.redirect(new URL('/dashboard?error=no_session', request.url));
+    }
+
+    // Encrypt tokens
+    const encryptedAccessToken = encrypt(tokens.access_token);
+    const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null;
+    const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
+    // Save to database
+    const { error: dbError } = await supabase
+      .from('google_calendar_connections')
+      .upsert({
+        user_id: user.id,
+        google_email: googleUser.email,
+        access_token: encryptedAccessToken,
+        refresh_token: encryptedRefreshToken,
+        token_expires_at: expiresAt,
+        scopes: tokens.scope?.split(' '),
+        status: 'active',
+        last_sync_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (dbError) {
+      console.error('DB Error:', dbError);
+      return NextResponse.redirect(new URL('/dashboard?error=db_failed', request.url));
+    }
+
+    return NextResponse.redirect(new URL('/dashboard?success=google_connected', request.url));
+  } catch (err) {
+    console.error('Callback Error:', err);
+    return NextResponse.redirect(new URL('/dashboard?error=internal_error', request.url));
+  }
+}

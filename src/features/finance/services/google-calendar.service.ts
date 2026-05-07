@@ -1,98 +1,134 @@
-/**
- * Google Calendar Integration Service
- * Infrastructure for Bi-directional synchronization.
- */
+import { supabase } from '@/services/supabase';
+import { decrypt, encrypt } from '@/core/utils/encryption';
+import { getHolidays, Holiday } from './holiday.service';
 
 export interface CalendarEvent {
   id: string;
-  google_id?: string;
   title: string;
   description?: string;
-  start: string; // ISO String
-  end: string;   // ISO String
+  start: string;
+  end: string;
+  source: 'google' | 'holiday' | 'system';
+  type?: 'national' | 'state' | 'municipal';
   color?: string;
-  source: 'local' | 'google';
 }
 
 class GoogleCalendarService {
-  private isConnected = false;
-  private clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  private async getActiveConnection(userId: string) {
+    const { data, error } = await supabase
+      .from('google_calendar_connections')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-  // Mock initial events for demonstration
-  private mockEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Vistoria Agendada - ABC-1234',
-      start: new Date().toISOString(),
-      end: new Date(new Date().getTime() + 3600000).toISOString(),
-      source: 'local',
-      color: '#2563EB'
-    },
-    {
-      id: '2',
-      title: 'Reunião Contabilidade (Google)',
-      start: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
-      end: new Date(new Date().setDate(new Date().getDate() + 1) + 3600000).toISOString(),
-      source: 'google',
-      color: '#059669'
-    }
-  ];
-
-  async connect() {
-    if (!this.clientId) {
-      console.warn('Google Client ID not configured. Running in DEMO mode.');
-    }
-    // Logic for OAuth 2.0 would go here
-    this.isConnected = true;
-    return true;
+    if (error || !data) return null;
+    return data;
   }
 
-  async getEvents(): Promise<CalendarEvent[]> {
-    // In a real scenario, this would fetch from both Supabase and Google Calendar
-    // and perform a merge/reconciliation based on google_id.
-    return this.mockEvents;
+  private async refreshAccessToken(connection: any) {
+    if (!connection.refresh_token) throw new Error('No refresh token available');
+
+    const decryptedRefreshToken = decrypt(connection.refresh_token);
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID as string,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        refresh_token: decryptedRefreshToken,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(`Refresh failed: ${data.error}`);
+
+    const encryptedAccessToken = encrypt(data.access_token);
+    const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
+
+    await supabase
+      .from('google_calendar_connections')
+      .update({
+        access_token: encryptedAccessToken,
+        token_expires_at: expiresAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', connection.id);
+
+    return data.access_token;
   }
 
-  async createEvent(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
-    const newEvent = { ...event, id: Math.random().toString(36).substr(2, 9) };
-    this.mockEvents.push(newEvent);
+  async getEvents(userId: string, month: Date): Promise<CalendarEvent[]> {
+    const events: CalendarEvent[] = [];
     
-    if (this.isConnected && this.clientId) {
-      // Sync to Google Calendar API
-      console.log('Syncing new event to Google Calendar:', newEvent);
-    }
-    
-    return newEvent;
-  }
+    // 1. Get Holidays
+    const year = month.getFullYear();
+    const holidays = getHolidays(year);
+    holidays.forEach(h => {
+      events.push({
+        id: `h-${h.date}-${h.name}`,
+        title: h.name,
+        description: h.description,
+        start: h.date,
+        end: h.date,
+        source: 'holiday',
+        type: h.type,
+        color: h.type === 'municipal' ? '#f59e0b' : h.type === 'state' ? '#ec4899' : '#ef4444'
+      });
+    });
 
-  async updateEvent(id: string, updates: Partial<CalendarEvent>) {
-    const index = this.mockEvents.findIndex(e => e.id === id);
-    if (index !== -1) {
-      this.mockEvents[index] = { ...this.mockEvents[index], ...updates };
-      
-      if (this.isConnected && this.mockEvents[index].google_id) {
-        // Sync update to Google
-        console.log('Syncing update to Google Calendar:', id);
+    // 2. Get Google Events
+    const connection = await this.getActiveConnection(userId);
+    if (connection && connection.status === 'active') {
+      try {
+        let token = decrypt(connection.access_token);
+        const isExpired = new Date(connection.token_expires_at) <= new Date();
+
+        if (isExpired) {
+          token = await this.refreshAccessToken(connection);
+        }
+
+        const timeMin = new Date(month.getFullYear(), month.getMonth(), 1).toISOString();
+        const timeMax = new Date(month.getFullYear(), month.getMonth() + 1, 0).toISOString();
+
+        const res = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = await res.json();
+        if (data.items) {
+          data.items.forEach((item: any) => {
+            events.push({
+              id: item.id,
+              title: item.summary,
+              description: item.description,
+              start: item.start.dateTime || item.start.date,
+              end: item.end.dateTime || item.end.date,
+              source: 'google',
+              color: '#2563eb'
+            });
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching Google Events:', err);
       }
     }
+
+    return events;
   }
 
-  async deleteEvent(id: string) {
-    const event = this.mockEvents.find(e => e.id === id);
-    this.mockEvents = this.mockEvents.filter(e => e.id !== id);
+  async getConnectionStatus(userId: string) {
+    const conn = await this.getActiveConnection(userId);
+    if (!conn) return { connected: false, status: 'disconnected' };
     
-    if (this.isConnected && event?.google_id) {
-      // Sync deletion to Google
-      console.log('Syncing deletion to Google Calendar:', id);
-    }
-  }
-
-  getConnectionStatus() {
-    return {
-      connected: this.isConnected,
-      mode: this.clientId ? 'PROD' : 'DEMO'
-    };
+    const isExpired = new Date(conn.token_expires_at) <= new Date();
+    if (isExpired && !conn.refresh_token) return { connected: true, status: 'reconnect_required', email: conn.google_email };
+    
+    return { connected: true, status: conn.status, email: conn.google_email };
   }
 }
 
 export const googleCalendarService = new GoogleCalendarService();
+
