@@ -14,7 +14,7 @@ import { DashboardHeader } from './DashboardHeader';
 import { FinancialHeroCard } from './FinancialHeroCard';
 import { MetricCard } from './MetricCard';
 import { CashFlowChart } from './CashFlowChart';
-import { AlertsInsightsPanel } from './AlertsInsightsPanel';
+import { FinancialInsightsCard } from './FinancialInsightsCard';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { TopClientsCard } from './TopClientsCard';
 import { ExpensesByCategoryCard } from './ExpensesByCategoryCard';
@@ -296,7 +296,7 @@ export function DashboardPage() {
           <CashFlowChart data={cashFlowData} />
         </div>
         <div className="min-w-0">
-          <AlertsInsightsPanel alerts={[]} />
+          <FinancialInsightsCard />
         </div>
       </section>
 

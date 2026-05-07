@@ -38,6 +38,7 @@ export function daysBetween(date1: Date, date2: Date) {
 
 /**
  * Verifica se um lançamento é uma possível duplicata de algum existente.
+ * Usado individualmente durante a criação/edição.
  */
 export function checkDuplicateLaunch(
   newLaunch: { placa: string; categoria: string; data: string; id?: string | number },
@@ -52,7 +53,6 @@ export function checkDuplicateLaunch(
   }
 
   for (const t of existingTransactions) {
-    // Se for edição, não comparar com o próprio registro
     if (newLaunch.id && String(t.id) === String(newLaunch.id)) continue;
 
     const existingPlate = normalizePlate(t.metadata?.placa || (t as any).placa);
@@ -71,4 +71,54 @@ export function checkDuplicateLaunch(
   }
 
   return null;
+}
+
+export type DuplicateGroup = {
+  key: string; // "PLACA-SERVICO"
+  transactions: Transaction[];
+};
+
+/**
+ * Identifica todos os grupos de duplicados em uma lista de transações.
+ */
+export function findDuplicateGroups(transactions: Transaction[]): DuplicateGroup[] {
+  const groups: DuplicateGroup[] = [];
+  const visited = new Set<string | number>();
+
+  // Filtramos apenas receitas (vistorias) para checagem de duplicidade de placa
+  const incomes = transactions.filter(t => t.type === 'income');
+
+  for (const current of incomes) {
+    if (visited.has(current.id)) continue;
+
+    const currentPlate = normalizePlate(current.metadata?.placa);
+    const currentService = normalizeText(current.category);
+
+    if (!currentPlate || !currentService) continue;
+
+    const duplicates = incomes.filter(candidate => {
+      if (candidate.id === current.id) return false;
+
+      const samePlate = normalizePlate(candidate.metadata?.placa) === currentPlate;
+      const sameService = normalizeText(candidate.category) === currentService;
+      
+      const d1 = new Date(current.date + 'T12:00:00');
+      const d2 = new Date(candidate.date + 'T12:00:00');
+      const diffDays = daysBetween(d1, d2);
+
+      return samePlate && sameService && diffDays < 30;
+    });
+
+    if (duplicates.length > 0) {
+      const allInGroup = [current, ...duplicates];
+      allInGroup.forEach(t => visited.add(t.id));
+      
+      groups.push({
+        key: `${currentPlate}-${currentService}`,
+        transactions: allInGroup
+      });
+    }
+  }
+
+  return groups;
 }
