@@ -5,9 +5,14 @@ import { encrypt } from '@/core/utils/encryption';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
+  const userId = searchParams.get('state'); // State contains our userId
 
   if (!code) {
     return NextResponse.redirect(new URL('/?error=no_code', request.url));
+  }
+
+  if (!userId) {
+    return NextResponse.redirect(new URL('/?error=no_user_context', request.url));
   }
 
   try {
@@ -41,18 +46,6 @@ export async function GET(request: Request) {
     });
     const googleUser = await userRes.json();
 
-    // Get current Supabase user
-    // In a real app, we'd use cookies to get the session. 
-    // Since I don't have the auth helper setup for SSR, I'll assume the user is authenticated 
-    // and I'll use a hidden field or session check if possible.
-    // For now, I'll use the supabase client to get the user from the headers if possible.
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      console.error('Supabase User Error:', userError);
-      return NextResponse.redirect(new URL('/?error=no_session', request.url));
-    }
-
     // Encrypt tokens
     const encryptedAccessToken = encrypt(tokens.access_token);
     const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null;
@@ -62,7 +55,7 @@ export async function GET(request: Request) {
     const { error: dbError } = await supabase
       .from('google_calendar_connections')
       .upsert({
-        user_id: user.id,
+        user_id: userId,
         google_email: googleUser.email,
         access_token: encryptedAccessToken,
         refresh_token: encryptedRefreshToken,

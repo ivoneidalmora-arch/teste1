@@ -75,7 +75,8 @@ export function GoogleCalendarCard() {
   const goToToday = () => setCurrentMonth(new Date());
 
   const handleConnect = () => {
-    window.location.href = '/api/auth/google/login';
+    if (!user?.id) return;
+    window.location.href = `/api/auth/google/login?userId=${user.id}`;
   };
 
   return (

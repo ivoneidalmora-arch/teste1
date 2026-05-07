@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { origin } = new URL(request.url);
+  const { origin, searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
   
   // Prioritize environment variable for production stability
@@ -16,12 +17,13 @@ export async function GET(request: Request) {
     }, { status: 500 });
   }
 
-  console.log('Iniciando Google Auth com Redirect:', redirectUri);
+  const options = {
     redirect_uri: redirectUri,
     client_id: process.env.GOOGLE_CLIENT_ID,
     access_type: 'offline',
     response_type: 'code',
     prompt: 'consent',
+    state: userId || '',
     scope: [
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/userinfo.email',
