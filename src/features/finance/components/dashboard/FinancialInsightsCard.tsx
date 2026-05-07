@@ -92,7 +92,7 @@ export function FinancialInsightsCard() {
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verificação Automática</span>
           </div>
           <p className="text-[11px] font-bold text-slate-300 leading-relaxed">
-            {totalProcessed} registros analisados. Detecção de duplicidade por placa e intervalo de 30 dias está ativa.
+            {totalProcessed} registros analisados. Detecção de duplicidade por placa e intervalo de 30 dias está ativa. Despesas, receitas e saldo líquido também estão sendo monitorados automaticamente.
           </p>
         </div>
       </div>
