@@ -17,45 +17,35 @@ import {
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-
-const ICON_STYLES: Record<string, { bg: string; text: string }> = {
-  'Dashboard': { bg: 'bg-blue-50 group-hover:bg-blue-100', text: 'text-blue-600' },
-  'Receitas': { bg: 'bg-emerald-50 group-hover:bg-emerald-100', text: 'text-emerald-600' },
-  'Despesas': { bg: 'bg-rose-50 group-hover:bg-rose-100', text: 'text-rose-600' },
-  'Relatórios': { bg: 'bg-violet-50 group-hover:bg-violet-100', text: 'text-violet-600' },
-  'Importações': { bg: 'bg-blue-50 group-hover:bg-blue-100', text: 'text-blue-600' },
-  'OCR / IA': { bg: 'bg-purple-50 group-hover:bg-purple-100', text: 'text-purple-600' },
-  'Insights IA': { bg: 'bg-amber-50 group-hover:bg-amber-100', text: 'text-amber-600' },
-  'Configurações': { bg: 'bg-teal-50 group-hover:bg-teal-100', text: 'text-teal-600' },
-};
+import { IconBadge } from '@/core/components/ui/IconBadge';
 
 const MENU_GROUPS = [
   {
     title: 'Principal',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/', variant: 'blue' as const },
     ]
   },
   {
     title: 'Financeiro',
     items: [
-      { icon: TrendingUp, label: 'Receitas', href: '/receitas' },
-      { icon: TrendingDown, label: 'Despesas', href: '/despesas' },
-      { icon: FileText, label: 'Relatórios', href: '/relatorios' },
+      { icon: TrendingUp, label: 'Receitas', href: '/receitas', variant: 'green' as const },
+      { icon: TrendingDown, label: 'Despesas', href: '/despesas', variant: 'red' as const },
+      { icon: FileText, label: 'Relatórios', href: '/relatorios', variant: 'purple' as const },
     ]
   },
   {
     title: 'Automação',
     items: [
-      { icon: Upload, label: 'Importações', href: '/importacoes' },
-      { icon: Scan, label: 'OCR / IA', href: '/ocr-ia' },
-      { icon: Sparkles, label: 'Insights IA', href: '/insights-ia' },
+      { icon: Upload, label: 'Importações', href: '/importacoes', variant: 'blue' as const },
+      { icon: Scan, label: 'OCR / IA', href: '/ocr-ia', variant: 'violet' as const },
+      { icon: Sparkles, label: 'Insights IA', href: '/insights-ia', variant: 'orange' as const },
     ]
   },
   {
     title: 'Sistema',
     items: [
-      { icon: Settings, label: 'Configurações', href: '/configuracoes' },
+      { icon: Settings, label: 'Configurações', href: '/configuracoes', variant: 'teal' as const },
     ]
   }
 ];
@@ -99,8 +89,6 @@ export function SidebarContent({ onItemClick }: Props) {
                   ? pathname === '/' 
                   : pathname.startsWith(item.href);
                 
-                const styles = ICON_STYLES[item.label] || { bg: 'bg-slate-50', text: 'text-slate-600' };
-                
                 return (
                   <Link
                     key={item.label}
@@ -114,13 +102,13 @@ export function SidebarContent({ onItemClick }: Props) {
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <div className={cn(
-                      "flex h-7.5 w-7.5 items-center justify-center rounded-lg shadow-sm transition-all duration-300 group-hover:scale-110",
-                      isActive ? "bg-white text-blue-600" : styles.bg,
-                      isActive && item.label !== 'Dashboard' ? styles.text : (isActive ? 'text-blue-600' : styles.text)
-                    )}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                    </div>
+                    <IconBadge 
+                      icon={item.icon} 
+                      variant={item.variant} 
+                      size="sm" 
+                      gradient={isActive} 
+                      className={cn(!isActive && "bg-transparent shadow-none")}
+                    />
                     <span className="min-w-0 flex-1 truncate">
                       {item.label}
                     </span>
