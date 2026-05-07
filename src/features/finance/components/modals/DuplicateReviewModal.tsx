@@ -7,12 +7,14 @@ import { Transaction } from '@/core/types/finance';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Edit2, AlertTriangle, ChevronRight, Calendar, User, Hash } from 'lucide-react';
+import { Trash2, Edit2, AlertTriangle, ChevronRight, Calendar, User, Hash, CheckCircle, Sparkles } from 'lucide-react';
 import { EditTransactionModal } from './EditTransactionModal';
 import { transactionService } from '@/features/finance/services/transaction.service';
+import { approvedDuplicateService } from '@/features/finance/services/approved-duplicate.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { useFinanceContext } from '../../contexts/FinanceContext';
 import { toast } from 'sonner';
+import { ConfirmationModal } from '@/core/components/ConfirmationModal';
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +26,36 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
   const { user } = useAuthContext();
   const { refresh, transactions } = useFinanceContext();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [approvingGroup, setApprovingGroup] = useState<DuplicateGroup | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+
+  const handleApprove = async () => {
+    if (!user || !approvingGroup) return;
+    setIsApproving(true);
+
+    try {
+      const plate = approvingGroup.key.split('-')[0];
+      const service = approvingGroup.key.split('-')[1];
+      const transactionIds = approvingGroup.transactions.map(t => t.id);
+
+      await approvedDuplicateService.approve({
+        app_user_id: user.id,
+        vehicle_plate: plate,
+        service_name: service,
+        transaction_ids: transactionIds,
+        approved_by: user.id
+      });
+
+      toast.success('Duplicidade aprovada com sucesso.');
+      await refresh();
+      setApprovingGroup(null);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao aprovar duplicidade');
+    } finally {
+      setIsApproving(false);
+    }
+  };
 
   const handleDelete = async (t: Transaction) => {
     if (!user) return;
@@ -63,9 +95,19 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
                   </div>
                   <span className="text-sm font-bold text-slate-600">{group.key.split('-')[1]}</span>
                 </div>
-                <span className="text-[10px] font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full uppercase">
-                  {group.transactions.length} Registros
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black text-amber-600 bg-amber-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    {group.transactions.length} Registros
+                  </span>
+                  
+                  <button
+                    onClick={() => setApprovingGroup(group)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm shadow-emerald-200/50"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Aprovar Duplicidade
+                  </button>
+                </div>
               </div>
 
               <div className="divide-y divide-slate-100">
@@ -128,6 +170,16 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
               </div>
             </div>
           ))}
+
+          {duplicateGroups.length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-4">
+                <Sparkles className="w-10 h-10" />
+              </div>
+              <p className="text-slate-600 font-bold text-lg">Tudo limpo!</p>
+              <p className="text-slate-400 font-medium">Nenhuma duplicidade pendente encontrada.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
@@ -150,6 +202,19 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
           }}
           transaction={editingTransaction}
           existingTransactions={transactions}
+        />
+      )}
+
+      {approvingGroup && (
+        <ConfirmationModal
+          isOpen={!!approvingGroup}
+          onClose={() => setApprovingGroup(null)}
+          onConfirm={handleApprove}
+          loading={isApproving}
+          variant="success"
+          title="Aprovar Duplicidade?"
+          description="Tem certeza que deseja aprovar esta duplicidade? Após aprovada, ela não aparecerá novamente nos alertas de duplicidade."
+          confirmText="Confirmar Aprovação"
         />
       )}
     </BaseModal>

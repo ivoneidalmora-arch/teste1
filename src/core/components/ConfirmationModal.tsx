@@ -1,7 +1,7 @@
 "use client";
 
 import { BaseModal } from '@/core/components/BaseModal';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Trash2, X, CheckCircle } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info' | 'success';
   loading?: boolean;
   children?: React.ReactNode;
 }
@@ -50,6 +50,13 @@ export function ConfirmationModal({
       iconText: 'text-blue-600',
       button: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200',
       headerContext: 'info' as const
+    },
+    success: {
+      icon: CheckCircle,
+      iconBg: 'bg-emerald-100',
+      iconText: 'text-emerald-600',
+      button: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200',
+      headerContext: 'success' as const
     }
   };
 

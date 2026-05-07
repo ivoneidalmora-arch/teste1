@@ -81,7 +81,10 @@ export type DuplicateGroup = {
 /**
  * Identifica todos os grupos de duplicados em uma lista de transações.
  */
-export function findDuplicateGroups(transactions: Transaction[]): DuplicateGroup[] {
+export function findDuplicateGroups(
+  transactions: Transaction[],
+  approvedDuplicates: any[] = []
+): DuplicateGroup[] {
   const groups: DuplicateGroup[] = [];
   const visited = new Set<string | number>();
 
@@ -111,12 +114,26 @@ export function findDuplicateGroups(transactions: Transaction[]): DuplicateGroup
 
     if (duplicates.length > 0) {
       const allInGroup = [current, ...duplicates];
-      allInGroup.forEach(t => visited.add(t.id));
+      const allIdsInGroup = allInGroup.map(t => String(t.id)).sort();
       
-      groups.push({
-        key: `${currentPlate}-${currentService}`,
-        transactions: allInGroup
+      // Verifica se este grupo já foi aprovado
+      const isApproved = approvedDuplicates.some(approved => {
+        if (normalizePlate(approved.vehicle_plate) !== currentPlate) return false;
+        if (normalizeText(approved.service_name) !== currentService) return false;
+        
+        // Compara os IDs das transações (devem ser os mesmos)
+        const approvedIds = (approved.transaction_ids as (string | number)[]).map(id => String(id)).sort();
+        return JSON.stringify(allIdsInGroup) === JSON.stringify(approvedIds);
       });
+
+      if (!isApproved) {
+        allInGroup.forEach(t => visited.add(t.id));
+        
+        groups.push({
+          key: `${currentPlate}-${currentService}`,
+          transactions: allInGroup
+        });
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Transaction } from '@/core/types/finance';
 import { transactionService } from '../services/transaction.service';
+import { approvedDuplicateService } from '../services/approved-duplicate.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { filterByMonth } from '@/core/utils/finance';
 
@@ -16,6 +17,7 @@ interface FinanceContextType {
   setPeriod: (period: string) => void;
   refresh: () => Promise<void>;
   filteredTransactions: Transaction[];
+  approvedDuplicates: any[];
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -29,6 +31,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approvedDuplicates, setApprovedDuplicates] = useState<any[]>([]);
 
   // O período vem da URL ou padrão 'global'
   const selectedPeriod = searchParams.get('periodo') || 'global';
@@ -43,8 +46,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await transactionService.getAll(user.id);
+      const [data, approved] = await Promise.all([
+        transactionService.getAll(user.id),
+        approvedDuplicateService.getAll(user.id)
+      ]);
       setTransactions(data);
+      setApprovedDuplicates(approved);
     } catch (err: any) {
       console.error('[FinanceContext] Error:', err);
       setError('Falha ao carregar dados financeiros.');
@@ -97,7 +104,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     availableMonths,
     setPeriod,
     refresh: fetchTransactions,
-    filteredTransactions
+    filteredTransactions,
+    approvedDuplicates
   };
 
   return (

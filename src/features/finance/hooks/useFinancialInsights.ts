@@ -4,7 +4,7 @@ import { findDuplicateGroups } from '../utils/duplicate-check';
 import { generatePeriodInsights } from '../utils/insights';
 
 export function useFinancialInsights() {
-  const { filteredTransactions, transactions: allTransactions, selectedPeriod, loading } = useFinanceContext();
+  const { filteredTransactions, transactions: allTransactions, approvedDuplicates, selectedPeriod, loading } = useFinanceContext();
 
   const data = useMemo(() => {
     if (loading || filteredTransactions.length === 0) {
@@ -15,7 +15,7 @@ export function useFinancialInsights() {
       };
     }
 
-    const duplicates = findDuplicateGroups(filteredTransactions);
+    const duplicates = findDuplicateGroups(filteredTransactions, approvedDuplicates);
     const insights = generatePeriodInsights(
       filteredTransactions,
       allTransactions,
@@ -28,7 +28,7 @@ export function useFinancialInsights() {
       duplicateGroups: duplicates,
       totalProcessed: filteredTransactions.length
     };
-  }, [filteredTransactions, allTransactions, selectedPeriod, loading]);
+  }, [filteredTransactions, allTransactions, approvedDuplicates, selectedPeriod, loading]);
 
   return data;
 }
