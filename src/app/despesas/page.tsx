@@ -8,6 +8,7 @@ import { TrendingDown, Plus, Search } from 'lucide-react';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { Transaction } from '@/core/types/finance';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
+import { NovaDespesaModal } from '@/features/finance/components/modals/NovaDespesaModal';
 
 export default function DespesasPage() {
   const { loading, transactions, metrics, refresh, filters } = useReports();

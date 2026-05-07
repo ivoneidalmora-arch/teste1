@@ -24,6 +24,7 @@ import { cn, formatBRL } from '@/core/utils/formatters';
 import { formatDisplayDate } from '@/core/utils/date';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
+import { Transaction } from '@/core/types/finance';
 
 export const dynamic = 'force-dynamic';
 

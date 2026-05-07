@@ -38,7 +38,7 @@ interface FormData {
   observacao: string;
 }
 
-export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction }: Props) {
+export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, existingTransactions }: Props) {
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);

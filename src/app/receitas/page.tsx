@@ -8,6 +8,7 @@ import { TrendingUp, Plus, Search } from 'lucide-react';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { Transaction } from '@/core/types/finance';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
+import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
 
 export default function ReceitasPage() {
   const { loading, transactions, metrics, refresh, filters, allTransactions } = useReports();
