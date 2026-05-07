@@ -84,7 +84,6 @@ export default function RelatoriosPage() {
           <p className="text-slate-500 mt-1">Busca avançada, gráficos modulares e documentos em PDF.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-400">Filtrar Período:</span>
           <FinancialPeriodFilter />
           <ImportButton onSuccess={refresh} />
           <button 
