@@ -169,7 +169,7 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
                        <span className="text-xs font-black text-slate-900 tracking-wider uppercase">{group.placa}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{group.servico}</span>
+                      <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{group.servico}</span>
                       <span className="text-[10px] font-bold text-slate-500">Intervalo de {group.daysBetween} dias entre lançamentos</span>
                     </div>
                   </div>
@@ -217,6 +217,10 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
                         <div className="flex items-center gap-3">
                           <User className="w-3.5 h-3.5 text-slate-400" />
                           <span className="text-xs font-bold text-slate-600 truncate">{record.cliente || 'Particular'}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Tag className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-xs font-bold text-slate-600 truncate">{record.servico}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <DollarSign className="w-3.5 h-3.5 text-slate-400" />
