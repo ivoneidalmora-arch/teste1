@@ -11,7 +11,7 @@ export interface HolidayRecord {
   scope: HolidayScope;
   city?: string;
   state?: string;
-  description?: string;
+  description?: string | null;
   holidayKey: string;
 }
 
@@ -27,7 +27,7 @@ export class HolidayLib {
       title: h.title,
       date: h.date!,
       type: h.type as HolidayType,
-      scope: this.inferScope(h.type),
+      scope: this.inferScope(h.type as string),
       city: h.type === 'municipal' ? 'São Mateus' : undefined,
       state: (h.type === 'state' || h.type === 'municipal') ? 'ES' : undefined,
       description: h.description,

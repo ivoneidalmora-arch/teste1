@@ -212,4 +212,16 @@ export class GoogleCalendarServerService {
       needs_reconnect: needsReconnect
     };
   }
+
+  static async disconnect() {
+    const userId = await this.getUserIdFromSession();
+    if (!userId) throw new Error('UNAUTHORIZED');
+
+    await supabaseAdmin
+      .from('google_calendar_connections')
+      .delete()
+      .eq('app_user_id', userId);
+
+    return { success: true };
+  }
 }
