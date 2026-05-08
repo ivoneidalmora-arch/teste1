@@ -61,8 +61,8 @@ export function SidebarContent({ onItemClick }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* 1. Topo: Logo fixo - Opção 1 (Cartão Elevado) */}
-      <SidebarBrandCard />
+      {/* 1. Topo: Logo fixo - Opção Premium (Cartão Elevado) */}
+      <SidebarBrandCard className="mb-2" />
 
 
       {/* 2. Centro: Menu com scroll */}

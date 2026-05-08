@@ -10,46 +10,48 @@ interface SidebarBrandCardProps {
 
 export function SidebarBrandCard({ collapsed = false, className }: SidebarBrandCardProps) {
   return (
-    <div className={cn("px-4 pt-8 pb-4", className)}>
+    <div className={cn("px-5 pt-8 pb-8", className)}>
       <div 
         className={cn(
-          "group relative flex flex-col items-center justify-center rounded-2xl bg-white transition-all duration-500",
-          "shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-slate-100/80",
-          "hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] hover:border-blue-100/50",
-          collapsed ? "p-3" : "p-6"
+          "group relative flex flex-col items-center justify-center rounded-[2.5rem] bg-white transition-all duration-700",
+          "shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-50",
+          "hover:shadow-[0_30px_70px_rgba(0,0,0,0.15)] hover:-translate-y-1",
+          collapsed ? "p-4" : "p-10"
         )}
       >
-        {/* Detalhe visual de fundo: Gradiente sutil e forma abstrata */}
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50/30 rounded-full blur-2xl transition-all duration-700 group-hover:bg-blue-100/40" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-slate-50/50" />
+        {/* Detalhe visual de fundo: Profundidade e brilho sutil */}
+        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-50/20 rounded-full blur-3xl transition-all duration-1000 group-hover:bg-blue-100/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50/30" />
         </div>
 
-        {/* Logo Container */}
+        {/* Logo Container - Tamanho Maximizado conforme a imagem */}
         <div className={cn(
           "relative flex items-center justify-center w-full transition-all duration-500",
-          collapsed ? "h-8" : "h-14"
+          collapsed ? "h-10" : "h-24"
         )}>
           <Image 
             src="/logo.png" 
             alt="Alfa Perícia e Vistoria Veicular" 
-            width={collapsed ? 80 : 160} 
-            height={collapsed ? 32 : 60} 
+            width={collapsed ? 80 : 180} 
+            height={collapsed ? 40 : 90} 
             className={cn(
               "h-auto w-auto object-contain transition-all duration-700",
-              collapsed ? "max-h-8 max-w-[40px]" : "max-h-14 max-w-[140px] group-hover:scale-110"
+              collapsed ? "max-h-10 max-w-[45px]" : "max-h-24 max-w-[170px] group-hover:scale-105"
             )}
             priority
           />
         </div>
 
-        {/* Linha de Destaque na base (Opção 1) */}
+        {/* Linha de Destaque com Gradiente Vibrante (Exatamente como na imagem) */}
         {!collapsed && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent rounded-full opacity-40 group-hover:w-20 group-hover:opacity-100 transition-all duration-700" />
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-3/4 h-[3px] overflow-hidden rounded-full">
+            <div className="h-full w-full bg-gradient-to-r from-[#e11d48] via-[#2563eb] to-[#60a5fa] opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-x-110" />
+          </div>
         )}
         
-        {/* Detalhe de acabamento lateral (sutil) */}
-        <div className="absolute right-0 top-1/4 bottom-1/4 w-[1px] bg-gradient-to-b from-transparent via-slate-100 to-transparent" />
+        {/* Refinamento de borda interna sutil */}
+        <div className="absolute inset-0 rounded-[2.5rem] border border-white/50 pointer-events-none" />
       </div>
     </div>
   );
