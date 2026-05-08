@@ -90,7 +90,7 @@ export const insightsMetricsService = {
     const rawGroups: Record<string, any[]> = {};
     (resRec.data || []).forEach(r => {
       if (r.placa) {
-        const key = `${r.placa}-${r.servico || ''}`;
+        const key = `${r.placa}-${r.category || ''}`;
         if (!rawGroups[key]) rawGroups[key] = [];
         rawGroups[key].push(r);
       }
@@ -114,14 +114,14 @@ export const insightsMetricsService = {
               date: it.date,
               cliente: it.cliente,
               placa: it.placa,
-              servico: it.servico,
+              servico: it.category,
               amountBruto: it.amountBruto,
               amountLiquido: it.amountLiquido,
               amount: it.amount
             }));
 
             const ids = records.map(r => r.id).sort();
-            const groupKey = `${items[0].placa}-${items[0].servico}-${ids.join('-')}`;
+            const groupKey = `${items[0].placa}-${items[0].category}-${ids.join('-')}`;
             const existingReview = reviewsMap[groupKey];
             const status = existingReview?.status || 'pending_review';
 
@@ -141,7 +141,7 @@ export const insightsMetricsService = {
             duplicateGroups.push({
               groupKey,
               placa: items[0].placa,
-              servico: items[0].servico,
+              servico: items[0].category,
               cliente: items[0].cliente,
               records,
               confidence,

@@ -54,7 +54,8 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
       if (processedGroups.includes(group.groupKey)) return false;
       
       const matchesSearch = group.placa.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           group.cliente?.toLowerCase().includes(searchTerm.toLowerCase());
+                           group.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           group.servico?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' ? true : group.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
