@@ -1,41 +1,49 @@
 import { supabase } from '@/lib/supabase/client';
-import { FinancialMetrics } from '../types/insights.types';
-import { startOfMonth, endOfMonth, subMonths, setMonth, setYear } from 'date-fns';
+import { FinancialMetrics, PeriodFilter } from '../types/insights.types';
+import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 
 export const insightsMetricsService = {
-  async calculateMetrics(userId: string, month: number, year: number): Promise<FinancialMetrics> {
-    const targetDate = setYear(setMonth(new Date(), month - 1), year);
-    const start = startOfMonth(targetDate);
-    const end = endOfMonth(targetDate);
+  async calculateMetrics(userId: string, period: PeriodFilter): Promise<FinancialMetrics> {
+    const isGlobal = period.type === 'global';
     
-    const prevMonthDate = subMonths(targetDate, 1);
-    const startPrev = startOfMonth(prevMonthDate);
-    const endPrev = endOfMonth(prevMonthDate);
-
     // 1. Fetch current period data
-    const [resRec, resDes] = await Promise.all([
-      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('date', start.toISOString()).lte('date', end.toISOString()),
-      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('date', start.toISOString()).lte('date', end.toISOString()),
-    ]);
+    let queryRec = supabase.from('Receitas').select('*').eq('app_user_id', userId);
+    let queryDes = supabase.from('Despesas').select('*').eq('app_user_id', userId);
+
+    if (period.type === 'month') {
+      queryRec = queryRec.gte('date', period.startDate).lte('date', period.endDate);
+      queryDes = queryDes.gte('date', period.startDate).lte('date', period.endDate);
+    }
+
+    const [resRec, resDes] = await Promise.all([queryRec, queryDes]);
 
     if (resRec.error) throw new Error(`Erro ao buscar receitas: ${resRec.error.message}`);
     if (resDes.error) throw new Error(`Erro ao buscar despesas: ${resDes.error.message}`);
 
-    // 2. Fetch previous period data for trends
-    const [resRecPrev, resDesPrev] = await Promise.all([
-      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('date', startPrev.toISOString()).lte('date', endPrev.toISOString()),
-      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('date', startPrev.toISOString()).lte('date', endPrev.toISOString()),
-    ]);
+    // 2. Fetch previous period data for trends (only if monthly)
+    let prevRevenueLiquido = 0;
+    let prevExpense = 0;
+
+    if (period.type === 'month') {
+      const targetDate = new Date(period.year, period.month - 1, 1);
+      const prevMonthDate = subMonths(targetDate, 1);
+      const startPrev = format(startOfMonth(prevMonthDate), 'yyyy-MM-dd');
+      const endPrev = format(endOfMonth(prevMonthDate), 'yyyy-MM-dd');
+
+      const [resRecPrev, resDesPrev] = await Promise.all([
+        supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('date', startPrev).lte('date', endPrev),
+        supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('date', startPrev).lte('date', endPrev),
+      ]);
+
+      prevRevenueLiquido = (resRecPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
+      prevExpense = (resDesPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+    }
 
     // Current totals
     const currentRevenueBruto = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.amountBruto) || Number(curr.amount) || 0), 0);
     const currentRevenueLiquido = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
     const currentExpense = (resDes.data || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
     
-    // Previous totals
-    const prevRevenueLiquido = (resRecPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
-    const prevExpense = (resDesPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-
     // Calculate top customer
     const customers: Record<string, { value: number, count: number }> = {};
     (resRec.data || []).forEach(r => {
@@ -45,7 +53,8 @@ export const insightsMetricsService = {
       customers[name].count += 1;
     });
     
-    const topCustomerName = Object.keys(customers).sort((a, b) => customers[b].value - customers[a].value)[0] || 'Nenhum';
+    const topCustomerEntries = Object.entries(customers).sort((a, b) => b[1].value - a[1].value);
+    const topCustomerName = topCustomerEntries[0]?.[0] || 'Nenhum';
     const topCustomer = { 
       name: topCustomerName, 
       value: customers[topCustomerName]?.value || 0,
@@ -68,7 +77,8 @@ export const insightsMetricsService = {
     const categories = Object.entries(categoriesMap).map(([category, value]) => ({ category, value })).sort((a, b) => b.value - a.value);
     const topCategory = categories[0] || { category: 'Nenhuma', value: 0 };
 
-    // Detect duplicates (Plate + Service + Month rule)
+    // Detect duplicates (Plate + Service + 30-day window)
+    // No modo global, analisamos todas as duplicidades históricas que respeitam a regra de 30 dias
     const duplicatesMap: Record<string, any[]> = {};
     (resRec.data || []).forEach(r => {
       if (r.placa) {
@@ -77,7 +87,24 @@ export const insightsMetricsService = {
         duplicatesMap[key].push(r);
       }
     });
-    const duplicatePlates = Object.keys(duplicatesMap).filter(k => duplicatesMap[k].length > 1);
+    
+    // Filtro refinado de duplicidades (mesma placa/serviço em menos de 30 dias)
+    const duplicatePlates: string[] = [];
+    Object.entries(duplicatesMap).forEach(([key, items]) => {
+      if (items.length > 1) {
+        items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        for (let i = 0; i < items.length - 1; i++) {
+          const d1 = new Date(items[i].date);
+          const d2 = new Date(items[i+1].date);
+          const diffDays = Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+          if (diffDays <= 30) {
+            const placa = key.split('-')[0];
+            if (!duplicatePlates.includes(placa)) duplicatePlates.push(placa);
+            break;
+          }
+        }
+      }
+    });
 
     // Final calculations
     const netProfit = currentRevenueLiquido - currentExpense;
@@ -86,6 +113,26 @@ export const insightsMetricsService = {
     let expenseStatus: 'Saudável' | 'Atenção' | 'Crítico' = 'Saudável';
     if (expensePercentage >= 70) expenseStatus = 'Crítico';
     else if (expensePercentage >= 40) expenseStatus = 'Atenção';
+
+    // Monthly Variation logic for Global mode: compare last month vs previous month
+    let monthlyVariation = 0;
+    if (period.type === 'global' && resRec.data && resRec.data.length > 0) {
+      // Agrupar por mês e pegar os dois últimos
+      const monthsMap: Record<string, number> = {};
+      resRec.data.forEach(r => {
+        const d = new Date(r.date);
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthsMap[k] = (monthsMap[k] || 0) + (Number(r.amountLiquido) || Number(r.amount) || 0);
+      });
+      const sortedMonths = Object.keys(monthsMap).sort().reverse();
+      if (sortedMonths.length >= 2) {
+        const lastVal = monthsMap[sortedMonths[0]];
+        const prevVal = monthsMap[sortedMonths[1]];
+        monthlyVariation = prevVal === 0 ? 0 : ((lastVal - prevVal) / prevVal) * 100;
+      }
+    } else {
+      monthlyVariation = prevRevenueLiquido === 0 ? 0 : ((currentRevenueLiquido - prevRevenueLiquido) / prevRevenueLiquido) * 100;
+    }
 
     return {
       totalRevenueBruto: currentRevenueBruto,
@@ -97,7 +144,7 @@ export const insightsMetricsService = {
       expenseStatus,
       topCustomer,
       mostFrequentPlate: Object.keys(duplicatesMap).sort((a, b) => duplicatesMap[b].length - duplicatesMap[a].length)[0] || 'Nenhuma',
-      monthlyVariation: prevRevenueLiquido === 0 ? 0 : ((currentRevenueLiquido - prevRevenueLiquido) / prevRevenueLiquido) * 100,
+      monthlyVariation,
       duplicatePlates,
       expenseDetails: {
         topCategory: topCategory.category,
@@ -106,10 +153,10 @@ export const insightsMetricsService = {
         categories
       },
       trends: {
-        revenueGrowth: prevRevenueLiquido === 0 ? 0 : ((currentRevenueLiquido - prevRevenueLiquido) / prevRevenueLiquido) * 100,
-        expenseGrowth: prevExpense === 0 ? 0 : ((currentExpense - prevExpense) / prevExpense) * 100,
+        revenueGrowth: monthlyVariation,
+        expenseGrowth: period.type === 'month' ? (prevExpense === 0 ? 0 : ((currentExpense - prevExpense) / prevExpense) * 100) : 0,
       },
-      period: { month, year }
+      period
     };
   }
 };

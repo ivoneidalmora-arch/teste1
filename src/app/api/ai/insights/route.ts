@@ -9,11 +9,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Gemini API Key não configurada" }, { status: 503 });
     }
 
+    const isGlobal = metrics.period.type === 'global';
+    const periodLabel = isGlobal ? "HISTÓRICO COMPLETO (ANÁLISE GLOBAL)" : `${metrics.period.month}/${metrics.period.year}`;
+
     const prompt = `
-      Atue como um analista financeiro sênior especializado em empresas de vistoria automotiva. 
+      Atue como um desenvolvedor full-stack sênior e analista financeiro sênior especializado em empresas de vistoria automotiva. 
       Analise as métricas financeiras abaixo e forneça 3 insights acionáveis de alto impacto.
 
-      Contexto do Período (${metrics.period.month}/${metrics.period.year}):
+      Contexto do Período: ${periodLabel}
+      ${isGlobal ? 'OBSERVAÇÃO: Esta é uma análise de TODO O HISTÓRICO cadastrado no sistema.' : ''}
+
+      Métricas:
       - Receita Bruta: R$ ${metrics.totalRevenueBruto.toLocaleString('pt-BR')}
       - Receita Líquida: R$ ${metrics.totalRevenueLiquido.toLocaleString('pt-BR')}
       - Despesas Totais: R$ ${metrics.totalExpense.toLocaleString('pt-BR')}
@@ -22,18 +28,19 @@ export async function POST(req: NextRequest) {
       - Status das Despesas: ${metrics.expenseStatus}
       
       Destaques:
-      - Melhor Cliente: ${metrics.topCustomer.name} (R$ ${metrics.topCustomer.value.toLocaleString('pt-BR')} em ${metrics.topCustomer.count} serviços)
+      - Melhor Cliente Histórico: ${metrics.topCustomer.name} (R$ ${metrics.topCustomer.value.toLocaleString('pt-BR')} em ${metrics.topCustomer.count} serviços)
       - Maior Categoria de Custo: ${metrics.expenseDetails.topCategory} (R$ ${metrics.expenseDetails.topCategoryValue.toLocaleString('pt-BR')})
-      - Variação Mensal (Receita): ${metrics.monthlyVariation.toFixed(2)}%
+      - Variação (${isGlobal ? 'Último mês vs Anterior' : 'Mensal'}): ${metrics.monthlyVariation.toFixed(2)}%
       
       Regras de Resposta:
       1. Título curto e impactante em uppercase.
       2. Conteúdo humanizado, direto e executivo.
-      3. Retorne APENAS um JSON válido:
+      3. No modo GLOBAL, deixe claro que os dados referem-se ao acumulado total.
+      4. Retorne APENAS um JSON válido:
       [
-        { "type": "summary", "severity": "info", "title": "RESUMO EXECUTIVO", "content": "..." },
-        { "type": "alert", "severity": "warning", "title": "ALERTA DE CUSTOS", "content": "..." },
-        { "type": "recommendation", "severity": "info", "title": "RECOMENDAÇÃO ESTRATÉGICA", "content": "..." }
+        { "type": "summary", "severity": "info", "title": "...", "content": "..." },
+        { "type": "alert", "severity": "warning", "title": "...", "content": "..." },
+        { "type": "recommendation", "severity": "info", "title": "...", "content": "..." }
       ]
     `;
 

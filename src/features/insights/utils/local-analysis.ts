@@ -15,13 +15,17 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
     monthlyVariation
   } = metrics;
 
+  const isGlobal = metrics.period.type === 'global';
+
   // 1. Summary Insight
   insights.push({
     id: 'summary-' + Date.now(),
     type: 'summary',
     severity: 'info',
-    title: 'Resumo do Período',
-    content: `No período analisado, sua empresa obteve uma receita líquida de ${formatBRL(totalRevenueLiquido)} e despesas de ${formatBRL(totalExpense)}, resultando em um saldo final de ${formatBRL(netProfit)}. As despesas representam ${expensePercentage.toFixed(1)}% da receita bruta, indicando um cenário ${expenseStatus.toLowerCase()}.`,
+    title: isGlobal ? 'Resumo Histórico Global' : 'Resumo do Período',
+    content: isGlobal 
+      ? `Considerando todo o histórico do sistema, sua empresa acumulou uma receita líquida de ${formatBRL(totalRevenueLiquido)} e despesas totais de ${formatBRL(totalExpense)}, com um saldo acumulado de ${formatBRL(netProfit)}. A taxa média de comprometimento é de ${expensePercentage.toFixed(1)}%.`
+      : `No período analisado, sua empresa obteve uma receita líquida de ${formatBRL(totalRevenueLiquido)} e despesas de ${formatBRL(totalExpense)}, resultando em um saldo final de ${formatBRL(netProfit)}. As despesas representam ${expensePercentage.toFixed(1)}% da receita bruta, indicando um cenário ${expenseStatus.toLowerCase()}.`,
     created_at: new Date().toISOString()
   });
 
@@ -31,8 +35,10 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
       id: 'alert-expense-' + Date.now(),
       type: 'alert',
       severity: expenseStatus === 'Crítico' ? 'critical' : 'warning',
-      title: 'Alerta de Custos',
-      content: `Atenção: seus custos estão em nível ${expenseStatus.toLowerCase()} (${expensePercentage.toFixed(1)}%). A categoria "${expenseDetails.topCategory}" é a que mais impacta seu caixa atualmente, totalizando ${formatBRL(expenseDetails.topCategoryValue)}. Recomendamos revisar despesas recorrentes imediatamente.`,
+      title: isGlobal ? 'Gestão de Custos Acumulados' : 'Alerta de Custos',
+      content: isGlobal
+        ? `Historicamente, seus custos representam ${expensePercentage.toFixed(1)}% da receita bruta. A categoria "${expenseDetails.topCategory}" é o maior ralo financeiro acumulado (${formatBRL(expenseDetails.topCategoryValue)}). Recomendamos uma auditoria em contratos fixos.`
+        : `Atenção: seus custos estão em nível ${expenseStatus.toLowerCase()} (${expensePercentage.toFixed(1)}%). A categoria "${expenseDetails.topCategory}" é a que mais impacta seu caixa atualmente, totalizando ${formatBRL(expenseDetails.topCategoryValue)}. Recomendamos revisar despesas recorrentes imediatamente.`,
       created_at: new Date().toISOString()
     });
   } else if (duplicatePlates.length > 0) {
@@ -40,8 +46,8 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
       id: 'alert-duplicates-' + Date.now(),
       type: 'alert',
       severity: 'warning',
-      title: 'Possíveis Duplicidades',
-      content: `Foram detectadas ${duplicatePlates.length} placas com múltiplos lançamentos no mesmo período. Isso pode indicar erros de digitação ou cobranças duplicadas que precisam de revisão manual.`,
+      title: isGlobal ? 'Duplicidades no Histórico' : 'Possíveis Duplicidades',
+      content: `Foram detectadas ${duplicatePlates.length} placas com lançamentos duplicados (mesma placa/serviço em 30 dias) no ${isGlobal ? 'histórico completo' : 'período'}. Revise esses registros para evitar inconsistências no saldo acumulado.`,
       created_at: new Date().toISOString()
     });
   } else {
@@ -49,10 +55,12 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
       id: 'alert-variation-' + Date.now(),
       type: 'alert',
       severity: monthlyVariation < 0 ? 'warning' : 'info',
-      title: 'Desempenho Mensal',
-      content: monthlyVariation < 0 
-        ? `Houve uma queda de ${Math.abs(monthlyVariation).toFixed(1)}% na receita líquida em relação ao mês anterior. Monitore a entrada de novos serviços para evitar quebra de fluxo.`
-        : `Sua receita cresceu ${monthlyVariation.toFixed(1)}% este mês. Excelente sinal de expansão das atividades!`,
+      title: isGlobal ? 'Tendência de Crescimento' : 'Desempenho Mensal',
+      content: isGlobal
+        ? `A variação entre os últimos dois meses com dados foi de ${monthlyVariation.toFixed(1)}%. ${monthlyVariation < 0 ? 'Houve uma desaceleração recente que precisa de atenção.' : 'O negócio mantém uma tendência de alta no fechamento histórico.'}`
+        : (monthlyVariation < 0 
+          ? `Houve uma queda de ${Math.abs(monthlyVariation).toFixed(1)}% na receita líquida em relação ao mês anterior. Monitore a entrada de novos serviços para evitar quebra de fluxo.`
+          : `Sua receita cresceu ${monthlyVariation.toFixed(1)}% este mês. Excelente sinal de expansão das atividades!`),
       created_at: new Date().toISOString()
     });
   }
@@ -62,8 +70,10 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
     id: 'rec-' + Date.now(),
     type: 'recommendation',
     severity: 'info',
-    title: 'Dica de Gestão',
-    content: `O cliente "${topCustomer.name}" é seu maior parceiro, gerando ${formatBRL(topCustomer.value)} (${topCustomer.count} serviços). Recomendamos fortalecer este relacionamento e, ao mesmo tempo, buscar diversificar sua carteira para reduzir a dependência de um único cliente principal.`,
+    title: isGlobal ? 'Estratégia de Longo Prazo' : 'Dica de Gestão',
+    content: isGlobal
+      ? `Seu maior cliente histórico é "${topCustomer.name}", com ${formatBRL(topCustomer.value)} gerados. Em uma visão global, ele representa uma fatia vital do seu faturamento. Considere planos de fidelização para grandes volumes.`
+      : `O cliente "${topCustomer.name}" é seu maior parceiro, gerando ${formatBRL(topCustomer.value)} (${topCustomer.count} serviços). Recomendamos fortalecer este relacionamento e, ao mesmo tempo, buscar diversificar sua carteira para reduzir a dependência de um único cliente principal.`,
     created_at: new Date().toISOString()
   });
 

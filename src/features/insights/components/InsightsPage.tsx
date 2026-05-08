@@ -16,12 +16,13 @@ import {
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { insightsMetricsService } from '../services/insights-metrics.service';
 import { geminiInsightsService } from '../services/gemini-insights.service';
-import { FinancialMetrics, IAInsight } from '../types/insights.types';
+import { FinancialMetrics, IAInsight, PeriodFilter } from '../types/insights.types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { formatBRL, cn } from '@/core/utils/formatters';
 import { useFinanceContext } from '../../finance/contexts/FinanceContext';
 import { FinancialPeriodFilter } from '../../finance/components/filters/FinancialPeriodFilter';
 import { useMemo } from 'react';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 export function InsightsPage() {
   const { user } = useAuth();
@@ -33,14 +34,21 @@ export function InsightsPage() {
   
   const { selectedPeriod } = useFinanceContext();
   
-  // Derivar mês e ano do período selecionado
-  const { month, year } = useMemo(() => {
+  // Derivar o objeto de filtro a partir do estado do contexto
+  const periodFilter: PeriodFilter = useMemo(() => {
     if (selectedPeriod === 'global') {
-      const now = new Date();
-      return { month: now.getMonth() + 1, year: now.getFullYear() };
+      return { type: 'global', label: 'Tudo (Global)' };
     }
     const [y, m] = selectedPeriod.split('-').map(Number);
-    return { month: m, year: y };
+    const d = new Date(y, m - 1, 1);
+    return {
+      type: 'month',
+      label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+      month: m,
+      year: y,
+      startDate: format(startOfMonth(d), 'yyyy-MM-dd'),
+      endDate: format(endOfMonth(d), 'yyyy-MM-dd')
+    };
   }, [selectedPeriod]);
 
   const loadData = useCallback(async () => {
@@ -48,7 +56,7 @@ export function InsightsPage() {
     setLoading(true);
     setError(null);
     try {
-      const m = await insightsMetricsService.calculateMetrics(user.id, month, year);
+      const m = await insightsMetricsService.calculateMetrics(user.id, periodFilter);
       setMetrics(m);
       // Resetar insights ao trocar período para forçar nova geração
       setInsights([]);
@@ -58,7 +66,7 @@ export function InsightsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, month, year]);
+  }, [user?.id, periodFilter]);
 
   useEffect(() => {
     loadData();
@@ -104,7 +112,9 @@ export function InsightsPage() {
           <IconBadge icon={Sparkles} variant="orange" size="lg" gradient />
           <div>
             <h1 className="text-2xl font-black text-[#0F172A] tracking-tight">Insights IA</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Análise de Performance</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+              {periodFilter.type === 'global' ? 'Histórico Completo de Performance' : 'Análise de Performance Mensal'}
+            </p>
           </div>
         </div>
 
@@ -144,13 +154,14 @@ export function InsightsPage() {
               icon={TrendingUp} 
               variant="green"
               trend={metrics.monthlyVariation}
+              subtitle={periodFilter.type === 'global' ? 'Acumulado histórico' : 'Resultado do mês'}
             />
             <MetricBox 
               title="Despesas" 
               value={formatBRL(metrics.totalExpense)} 
               icon={Wallet} 
               variant="red"
-              subtitle={`${metrics.expensePercentage.toFixed(1)}% da receita`}
+              subtitle={periodFilter.type === 'global' ? 'Total histórico' : `${metrics.expensePercentage.toFixed(1)}% da receita`}
               status={metrics.expenseStatus}
             />
             <MetricBox 
@@ -158,21 +169,21 @@ export function InsightsPage() {
               value={metrics.topCustomer.name} 
               icon={CheckCircle2} 
               variant="blue" 
-              subtitle={`${formatBRL(metrics.topCustomer.value)} (${metrics.topCustomer.count} serviços)`} 
+              subtitle={periodFilter.type === 'global' ? `Maior histórico: ${formatBRL(metrics.topCustomer.value)}` : `${formatBRL(metrics.topCustomer.value)} (${metrics.topCustomer.count} serviços)`} 
             />
             <MetricBox 
               title="Variação Mensal" 
               value={`${metrics.monthlyVariation > 0 ? '+' : ''}${metrics.monthlyVariation.toFixed(1)}%`} 
               icon={RefreshCw} 
               variant="purple" 
-              subtitle="Em relação ao mês anterior"
+              subtitle={periodFilter.type === 'global' ? 'Último mês vs anterior' : 'Em relação ao mês anterior'}
             />
             <MetricBox 
               title="Duplicidades" 
               value={metrics.duplicatePlates.length.toString()} 
               icon={ShieldAlert} 
               variant={metrics.duplicatePlates.length > 0 ? "red" : "slate"} 
-              subtitle="Placas repetidas no mês" 
+              subtitle={periodFilter.type === 'global' ? 'Placas repetidas no histórico' : 'Placas repetidas no mês'} 
             />
           </>
         ) : (
@@ -185,7 +196,9 @@ export function InsightsPage() {
       {/* Insights da IA / Local Analysis Box */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
-          <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Sugestões e Diagnóstico IA</h2>
+          <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            {periodFilter.type === 'global' ? 'Diagnóstico Financeiro Global' : 'Sugestões e Diagnóstico IA'}
+          </h2>
           {insights.length > 0 && (
              <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-full">Atualizado</span>
           )}
@@ -202,7 +215,7 @@ export function InsightsPage() {
             <p className="text-xs font-bold text-slate-400 max-w-sm mx-auto leading-relaxed">
               {generating 
                 ? 'Estamos analisando receitas, despesas e duplicidades para fornecer um diagnóstico completo do seu negócio.' 
-                : 'Clique no botão superior para que nossa IA gere um relatório humanizado com sugestões para otimizar seus lucros.'}
+                : `Clique no botão superior para que nossa IA gere uma ${periodFilter.type === 'global' ? 'análise global' : 'análise mensal'} com sugestões estratégicas.`}
             </p>
           </div>
         ) : (

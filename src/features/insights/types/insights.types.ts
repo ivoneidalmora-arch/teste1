@@ -1,3 +1,17 @@
+export type PeriodFilter = 
+  | { 
+      type: 'global'; 
+      label: string; 
+    }
+  | { 
+      type: 'month'; 
+      label: string; 
+      month: number; 
+      year: number; 
+      startDate: string; 
+      endDate: string; 
+    };
+
 export interface FinancialMetrics {
   totalRevenueBruto: number;
   totalRevenueLiquido: number;
@@ -32,10 +46,7 @@ export interface FinancialMetrics {
     expenseGrowth: number;
   };
   
-  period: {
-    month: number;
-    year: number;
-  };
+  period: PeriodFilter;
 }
 
 export interface IAInsight {
