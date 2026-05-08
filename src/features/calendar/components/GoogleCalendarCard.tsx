@@ -53,18 +53,17 @@ export function GoogleCalendarCard() {
   const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const monthParam = format(currentMonth, 'yyyy-MM-dd');
+      const monthParam = format(currentMonth, 'yyyy-MM');
       const response = await fetch(`/api/calendar/events?month=${monthParam}`);
       
       if (response.ok) {
         const data = await response.json();
-        setEvents(data.map((e: any) => ({
-          ...e,
-          start_at: e.start,
-          end_at: e.end,
-        })));
+        setEvents(data);
       } else {
-        console.error('Failed to load events');
+        const err = await response.json();
+        if (err.code === 'RECONNECT_REQUIRED') {
+          setStatus(prev => ({ ...prev, status: 'reconnect_required' }));
+        }
       }
     } catch (error) {
       console.error('Error loading events:', error);
@@ -84,14 +83,10 @@ export function GoogleCalendarCard() {
     const hasAttempted = sessionStorage.getItem('google_auto_connect_attempted');
     
     if (status.status === 'disconnected' && !hasAttempted && user?.id) {
-      console.log('Auto-activating Google Calendar connection...');
       sessionStorage.setItem('google_auto_connect_attempted', 'true');
-      
-      // Small delay to ensure UI is ready and avoid race conditions
       const timer = setTimeout(() => {
         handleConnect();
-      }, 1500);
-      
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [status.status, user?.id]);
@@ -111,12 +106,39 @@ export function GoogleCalendarCard() {
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToToday = () => setCurrentMonth(new Date());
 
-  const handleConnect = () => {
-    if (!user?.id) {
-      toast.error('Usuário não identificado');
-      return;
+  const handleConnect = (forcePrompt = false) => {
+    const url = `/api/auth/google/login${forcePrompt ? '?prompt=consent' : ''}`;
+    window.location.href = url;
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Deseja realmente desconectar sua conta do Google?')) return;
+    try {
+      const res = await fetch('/api/calendar/disconnect', { method: 'POST' });
+      if (res.ok) {
+        toast.success('Conta desconectada');
+        loadStatus();
+        loadEvents();
+      }
+    } catch (err) {
+      toast.error('Erro ao desconectar');
     }
-    window.location.href = `/api/auth/google/login?userId=${user.id}`;
+  };
+
+  const handleSyncHolidays = async () => {
+    const tid = toast.loading('Sincronizando feriados com Google...');
+    try {
+      const res = await fetch('/api/calendar/sync-holidays', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Feriados sincronizados: ${data.summary.created} novos`, { id: tid });
+        loadEvents();
+      } else {
+        toast.error(data.error || 'Erro ao sincronizar', { id: tid });
+      }
+    } catch (err) {
+      toast.error('Erro na chamada de sincronização', { id: tid });
+    }
   };
 
   return (
@@ -178,61 +200,89 @@ export function GoogleCalendarCard() {
       {/* Footer Sync Status Premium */}
       <div className="p-4 bg-slate-50/30 border-t border-slate-100">
         <div className={cn(
-          "flex items-center justify-between p-3 rounded-2xl border transition-all duration-500",
+          "flex flex-col gap-3 p-3 rounded-2xl border transition-all duration-500",
           status.connected ? "bg-white border-slate-100 shadow-sm" : "bg-slate-100/50 border-transparent"
         )}>
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm transition-all",
-              status.connected ? "bg-white border border-slate-100 text-blue-600" : "bg-slate-200 text-slate-400"
-            )}>
-              {status.connected ? (
-                <span className="bg-clip-text text-transparent bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500">G</span>
-              ) : 'G'}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-[#0F172A] leading-tight flex items-center gap-1.5">
-                {status.connected ? 'Sincronização Ativa' : 'Google Agenda'}
-                {status.connected && status.status === 'active' && (
-                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                {status.connected ? `Vinculado a ${status.email?.split('@')[0]}...` : 'Modo demonstração'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {!status.connected || status.status === 'reconnect_required' ? (
-              <button 
-                onClick={handleConnect}
-                className="px-3.5 py-1.5 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-blue-600/30 transition-all active:scale-95"
-              >
-                Ativar
-              </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={loadEvents}
-                  disabled={loading}
-                  className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400 hover:text-blue-600"
-                >
-                  <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                </button>
-                <button 
-                  onClick={() => window.open('https://calendar.google.com', '_blank')}
-                  className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400 hover:text-blue-600"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm transition-all",
+                status.connected ? "bg-white border border-slate-100 text-blue-600" : "bg-slate-200 text-slate-400"
+              )}>
+                {status.connected ? (
+                  <span className="bg-clip-text text-transparent bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500">G</span>
+                ) : 'G'}
               </div>
-            )}
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-[#0F172A] leading-tight flex items-center gap-1.5">
+                  {status.status === 'active' ? 'Sincronização Ativa' : 
+                   status.status === 'reconnect_required' ? 'Ação Necessária' : 'Google Agenda'}
+                  {status.connected && status.status === 'active' && (
+                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                  {status.connected ? (status.status === 'reconnect_required' ? 'Token expirado' : `Logado como ${status.email?.split('@')[0]}...`) : 'Modo demonstração'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {!status.connected ? (
+                <button 
+                  onClick={() => handleConnect()}
+                  className="px-3.5 py-1.5 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-blue-600/30 transition-all active:scale-95"
+                >
+                  Ativar
+                </button>
+              ) : status.status === 'reconnect_required' ? (
+                <button 
+                  onClick={() => handleConnect(true)}
+                  className="px-3.5 py-1.5 bg-amber-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all active:scale-95"
+                >
+                  Reconectar
+                </button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={loadEvents}
+                    disabled={loading}
+                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-blue-600"
+                    title="Atualizar agora"
+                  >
+                    <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+                  </button>
+                  <button 
+                    onClick={() => window.open('https://calendar.google.com', '_blank')}
+                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-blue-600"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
+
+          {status.connected && status.status === 'active' && (
+            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+              <button 
+                onClick={handleSyncHolidays}
+                className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+              >
+                Sincronizar Feriados
+              </button>
+              <button 
+                onClick={handleDisconnect}
+                className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:underline"
+              >
+                Desconectar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

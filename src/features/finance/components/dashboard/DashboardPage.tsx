@@ -148,10 +148,10 @@ export function DashboardPage() {
         amount: norm.amount,
         netAmount: norm.netAmount,
         grossAmount: norm.grossAmount,
-        status: norm.status as any,
-        origin: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source) ? norm.source : 'manual') as any,
+        status: norm.status,
+        source: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source) ? norm.source : 'manual') as any,
         type: norm.type as any
-      };
+      } as any;
     }),
   [dashboardTransactions]);
 

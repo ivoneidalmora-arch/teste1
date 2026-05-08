@@ -9,7 +9,8 @@ import {
   ChevronDown,
   Calendar,
   Printer,
-  Table as TableIcon
+  Table as TableIcon,
+  RefreshCw
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { reportPDFService } from '../services/report-pdf.service';

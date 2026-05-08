@@ -10,7 +10,22 @@ import {
   CreditCard,
   Briefcase
 } from 'lucide-react';
-...
+import { cn, formatBRL } from '@/core/utils/formatters';
+import { formatDisplayDate } from '@/core/utils/date';
+import { Transaction } from '@/core/types/finance';
+
+interface Props {
+  transactions: Transaction[];
+  onAction?: (action: string, transaction: Transaction) => void;
+}
+
+const STATUS_MAP = {
+  paid: { label: 'Pago', class: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+  pending: { label: 'Pendente', class: 'bg-amber-50 text-amber-600 border-amber-100' },
+  overdue: { label: 'Atrasado', class: 'bg-rose-50 text-rose-600 border-rose-100' },
+  cancelled: { label: 'Cancelado', class: 'bg-slate-50 text-slate-400 border-slate-100' },
+};
+
 export function RecentTransactionsTable({ transactions, onAction }: Props) {
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -57,8 +72,8 @@ export function RecentTransactionsTable({ transactions, onAction }: Props) {
                   <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-200 cursor-default">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-[11px] font-black text-slate-900 leading-tight">{formatDisplayDate(t.date).split(' ')[0]}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{formatDisplayDate(t.date).split(' ')[1]}</span>
+                        <span className="text-[11px] font-black text-slate-900 leading-tight">{formatDisplayDate(t.date, 'dd MMM').split(' ')[0]}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">{formatDisplayDate(t.date, 'dd MMM').split(' ')[1]}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

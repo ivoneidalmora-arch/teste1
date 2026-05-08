@@ -72,8 +72,37 @@ npm run typecheck
 npm run build
 ```
 
-## 🔒 Segurança e Arquitetura
+## 📅 Integração Google Calendar
 
+O sistema integra-se ao Google Calendar para sincronizar vistorias e feriados.
+
+### 1. Configuração no Google Cloud
+1. Acesse o [Google Cloud Console](https://console.cloud.google.com/).
+2. Ative a **Google Calendar API**.
+3. Em **OAuth consent screen**, configure como "External" e adicione os escopos:
+   - `.../auth/calendar.events`
+   - `.../auth/userinfo.email`
+   - `.../auth/userinfo.profile`
+4. Em **Credentials**, crie um **OAuth 2.0 Client ID** do tipo "Web Application".
+5. Adicione as **Authorized Redirect URIs**:
+   - Local: `http://localhost:3000/api/auth/google/callback`
+   - Produção: `https://seu-dominio.com/api/auth/google/callback`
+
+### 2. Variáveis de Ambiente Adicionais
+No seu `.env.local` e no painel do Vercel, adicione:
+
+```env
+GOOGLE_CLIENT_ID=seu_client_id
+GOOGLE_CLIENT_SECRET=seu_client_secret
+ENCRYPTION_KEY=uma_chave_de_32_caracteres_para_criptografia
+NEXT_PUBLIC_SITE_URL=https://seu-dominio.com # ou http://localhost:3000
+```
+
+### 3. Banco de Dados
+Execute o arquivo `supabase_migration_calendar_v2.sql` no seu SQL Editor do Supabase para criar as tabelas de conexões e eventos.
+
+## 🔒 Segurança e Arquitetura
 - **Middleware**: Proteção de rotas no nível do servidor.
 - **Isolamento de Dados**: Toda transação financeira é filtrada pelo `app_user_id` do usuário autenticado.
 - **Admin Service**: Operações sensíveis de banco de dados são realizadas via `supabaseAdmin` no servidor.
+- **OAuth Security**: Utiliza `nonce` via cookies HTTP-only e criptografia AES-256-GCM para tokens em repouso.
