@@ -300,8 +300,11 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
             onRefresh();
           }}
           transaction={{
-            ...editingRecord,
+            id: editingRecord.id,
+            type: 'income',
+            date: editingRecord.date,
             category: editingRecord.servico || '',
+            amount: editingRecord.amount || editingRecord.amountBruto || 0,
             grossAmount: editingRecord.amountBruto || 0,
             netAmount: editingRecord.amountLiquido || 0,
             customer: editingRecord.cliente || 'Particular',
