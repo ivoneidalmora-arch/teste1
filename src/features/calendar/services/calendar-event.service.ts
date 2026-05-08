@@ -1,27 +1,31 @@
 import { supabase } from '@/services/supabase';
-import { CalendarEvent, EventStatus, SyncStatus } from '../types/calendar.types';
+import type { CalendarEvent, SyncStatus } from '../types/calendar.types';
 
+/**
+ * Serviço de gerenciamento de eventos do calendário (Client-side).
+ * Nota: Sincronização Google é tratada exclusivamente pelo GoogleCalendarServerService.
+ */
 export const calendarEventService = {
-  async getAll(userId: string, start: Date, end: Date): Promise<CalendarEvent[]> {
+  async getAll(userId: string, start: string, end: string): Promise<CalendarEvent[]> {
+    // Busca eventos locais criados pelo usuário ou sincronizados
     const { data, error } = await supabase
       .from('calendar_events')
       .select('*')
       .eq('app_user_id', userId)
       .is('deleted_at', null)
-      .gte('start_at', start.toISOString())
-      .lte('end_at', end.toISOString());
+      .or(`date.gte.${start},start_at.gte.${start}`)
+      .or(`date.lte.${end},end_at.lte.${end}`);
 
     if (error) throw error;
     return data || [];
   },
 
-  async create(event: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>): Promise<CalendarEvent> {
+  async create(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
     const { data, error } = await supabase
       .from('calendar_events')
       .insert({
         ...event,
         sync_status: 'pending' as SyncStatus,
-        status: 'active' as EventStatus,
       })
       .select()
       .single();
@@ -51,7 +55,7 @@ export const calendarEventService = {
       .from('calendar_events')
       .update({
         deleted_at: new Date().toISOString(),
-        sync_status: 'deleted' as SyncStatus,
+        sync_status: 'pending' as SyncStatus,
       })
       .eq('id', id);
 

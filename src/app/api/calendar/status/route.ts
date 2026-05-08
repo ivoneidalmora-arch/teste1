@@ -6,7 +6,10 @@ export async function GET() {
     const status = await GoogleCalendarServerService.getConnectionStatus();
     return NextResponse.json(status);
   } catch (error: any) {
-    console.error('[API Status] Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('[API Calendar Status] Error:', error);
+    return NextResponse.json(
+      { connected: false, status: 'error', message: 'Erro ao verificar status da conexão' },
+      { status: 500 }
+    );
   }
 }

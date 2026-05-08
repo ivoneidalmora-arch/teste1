@@ -6,10 +6,10 @@ export async function POST() {
     const result = await GoogleCalendarServerService.disconnect();
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('[API Disconnect] Error:', error);
+    console.error('[API Calendar Disconnect] Error:', error);
     if (error.message === 'UNAUTHORIZED') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao desconectar Google Calendar' }, { status: 500 });
   }
 }

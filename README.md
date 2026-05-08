@@ -99,7 +99,13 @@ NEXT_PUBLIC_SITE_URL=https://seu-dominio.com # ou http://localhost:3000
 ```
 
 ### 3. Banco de Dados
-Execute o arquivo `supabase_migration_calendar_v2.sql` no seu SQL Editor do Supabase para criar as tabelas de conexões e eventos.
+Execute o arquivo `supabase_migration_calendar_final.sql` no seu SQL Editor do Supabase para criar as tabelas de conexões, eventos e duplicatas aprovadas.
+
+### ⚠️ Solução de Problemas: Erro 403 Access Denied
+Se você receber o erro `access_denied` ao tentar conectar, verifique:
+1. **App em Teste**: No Google Cloud Console, se o status do app estiver em "Testing", você deve adicionar o e-mail do usuário explicitamente em "Test users" na tela de consentimento OAuth.
+2. **Scopes**: Garanta que todos os escopos solicitados foram autorizados na tela de consentimento.
+3. **Redirect URI**: O `NEXT_PUBLIC_SITE_URL` deve bater exatamente com o que está configurado no Google Cloud (incluindo https e ausência de barra final).
 
 ## 🔒 Segurança e Arquitetura
 - **Middleware**: Proteção de rotas no nível do servidor.
