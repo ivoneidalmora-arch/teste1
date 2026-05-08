@@ -11,6 +11,7 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
     expenseStatus,
     topCustomer,
     duplicatePlates,
+    duplicateGroups,
     expenseDetails,
     monthlyVariation
   } = metrics;
@@ -41,13 +42,23 @@ export function generateLocalAnalysis(metrics: FinancialMetrics): IAInsight[] {
         : `Atenção: seus custos estão em nível ${expenseStatus.toLowerCase()} (${expensePercentage.toFixed(1)}%). A categoria "${expenseDetails.topCategory}" é a que mais impacta seu caixa atualmente, totalizando ${formatBRL(expenseDetails.topCategoryValue)}. Recomendamos revisar despesas recorrentes imediatamente.`,
       created_at: new Date().toISOString()
     });
-  } else if (duplicatePlates.length > 0) {
+  } else if (duplicateGroups.filter(g => g.status === 'pending_review').length > 0) {
+    const pendingCount = duplicateGroups.filter(g => g.status === 'pending_review').length;
     insights.push({
       id: 'alert-duplicates-' + Date.now(),
       type: 'alert',
       severity: 'warning',
-      title: isGlobal ? 'Duplicidades no Histórico' : 'Possíveis Duplicidades',
-      content: `Foram detectadas ${duplicatePlates.length} placas com lançamentos duplicados (mesma placa/serviço em 30 dias) no ${isGlobal ? 'histórico completo' : 'período'}. Revise esses registros para evitar inconsistências no saldo acumulado.`,
+      title: isGlobal ? 'Auditoria Pendente' : 'Possíveis Duplicidades',
+      content: `Existem ${pendingCount} possíveis duplicidades pendentes de revisão. Registros duplicados podem inflar sua receita líquida artificialmente. Recomendamos validar estes lançamentos na Central de Auditoria.`,
+      created_at: new Date().toISOString()
+    });
+  } else if (duplicateGroups.filter(g => g.status === 'confirmed_duplicate').length > 0) {
+    insights.push({
+      id: 'alert-confirmed-' + Date.now(),
+      type: 'alert',
+      severity: 'info',
+      title: 'Duplicidades Identificadas',
+      content: `Você possui ${duplicateGroups.filter(g => g.status === 'confirmed_duplicate').length} duplicidades confirmadas no sistema. Considere excluir os registros excedentes para manter a precisão do lucro líquido.`,
       created_at: new Date().toISOString()
     });
   } else {

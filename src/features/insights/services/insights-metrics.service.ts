@@ -77,29 +77,85 @@ export const insightsMetricsService = {
     const categories = Object.entries(categoriesMap).map(([category, value]) => ({ category, value })).sort((a, b) => b.value - a.value);
     const topCategory = categories[0] || { category: 'Nenhuma', value: 0 };
 
+    // Fetch existing reviews
+    const { data: existingReviews } = await supabase
+      .from('duplicate_reviews')
+      .select('*')
+      .eq('app_user_id', userId);
+    
+    const reviewsMap: Record<string, any> = {};
+    (existingReviews || []).forEach(r => {
+      reviewsMap[r.duplicate_group_key] = r;
+    });
+
     // Detect duplicates (Plate + Service + 30-day window)
-    // No modo global, analisamos todas as duplicidades históricas que respeitam a regra de 30 dias
-    const duplicatesMap: Record<string, any[]> = {};
+    const rawGroups: Record<string, any[]> = {};
     (resRec.data || []).forEach(r => {
       if (r.placa) {
         const key = `${r.placa}-${r.servico || ''}`;
-        if (!duplicatesMap[key]) duplicatesMap[key] = [];
-        duplicatesMap[key].push(r);
+        if (!rawGroups[key]) rawGroups[key] = [];
+        rawGroups[key].push(r);
       }
     });
     
-    // Filtro refinado de duplicidades (mesma placa/serviço em menos de 30 dias)
+    const duplicateGroups: any[] = [];
     const duplicatePlates: string[] = [];
-    Object.entries(duplicatesMap).forEach(([key, items]) => {
+
+    Object.entries(rawGroups).forEach(([key, items]) => {
       if (items.length > 1) {
         items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
         for (let i = 0; i < items.length - 1; i++) {
           const d1 = new Date(items[i].date);
           const d2 = new Date(items[i+1].date);
           const diffDays = Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+          
           if (diffDays <= 30) {
+            const records = items.map(it => ({
+              id: it.id,
+              date: it.date,
+              cliente: it.cliente,
+              placa: it.placa,
+              servico: it.servico,
+              amountBruto: it.amountBruto,
+              amountLiquido: it.amountLiquido,
+              amount: it.amount
+            }));
+
+            const ids = records.map(r => r.id).sort();
+            const groupKey = `${items[0].placa}-${items[0].servico}-${ids.join('-')}`;
+            const existingReview = reviewsMap[groupKey];
+            const status = existingReview?.status || 'pending_review';
+
+            // Calculate Confidence
+            let confidence: 'high' | 'medium' | 'low' = 'low';
+            const r1 = records[0];
+            const r2 = records[1];
+            
+            const sameValue = r1.amountBruto === r2.amountBruto;
+            const sameCustomer = r1.cliente === r2.cliente;
+            const sameService = r1.servico === r2.servico;
+
+            if (sameValue && sameCustomer && sameService) confidence = 'high';
+            else if (sameService) confidence = 'medium';
+            else confidence = 'low';
+
+            duplicateGroups.push({
+              groupKey,
+              placa: items[0].placa,
+              servico: items[0].servico,
+              cliente: items[0].cliente,
+              records,
+              confidence,
+              status,
+              daysBetween: Math.round(diffDays)
+            });
+
             const placa = key.split('-')[0];
-            if (!duplicatePlates.includes(placa)) duplicatePlates.push(placa);
+            // No card principal, apenas as pendentes contam
+            if (status === 'pending_review' && !duplicatePlates.includes(placa)) {
+              duplicatePlates.push(placa);
+            }
             break;
           }
         }
@@ -143,9 +199,10 @@ export const insightsMetricsService = {
       expensePercentage,
       expenseStatus,
       topCustomer,
-      mostFrequentPlate: Object.keys(duplicatesMap).sort((a, b) => duplicatesMap[b].length - duplicatesMap[a].length)[0] || 'Nenhuma',
+      mostFrequentPlate: Object.keys(rawGroups).sort((a, b) => rawGroups[b].length - rawGroups[a].length)[0] || 'Nenhuma',
       monthlyVariation,
       duplicatePlates,
+      duplicateGroups,
       expenseDetails: {
         topCategory: topCategory.category,
         topCategoryValue: topCategory.value,

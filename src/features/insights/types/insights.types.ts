@@ -12,6 +12,40 @@ export type PeriodFilter =
       endDate: string; 
     };
 
+export type DuplicateStatus =
+  | "pending_review"
+  | "confirmed_duplicate"
+  | "not_duplicate"
+  | "ignored"
+  | "resolved";
+
+export type DuplicateConfidence =
+  | "high"
+  | "medium"
+  | "low";
+
+export type DuplicateRecord = {
+  id: string;
+  date: string;
+  cliente?: string | null;
+  placa?: string | null;
+  servico?: string | null;
+  amountBruto?: number | null;
+  amountLiquido?: number | null;
+  amount?: number | null; // fallback
+};
+
+export type DuplicateGroup = {
+  groupKey: string;
+  placa: string;
+  servico: string;
+  cliente?: string | null;
+  records: DuplicateRecord[];
+  confidence: DuplicateConfidence;
+  status: DuplicateStatus;
+  daysBetween: number;
+};
+
 export interface FinancialMetrics {
   totalRevenueBruto: number;
   totalRevenueLiquido: number;
@@ -29,7 +63,8 @@ export interface FinancialMetrics {
   
   mostFrequentPlate: string;
   monthlyVariation: number;
-  duplicatePlates: string[];
+  duplicatePlates: string[]; // Manter por compatibilidade ou remover se migrar tudo
+  duplicateGroups: DuplicateGroup[];
   
   expenseDetails: {
     topCategory: string;

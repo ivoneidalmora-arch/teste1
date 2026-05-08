@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       - Melhor Cliente Histórico: ${metrics.topCustomer.name} (R$ ${metrics.topCustomer.value.toLocaleString('pt-BR')} em ${metrics.topCustomer.count} serviços)
       - Maior Categoria de Custo: ${metrics.expenseDetails.topCategory} (R$ ${metrics.expenseDetails.topCategoryValue.toLocaleString('pt-BR')})
       - Variação (${isGlobal ? 'Último mês vs Anterior' : 'Mensal'}): ${metrics.monthlyVariation.toFixed(2)}%
+      - Auditoria de Duplicidades: ${metrics.duplicateGroups.filter((g: any) => g.status === 'pending_review').length} pendentes, ${metrics.duplicateGroups.filter((g: any) => g.status === 'confirmed_duplicate').length} confirmadas.
       
       Regras de Resposta:
       1. Título curto e impactante em uppercase.

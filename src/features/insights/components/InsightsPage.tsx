@@ -23,6 +23,7 @@ import { useFinanceContext } from '../../finance/contexts/FinanceContext';
 import { FinancialPeriodFilter } from '../../finance/components/filters/FinancialPeriodFilter';
 import { useMemo } from 'react';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { DuplicateAlertsModal } from './DuplicateAlertsModal';
 
 export function InsightsPage() {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export function InsightsPage() {
   const [insights, setInsights] = useState<IAInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const { selectedPeriod } = useFinanceContext();
@@ -180,10 +182,12 @@ export function InsightsPage() {
             />
             <MetricBox 
               title="Duplicidades" 
-              value={metrics.duplicatePlates.length.toString()} 
+              value={metrics.duplicateGroups.filter(g => g.status === 'pending_review').length.toString()} 
               icon={ShieldAlert} 
-              variant={metrics.duplicatePlates.length > 0 ? "red" : "slate"} 
+              variant={metrics.duplicateGroups.filter(g => g.status === 'pending_review').length > 0 ? "red" : "slate"} 
               subtitle={periodFilter.type === 'global' ? 'Placas repetidas no histórico' : 'Placas repetidas no mês'} 
+              actionLabel="Revisar lançamentos"
+              onAction={() => setShowDuplicatesModal(true)}
             />
           </>
         ) : (
@@ -256,6 +260,16 @@ export function InsightsPage() {
           </div>
         )}
       </div>
+
+      {metrics && user && (
+        <DuplicateAlertsModal 
+          isOpen={showDuplicatesModal}
+          onClose={() => setShowDuplicatesModal(false)}
+          groups={metrics.duplicateGroups}
+          userId={user.id}
+          onRefresh={loadData}
+        />
+      )}
     </div>
   );
 }
@@ -268,9 +282,11 @@ interface MetricBoxProps {
   subtitle?: string;
   trend?: number;
   status?: 'Saudável' | 'Atenção' | 'Crítico';
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-function MetricBox({ title, value, icon, variant, subtitle, trend, status }: MetricBoxProps) {
+function MetricBox({ title, value, icon, variant, subtitle, trend, status, actionLabel, onAction }: MetricBoxProps) {
   return (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
       <div className="flex items-center justify-between mb-4">
@@ -299,6 +315,15 @@ function MetricBox({ title, value, icon, variant, subtitle, trend, status }: Met
         <h3 className="text-xl font-black text-slate-950 leading-tight group-hover:text-blue-600 transition-colors">{value}</h3>
         {subtitle && <p className="text-[10px] font-bold text-slate-400 leading-tight line-clamp-1">{subtitle}</p>}
       </div>
+
+      {actionLabel && onAction && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onAction(); }}
+          className="mt-4 w-full py-2.5 rounded-xl bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-all border border-slate-100 hover:border-slate-200 active:scale-[0.98]"
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 }
