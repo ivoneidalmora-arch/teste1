@@ -5,7 +5,7 @@ export const geminiInsightsService = {
   async generateInsights(metrics: FinancialMetrics): Promise<IAInsight[]> {
     try {
       // Tentar usar a API externa (se configurada)
-      const response = await fetch('/api/insights/generate', {
+      const response = await fetch('/api/ai/insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ metrics }),
