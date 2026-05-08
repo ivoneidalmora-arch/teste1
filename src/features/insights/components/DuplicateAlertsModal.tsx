@@ -63,15 +63,15 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
       const result = await updateDuplicateStatusAction(userId, groupKey, status);
       
       if (result.error) {
-        toast.error(`Erro: ${result.error}`);
+        toast.error(result.error);
         return;
       }
 
       toast.success(`Status atualizado para: ${status.replace('_', ' ')}`);
       onRefresh();
       setConfirmAction(null);
-    } catch (err) {
-      toast.error("Erro ao atualizar status.");
+    } catch (err: any) {
+      toast.error(`Erro ao atualizar status: ${err.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(null);
     }

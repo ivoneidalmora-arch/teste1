@@ -19,14 +19,14 @@ export async function updateDuplicateStatusAction(userId: string, groupKey: stri
       .single();
 
     if (error) {
-      console.error("[updateDuplicateStatusAction] Error:", error);
-      return { error: error.message };
+      console.error("[updateDuplicateStatusAction] DB Error:", error);
+      return { error: `DB ${error.code}: ${error.message}${error.details ? ' - ' + error.details : ''}` };
     }
 
     revalidatePath('/insights-ia');
     return { success: true, data };
   } catch (err: any) {
     console.error("[updateDuplicateStatusAction] Critical Error:", err);
-    return { error: err.message || "Erro interno ao atualizar status" };
+    return { error: `Erro Crítico: ${err.message || "Erro interno"}` };
   }
 }
