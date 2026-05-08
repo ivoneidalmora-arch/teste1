@@ -14,8 +14,8 @@ export const insightsMetricsService = {
 
     // 1. Fetch current period data
     const [resRec, resDes] = await Promise.all([
-      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('data', start.toISOString()).lte('data', end.toISOString()),
-      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('data', start.toISOString()).lte('data', end.toISOString()),
+      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('date', start.toISOString()).lte('date', end.toISOString()),
+      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('date', start.toISOString()).lte('date', end.toISOString()),
     ]);
 
     if (resRec.error) throw new Error(`Erro ao buscar receitas: ${resRec.error.message}`);
@@ -23,25 +23,25 @@ export const insightsMetricsService = {
 
     // 2. Fetch previous period data for trends
     const [resRecPrev, resDesPrev] = await Promise.all([
-      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('data', startPrev.toISOString()).lte('data', endPrev.toISOString()),
-      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('data', startPrev.toISOString()).lte('data', endPrev.toISOString()),
+      supabase.from('Receitas').select('*').eq('app_user_id', userId).gte('date', startPrev.toISOString()).lte('date', endPrev.toISOString()),
+      supabase.from('Despesas').select('*').eq('app_user_id', userId).gte('date', startPrev.toISOString()).lte('date', endPrev.toISOString()),
     ]);
 
     // Current totals
-    const currentRevenueBruto = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0);
-    const currentRevenueLiquido = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.valor_liquido) || Number(curr.valor_bruto) || 0), 0);
-    const currentExpense = (resDes.data || []).reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+    const currentRevenueBruto = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.amountBruto) || Number(curr.amount) || 0), 0);
+    const currentRevenueLiquido = (resRec.data || []).reduce((acc, curr) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
+    const currentExpense = (resDes.data || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
     
     // Previous totals
-    const prevRevenueLiquido = (resRecPrev.data || []).reduce((acc, curr) => acc + (Number(curr.valor_liquido) || Number(curr.valor_bruto) || 0), 0);
-    const prevExpense = (resDesPrev.data || []).reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+    const prevRevenueLiquido = (resRecPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
+    const prevExpense = (resDesPrev.data || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
     // Calculate top customer
     const customers: Record<string, { value: number, count: number }> = {};
     (resRec.data || []).forEach(r => {
       const name = r.cliente || 'Desconhecido';
       if (!customers[name]) customers[name] = { value: 0, count: 0 };
-      customers[name].value += (Number(r.valor_liquido) || Number(r.valor_bruto) || 0);
+      customers[name].value += (Number(r.amountLiquido) || Number(r.amount) || 0);
       customers[name].count += 1;
     });
     
@@ -57,11 +57,11 @@ export const insightsMetricsService = {
     let highestExp = { description: 'Nenhuma', value: 0 };
 
     (resDes.data || []).forEach(d => {
-      const cat = d.categoria || 'Outros';
-      const val = Number(d.valor) || 0;
+      const cat = d.category || 'Outros';
+      const val = Number(d.amount) || 0;
       categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
       if (val > highestExp.value) {
-        highestExp = { description: d.descricao || cat, value: val };
+        highestExp = { description: d.description || cat, value: val };
       }
     });
 
