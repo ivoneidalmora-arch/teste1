@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { reportPDFService } from '../services/report-pdf.service';
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { formatBRL } from '@/core/utils/formatters';
 import { cn } from '@/core/utils/formatters';

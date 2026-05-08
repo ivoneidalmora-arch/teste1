@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { normalizeCurrencyValue, getNetValueFor2025, shouldApplyAutoNetValue } from './financial-rules';
 
 /**

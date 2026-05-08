@@ -1,5 +1,5 @@
 import { decrypt, encrypt } from "@/core/utils/encryption";
-import { supabaseAdmin } from "@/services/supabase-admin";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export class GoogleAuthService {
   static async refreshAccessToken(connectionId: string, refreshToken: string, userId: string) {

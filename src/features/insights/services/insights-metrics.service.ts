@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { FinancialMetrics } from '../types/insights.types';
 import { startOfMonth, endOfMonth, subMonths, setMonth, setYear } from 'date-fns';
 

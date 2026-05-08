@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { supabaseAdmin } from '@/services/supabase-admin';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { encrypt } from '@/core/utils/encryption';
 import { jwtVerify } from 'jose';
 

@@ -17,7 +17,7 @@ import { importParserService } from '../services/import-parser.service';
 import { ImportItem } from '../types/import.types';
 import { formatBRL } from '@/core/utils/formatters';
 import { cn } from '@/core/utils/formatters';
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
 

@@ -1,5 +1,5 @@
 import 'server-only';
-import { supabaseAdmin } from '@/services/supabase-admin';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import { decrypt } from '@/core/utils/encryption';
 import { HolidayLib } from '@/lib/holidays/holiday-sync';
 import { GoogleCalendarClient } from '@/lib/google/calendar';

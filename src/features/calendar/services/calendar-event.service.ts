@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import type { CalendarEvent, SyncStatus } from '../types/calendar.types';
 
 /**

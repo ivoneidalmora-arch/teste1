@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export interface ApprovedDuplicate {
   id: string;

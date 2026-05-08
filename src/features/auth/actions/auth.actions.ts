@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { supabaseAdmin } from "@/services/supabase-admin";
+import { supabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 

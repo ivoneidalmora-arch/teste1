@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Transaction, NewTransaction } from '@/core/types/finance';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 import { normalizePlaca } from '@/features/ai-ocr/utils/normalization';

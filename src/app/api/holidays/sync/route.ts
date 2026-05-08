@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { HolidayLib } from '@/lib/holidays/holiday-sync';
-import { supabaseAdmin } from '@/services/supabase-admin';
+import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
