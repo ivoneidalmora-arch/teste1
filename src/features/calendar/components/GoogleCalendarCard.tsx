@@ -79,6 +79,23 @@ export function GoogleCalendarCard() {
     }
   }, [user?.id, loadStatus]);
 
+  // Auto-activation logic
+  useEffect(() => {
+    const hasAttempted = sessionStorage.getItem('google_auto_connect_attempted');
+    
+    if (status.status === 'disconnected' && !hasAttempted && user?.id) {
+      console.log('Auto-activating Google Calendar connection...');
+      sessionStorage.setItem('google_auto_connect_attempted', 'true');
+      
+      // Small delay to ensure UI is ready and avoid race conditions
+      const timer = setTimeout(() => {
+        handleConnect();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [status.status, user?.id]);
+
   useEffect(() => {
     if (user?.id) {
       loadEvents();
