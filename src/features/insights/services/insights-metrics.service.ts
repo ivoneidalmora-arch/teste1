@@ -109,17 +109,24 @@ export const insightsMetricsService = {
           const diffDays = Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
           
           if (diffDays <= 30) {
-            const records = items.map(it => ({
-              id: it.id,
-              type: 'income' as const,
-              date: it.date,
-              cliente: it.cliente,
-              placa: it.placa,
-              servico: it.category,
-              amountBruto: it.amountBruto,
-              amountLiquido: it.amountLiquido,
-              amount: it.amount
-            }));
+            const { getNetValueFor2025 } = require('@/lib/financial-rules');
+            
+            const records = items.map(it => {
+              const autoNetValue = getNetValueFor2025(it.amountBruto, it.date);
+              const finalLiquido = autoNetValue ?? it.amountLiquido ?? it.amount;
+              
+              return {
+                id: it.id,
+                type: 'income' as const,
+                date: it.date,
+                cliente: it.cliente,
+                placa: it.placa,
+                servico: it.category,
+                amountBruto: it.amountBruto,
+                amountLiquido: finalLiquido,
+                amount: finalLiquido
+              };
+            });
 
             const ids = records.map(r => r.id).sort();
             const groupKey = `${items[0].placa}-${items[0].category}-${ids.join('-')}`;
