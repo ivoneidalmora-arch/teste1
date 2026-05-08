@@ -37,6 +37,8 @@ interface DuplicateAlertsModalProps {
   onRefresh: () => void;
 }
 
+import { updateDuplicateStatusAction } from '../actions/duplicate.actions';
+
 export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefresh }: DuplicateAlertsModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<DuplicateStatus | 'all'>('pending_review');
@@ -58,7 +60,13 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
   const handleUpdateStatus = async (groupKey: string, status: DuplicateStatus) => {
     setLoading(groupKey);
     try {
-      await duplicateReviewService.updateStatus(userId, groupKey, status);
+      const result = await updateDuplicateStatusAction(userId, groupKey, status);
+      
+      if (result.error) {
+        toast.error(`Erro: ${result.error}`);
+        return;
+      }
+
       toast.success(`Status atualizado para: ${status.replace('_', ' ')}`);
       onRefresh();
       setConfirmAction(null);
