@@ -91,30 +91,22 @@ export class GoogleCalendarServerService {
     return data.access_token;
   }
 
-  static async getEvents(monthStr: string): Promise<CalendarEvent[]> {
+  static async getEvents(monthStr: string): Promise<any[]> {
     const userId = await this.getUserIdFromSession();
     if (!userId) throw new Error('UNAUTHORIZED');
 
-    const events: CalendarEvent[] = [];
+    const events: any[] = [];
     
-    // 1. Local Holidays
+    // 1. Local Holidays (Generate for current month)
     const [year, month] = monthStr.split('-').map(Number);
-    const dateObj = new Date(year, month - 1, 1);
     const holidays = getHolidays(year);
     
     holidays.forEach(h => {
-      // Filter holidays for the requested month
-      const hDate = new Date(h.date);
-      if (hDate.getMonth() === month - 1) {
+      const [hYear, hMonth] = h.date.split('-').map(Number);
+      if (hMonth === month) {
         events.push({
-          id: `h-${h.date}-${h.name}`,
-          title: h.name,
-          description: h.description,
-          start_at: h.date,
-          end_at: h.date,
-          all_day: true,
-          source: 'holiday',
-          color: h.type === 'municipal' ? '#f59e0b' : h.type === 'state' ? '#ec4899' : '#ef4444'
+          ...h,
+          visible: true
         });
       }
     });
@@ -131,7 +123,7 @@ export class GoogleCalendarServerService {
         }
 
         const timeMin = new Date(year, month - 1, 1).toISOString();
-        const timeMax = new Date(year, month, 1).toISOString(); // Próximo mês 00:00:00
+        const timeMax = new Date(year, month, 1).toISOString();
 
         const res = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
@@ -139,7 +131,6 @@ export class GoogleCalendarServerService {
         );
 
         if (res.status === 401) {
-          // Token expirou entre a checagem e a chamada ou é inválido
           token = await this.refreshAccessToken(connection);
           const retryRes = await fetch(
             `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
@@ -159,18 +150,44 @@ export class GoogleCalendarServerService {
     return events;
   }
 
-  private static processGoogleItems(items: any[], events: CalendarEvent[]) {
+  private static processGoogleItems(items: any[], events: any[]) {
     if (!items) return;
+
     items.forEach((item: any) => {
+      const isAllDay = !!item.start.date;
+      let dateKey: string;
+
+      if (isAllDay) {
+        dateKey = item.start.date; // Já vem em YYYY-MM-DD
+      } else {
+        // Para eventos com horário, precisamos extrair a data local correta.
+        // O formato do Google é "2026-05-08T22:00:00-03:00" ou "2026-05-09T01:00:00Z"
+        // Se houver offset (-03:00), o split('T')[0] funciona. 
+        // Se for 'Z', precisamos converter para o fuso de Brasília.
+        const dt = new Date(item.start.dateTime);
+        // Usamos Intl para garantir o dia correto em São Paulo independente de onde o servidor rode
+        dateKey = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(dt);
+      }
+      
+      const isSystemHoliday = item.extendedProperties?.private?.app === 'alfa-vistoria' && 
+                             item.extendedProperties?.private?.type === 'holiday';
+      
+      if (isSystemHoliday) return;
+
       events.push({
         id: item.id,
         title: item.summary || '(Sem título)',
-        description: item.description,
-        start_at: item.start.dateTime || item.start.date,
-        end_at: item.end.dateTime || item.end.date,
-        all_day: !!item.start.date,
+        date: dateKey,
+        allDay: isAllDay,
         source: 'google',
-        color: '#2563eb'
+        type: 'google',
+        description: item.description,
+        visible: true
       });
     });
   }

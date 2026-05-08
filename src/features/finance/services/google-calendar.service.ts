@@ -9,7 +9,7 @@ export interface CalendarEvent {
   start: string;
   end: string;
   source: 'google' | 'holiday' | 'system';
-  type?: 'national' | 'state' | 'municipal';
+  type?: 'national' | 'state' | 'municipal' | 'optional';
   color?: string;
 }
 
@@ -73,8 +73,8 @@ class GoogleCalendarService {
     const holidays = getHolidays(year);
     holidays.forEach(h => {
       events.push({
-        id: `h-${h.date}-${h.name}`,
-        title: h.name,
+        id: `h-${h.date}-${h.title}`,
+        title: h.title,
         description: h.description,
         start: h.date,
         end: h.date,

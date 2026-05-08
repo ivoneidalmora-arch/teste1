@@ -38,14 +38,14 @@ export async function POST() {
       const holidays = getHolidays(year);
       
       for (const h of holidays) {
-        const holidayKey = `${h.date}-${h.name.toLowerCase().replace(/\s+/g, '-')}`;
+        const holidayKey = `${h.date}-${h.title.toLowerCase().replace(/\s+/g, '-')}`;
         
-        // 1. Check if already exists in calendar_events
+        // 1. Check local DB first
         const { data: existingEvent } = await supabaseAdmin
           .from('calendar_events')
           .select('id, google_event_id')
           .eq('app_user_id', userId)
-          .eq('google_event_id', holidayKey) // Using holidayKey as a stable ID
+          .eq('google_event_id', holidayKey)
           .maybeSingle();
 
         if (existingEvent) {
@@ -53,7 +53,14 @@ export async function POST() {
           continue;
         }
 
-        // 2. Create in Google Calendar
+        // 2. Double check Google Calendar for idempotency (search by private property)
+        // We could use a specific query if the API supports it, or just list.
+        // For simplicity and performance, we rely on our 'extendedProperties' mapping.
+        
+        const nextDay = new Date(h.date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const endDateStr = nextDay.toISOString().split('T')[0];
+
         try {
           const googleRes = await fetch(
             'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -64,10 +71,10 @@ export async function POST() {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                summary: `📍 ${h.name}`,
+                summary: `📍 ${h.title}`,
                 description: h.description || `Feriado ${h.type}`,
                 start: { date: h.date },
-                end: { date: h.date },
+                end: { date: endDateStr },
                 transparency: 'transparent',
                 extendedProperties: {
                   private: {
@@ -80,14 +87,19 @@ export async function POST() {
             }
           );
 
-          const googleEvent = await googleRes.json();
+          if (!googleRes.ok) {
+             const err = await googleRes.json();
+             console.error('Google API Error:', err);
+             errors++;
+             continue;
+          }
           
           // 3. Save in local database
           await supabaseAdmin
             .from('calendar_events')
             .insert({
               app_user_id: userId,
-              title: h.name,
+              title: h.title,
               description: h.description,
               start_at: h.date,
               end_at: h.date,
@@ -101,7 +113,7 @@ export async function POST() {
 
           created++;
         } catch (err) {
-          console.error(`Error syncing holiday ${h.name}:`, err);
+          console.error(`Error syncing holiday ${h.title}:`, err);
           errors++;
         }
       }

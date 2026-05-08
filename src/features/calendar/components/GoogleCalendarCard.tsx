@@ -1,5 +1,3 @@
-"use client";
-
 import { 
   format, 
   addMonths, 
@@ -17,23 +15,28 @@ import {
   Calendar as CalendarIcon, 
   RefreshCw, 
   ExternalLink,
+  Info,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { CalendarMonthGrid } from './CalendarMonthGrid';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { toast } from 'sonner';
+import { toLocalDateKey, getHolidays } from '@/features/finance/services/holiday.service';
 
 export function GoogleCalendarCard() {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ connected: boolean; status: string; email?: string }>({ 
+  const [status, setStatus] = useState<{ connected: boolean; status: string; email?: string; last_sync_at?: string }>({ 
     connected: false, 
     status: 'loading' 
   });
+  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: Date, events: any[] } | null>(null);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -45,7 +48,6 @@ export function GoogleCalendarCard() {
         setStatus({ connected: false, status: 'disconnected' });
       }
     } catch (error) {
-      console.error('Error loading status:', error);
       setStatus({ connected: false, status: 'error' });
     }
   }, []);
@@ -78,29 +80,27 @@ export function GoogleCalendarCard() {
     }
   }, [user?.id, loadStatus]);
 
-  // Auto-activation logic
-  useEffect(() => {
-    const hasAttempted = sessionStorage.getItem('google_auto_connect_attempted');
-    
-    if (status.status === 'disconnected' && !hasAttempted && user?.id) {
-      sessionStorage.setItem('google_auto_connect_attempted', 'true');
-      const timer = setTimeout(() => {
-        handleConnect();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [status.status, user?.id]);
-
   useEffect(() => {
     if (user?.id) {
       loadEvents();
     }
   }, [user?.id, loadEvents]);
 
-  const days = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(currentMonth)),
-    end: endOfWeek(endOfMonth(currentMonth)),
-  });
+  // Auto-sync trigger
+  useEffect(() => {
+    if (status.connected && status.status === 'active' && !status.last_sync_at) {
+      handleSyncHolidays(true);
+    }
+  }, [status.connected, status.status, status.last_sync_at]);
+
+  const days = useMemo(() => {
+    // Normalizamos para o meio do dia para evitar que 00:00 em fusos negativos mude o mês/dia
+    const baseDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1, 12, 0, 0);
+    return eachDayOfInterval({
+      start: startOfWeek(startOfMonth(baseDate), { weekStartsOn: 0 }),
+      end: endOfWeek(endOfMonth(baseDate), { weekStartsOn: 0 }),
+    });
+  }, [currentMonth]);
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -111,60 +111,41 @@ export function GoogleCalendarCard() {
     window.location.href = url;
   };
 
-  const handleDisconnect = async () => {
-    if (!confirm('Deseja realmente desconectar sua conta do Google?')) return;
-    try {
-      const res = await fetch('/api/calendar/disconnect', { method: 'POST' });
-      if (res.ok) {
-        toast.success('Conta desconectada');
-        loadStatus();
-        loadEvents();
-      }
-    } catch (err) {
-      toast.error('Erro ao desconectar');
-    }
-  };
-
-  const handleSyncHolidays = async () => {
-    const tid = toast.loading('Sincronizando feriados com Google...');
+  const handleSyncHolidays = async (isAuto = false) => {
+    const tid = !isAuto ? toast.loading('Sincronizando feriados com Google...') : undefined;
     try {
       const res = await fetch('/api/calendar/sync-holidays', { method: 'POST' });
-      const data = await res.json();
       if (res.ok) {
-        toast.success(`Feriados sincronizados: ${data.summary.created} novos`, { id: tid });
+        if (!isAuto && tid) toast.success('Feriados sincronizados com Google Agenda.', { id: tid });
+        loadStatus();
         loadEvents();
       } else {
-        toast.error(data.error || 'Erro ao sincronizar', { id: tid });
+        if (!isAuto && tid) toast.error('Falha na sincronização.', { id: tid });
       }
     } catch (err) {
-      toast.error('Erro na chamada de sincronização', { id: tid });
+      if (!isAuto && tid) toast.error('Erro de conexão.', { id: tid });
     }
   };
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white shadow-sm flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-md">
-      {/* Header Premium */}
-      <div className="p-5 border-b border-slate-50 flex items-center justify-between bg-white">
+      {/* Header */}
+      <div className="p-4 border-b border-slate-50 flex items-center justify-between bg-white">
         <div className="flex items-center gap-3">
           <IconBadge icon={CalendarIcon} variant="blue" size="sm" gradient />
           <div>
-            <h3 className="text-sm font-black text-[#0F172A] flex items-center gap-2">
-              Calendário / Google Agenda
-            </h3>
+            <h3 className="text-sm font-black text-[#0F172A]">Calendário Alfa</h3>
             <p className="text-[10px] font-bold text-slate-400 capitalize">
               {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button onClick={prevMonth} className="p-1.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all active:scale-90">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button 
-            onClick={goToToday} 
-            className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-all border border-transparent hover:border-slate-100"
-          >
+          <button onClick={goToToday} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 rounded-lg">
             Hoje
           </button>
           <button onClick={nextMonth} className="p-1.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all active:scale-90">
@@ -173,16 +154,16 @@ export function GoogleCalendarCard() {
         </div>
       </div>
 
-      {/* Grid Dias da Semana */}
-      <div className="grid grid-cols-7 bg-slate-50/30 border-b border-slate-50">
+      {/* Week Headers */}
+      <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-50">
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-          <div key={day} className="py-2.5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">
+          <div key={day} className="py-2 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
             {day}
           </div>
         ))}
       </div>
 
-      {/* Grid Mensal Principal */}
+      {/* Grid */}
       <div className="relative flex-1">
         {loading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
@@ -193,98 +174,140 @@ export function GoogleCalendarCard() {
           days={days} 
           currentMonth={currentMonth} 
           events={events} 
-          onDayClick={(day) => console.log('Click day:', day)}
+          onDayClick={(day, dayEvents) => setSelectedDayEvents({ day, events: dayEvents })}
         />
       </div>
 
-      {/* Footer Sync Status Premium */}
-      <div className="p-4 bg-slate-50/30 border-t border-slate-100">
+      {/* Legend & Footer */}
+      <div className="p-3 bg-slate-50/30 border-t border-slate-100 space-y-3">
+        {/* Color Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center">
+          {[
+            { label: 'Nacional', color: 'bg-rose-400' },
+            { label: 'Estadual', color: 'bg-pink-400' },
+            { label: 'Municipal', color: 'bg-amber-400' },
+            { label: 'Google', color: 'bg-blue-400' },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <div className={cn("w-1.5 h-1.5 rounded-full", item.color)} />
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Connection Status */}
         <div className={cn(
-          "flex flex-col gap-3 p-3 rounded-2xl border transition-all duration-500",
+          "flex items-center justify-between p-2.5 rounded-2xl border transition-all",
           status.connected ? "bg-white border-slate-100 shadow-sm" : "bg-slate-100/50 border-transparent"
         )}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm transition-all",
-                status.connected ? "bg-white border border-slate-100 text-blue-600" : "bg-slate-200 text-slate-400"
-              )}>
-                {status.connected ? (
-                  <span className="bg-clip-text text-transparent bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500">G</span>
-                ) : 'G'}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-[#0F172A] leading-tight flex items-center gap-1.5">
-                  {status.status === 'active' ? 'Sincronização Ativa' : 
-                   status.status === 'reconnect_required' ? 'Ação Necessária' : 'Google Agenda'}
-                  {status.connected && status.status === 'active' && (
-                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                  {status.connected ? (status.status === 'reconnect_required' ? 'Token expirado' : `Logado como ${status.email?.split('@')[0]}...`) : 'Modo demonstração'}
-                </span>
-              </div>
+          <div className="flex items-center gap-2.5">
+            <div className={cn(
+              "w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black",
+              status.connected ? "bg-blue-50 text-blue-600" : "bg-slate-200 text-slate-400"
+            )}>
+              G
             </div>
-
-            <div className="flex items-center gap-1">
-              {!status.connected ? (
-                <button 
-                  onClick={() => handleConnect()}
-                  className="px-3.5 py-1.5 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-blue-600/30 transition-all active:scale-95"
-                >
-                  Ativar
-                </button>
-              ) : status.status === 'reconnect_required' ? (
-                <button 
-                  onClick={() => handleConnect(true)}
-                  className="px-3.5 py-1.5 bg-amber-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all active:scale-95"
-                >
-                  Reconectar
-                </button>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <button 
-                    onClick={loadEvents}
-                    disabled={loading}
-                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-blue-600"
-                    title="Atualizar agora"
-                  >
-                    <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-                  </button>
-                  <button 
-                    onClick={() => window.open('https://calendar.google.com', '_blank')}
-                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-blue-600"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black text-slate-900 leading-tight">
+                {status.connected ? 'Google Sincronizado' : 'Google Agenda Desconectado'}
+              </span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase">
+                {status.connected ? (status.last_sync_at ? `Última sync: ${format(new Date(status.last_sync_at), 'HH:mm')}` : 'Sincronização pendente') : 'Feriados locais ativos'}
+              </span>
             </div>
           </div>
 
-          {status.connected && status.status === 'active' && (
-            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+          <div className="flex items-center gap-1">
+            {!status.connected ? (
               <button 
-                onClick={handleSyncHolidays}
-                className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                onClick={() => handleConnect()}
+                className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[8px] font-black uppercase hover:bg-blue-700 transition-all"
               >
-                Sincronizar Feriados
+                Conectar
               </button>
-              <button 
-                onClick={handleDisconnect}
-                className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:underline"
-              >
-                Desconectar
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => handleSyncHolidays()}
+                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-blue-600 transition-all"
+                  title="Sincronizar Feriados"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  onClick={() => window.open('https://calendar.google.com', '_blank')}
+                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-blue-600 transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Events Modal/Popover Placeholder */}
+      {selectedDayEvents && (
+        <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-md p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-sm">
+                {format(selectedDayEvents.day, 'dd')}
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900">
+                  {format(selectedDayEvents.day, "EEEE, d 'de' MMMM", { locale: ptBR })}
+                </h4>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eventos e Feriados</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedDayEvents(null)}
+              className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-all"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+            {selectedDayEvents.events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-2">
+                <Info className="w-8 h-8 opacity-20" />
+                <p className="text-xs font-bold italic">Nenhum evento para este dia</p>
+              </div>
+            ) : (
+              selectedDayEvents.events.map(event => (
+                <div key={event.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all group">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
+                          event.type === 'national' ? "bg-rose-100 text-rose-700" :
+                          event.type === 'state' ? "bg-pink-100 text-pink-700" :
+                          event.type === 'municipal' ? "bg-amber-100 text-amber-700" :
+                          "bg-blue-100 text-blue-700"
+                        )}>
+                          {event.type}
+                        </span>
+                        <h5 className="text-xs font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                          {event.title}
+                        </h5>
+                      </div>
+                      {event.description && (
+                        <p className="text-[10px] font-medium text-slate-500 line-clamp-2">
+                          {event.description}
+                        </p>
+                      )}
+                    </div>
+                    {event.source === 'google' && <ExternalLink className="w-3 h-3 text-slate-300" />}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
