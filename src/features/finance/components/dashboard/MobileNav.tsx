@@ -29,13 +29,13 @@ export function MobileNav() {
   return (
     <div className="lg:hidden">
       {/* Top Bar Mobile */}
-      <div className="flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4">
+      <div className="flex h-16 w-full items-center justify-between border-b border-slate-100 bg-white px-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
         <div className="flex items-center">
           <Image 
             src="/logo.png" 
             alt="Alfa Logo" 
-            width={100} 
-            height={40} 
+            width={120} 
+            height={48} 
             className="h-8 w-auto object-contain"
           />
         </div>

@@ -60,16 +60,32 @@ export function SidebarContent({ onItemClick }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* 1. Topo: Logo fixo */}
-      <div className="shrink-0 px-6 py-6 flex justify-center border-b border-slate-50 mb-2">
-        <Image 
-          src="/logo.png" 
-          alt="Alfa Perícia e Vistoria Veicular" 
-          width={120} 
-          height={48} 
-          className="h-auto max-h-12 w-auto max-w-[120px] object-contain"
-          priority
-        />
+      {/* 1. Topo: Logo fixo - Bloco Premium */}
+      <div className="shrink-0 px-4 pt-8 pb-6">
+        <div className="group relative flex flex-col items-center justify-center rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all duration-500 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] hover:border-blue-100/50">
+          {/* Efeito de brilho sutil no hover */}
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-blue-50/0 via-blue-50/0 to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          
+          <div className="relative flex items-center justify-center w-full">
+            <Image 
+              src="/logo.png" 
+              alt="Alfa Perícia e Vistoria Veicular" 
+              width={160} 
+              height={60} 
+              className="h-auto max-h-14 w-auto max-w-[140px] object-contain transition-all duration-500 group-hover:scale-105"
+              priority
+            />
+          </div>
+          
+          {/* Detalhe de branding sutil */}
+          <div className="mt-3 flex items-center gap-2">
+            <div className="h-[1px] w-4 bg-slate-100" />
+            <span className="text-[10px] font-bold tracking-[0.2em] text-slate-300 uppercase group-hover:text-blue-400 transition-colors duration-500">
+              Operador Alfa
+            </span>
+            <div className="h-[1px] w-4 bg-slate-100" />
+          </div>
+        </div>
       </div>
 
       {/* 2. Centro: Menu com scroll */}
