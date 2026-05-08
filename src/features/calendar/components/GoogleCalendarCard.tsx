@@ -103,7 +103,7 @@ export function GoogleCalendarCard() {
     const tid = !isAuto ? toast.loading('Sincronizando feriados com Google...') : undefined;
     
     try {
-      const res = await fetch('/api/calendar/sync-holidays', { 
+      const res = await fetch('/api/calendar/sync', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ year: currentMonth.getFullYear() })
