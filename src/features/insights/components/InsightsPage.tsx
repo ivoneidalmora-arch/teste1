@@ -4,15 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   Sparkles, 
   TrendingUp, 
-  TrendingDown, 
   AlertTriangle, 
   CheckCircle2, 
   RefreshCw,
   Lightbulb,
   ShieldAlert,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
   Wallet,
   ArrowUpRight,
   ArrowDownRight
@@ -22,8 +18,10 @@ import { insightsMetricsService } from '../services/insights-metrics.service';
 import { geminiInsightsService } from '../services/gemini-insights.service';
 import { FinancialMetrics, IAInsight } from '../types/insights.types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { formatBRL } from '@/core/utils/formatters';
-import { cn } from '@/core/utils/formatters';
+import { formatBRL, cn } from '@/core/utils/formatters';
+import { useFinanceContext } from '../../finance/contexts/FinanceContext';
+import { FinancialPeriodFilter } from '../../finance/components/filters/FinancialPeriodFilter';
+import { useMemo } from 'react';
 
 export function InsightsPage() {
   const { user } = useAuth();
@@ -33,9 +31,17 @@ export function InsightsPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Filtros de Período
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const { selectedPeriod } = useFinanceContext();
+  
+  // Derivar mês e ano do período selecionado
+  const { month, year } = useMemo(() => {
+    if (selectedPeriod === 'global') {
+      const now = new Date();
+      return { month: now.getMonth() + 1, year: now.getFullYear() };
+    }
+    const [y, m] = selectedPeriod.split('-').map(Number);
+    return { month: m, year: y };
+  }, [selectedPeriod]);
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
@@ -73,20 +79,6 @@ export function InsightsPage() {
     }
   };
 
-  const changeMonth = (delta: number) => {
-    let newMonth = month + delta;
-    let newYear = year;
-    if (newMonth > 12) {
-      newMonth = 1;
-      newYear++;
-    } else if (newMonth < 1) {
-      newMonth = 12;
-      newYear--;
-    }
-    setMonth(newMonth);
-    setYear(newYear);
-  };
-
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -112,27 +104,12 @@ export function InsightsPage() {
           <IconBadge icon={Sparkles} variant="orange" size="lg" gradient />
           <div>
             <h1 className="text-2xl font-black text-[#0F172A] tracking-tight">Insights IA</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full">
-                <Calendar className="w-3 h-3 text-slate-500" />
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                  {months[month - 1]} {year}
-                </span>
-              </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Análise de Performance</p>
-            </div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Análise de Performance</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-slate-400 transition-all active:scale-90">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-slate-400 transition-all active:scale-90">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <FinancialPeriodFilter />
 
           <button 
             onClick={generateIAAnalysis}
