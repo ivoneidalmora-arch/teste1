@@ -90,8 +90,7 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
   const handleDeleteRecord = async (record: DuplicateRecord) => {
     setLoading(record.id);
     try {
-      // Nota: Precisamos do tipo da transação. Como são duplicidades de placa, geralmente são 'income'
-      await transactionService.delete(record.id, 'income', userId);
+      await transactionService.delete(record.id, record.type, userId);
       toast.success("Lançamento excluído com sucesso.");
       onRefresh();
       setConfirmDelete(null);
@@ -300,8 +299,17 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
             setEditingRecord(null);
             onRefresh();
           }}
-          transaction={editingRecord as any}
-          existingTransactions={[]} // Opcional: passar lista para checagem em tempo real
+          transaction={{
+            ...editingRecord,
+            category: editingRecord.servico || '',
+            grossAmount: editingRecord.amountBruto || 0,
+            netAmount: editingRecord.amountLiquido || 0,
+            customer: editingRecord.cliente || 'Particular',
+            metadata: {
+              placa: editingRecord.placa || '',
+            }
+          } as any}
+          existingTransactions={[]} 
         />
       )}
 

@@ -26,6 +26,7 @@ export type DuplicateConfidence =
 
 export type DuplicateRecord = {
   id: string;
+  type: 'income' | 'expense';
   date: string;
   cliente?: string | null;
   placa?: string | null;

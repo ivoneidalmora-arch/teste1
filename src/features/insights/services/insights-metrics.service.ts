@@ -111,6 +111,7 @@ export const insightsMetricsService = {
           if (diffDays <= 30) {
             const records = items.map(it => ({
               id: it.id,
+              type: 'income' as const,
               date: it.date,
               cliente: it.cliente,
               placa: it.placa,
