@@ -30,3 +30,22 @@ export async function updateDuplicateStatusAction(userId: string, groupKey: stri
     return { error: `Erro Crítico: ${err.message || "Erro interno"}` };
   }
 }
+
+export async function getDuplicateReviewsAction(userId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('duplicate_reviews')
+      .select('*')
+      .eq('app_user_id', userId);
+
+    if (error) {
+      console.error("[getDuplicateReviewsAction] Error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("[getDuplicateReviewsAction] Critical Error:", err);
+    return [];
+  }
+}

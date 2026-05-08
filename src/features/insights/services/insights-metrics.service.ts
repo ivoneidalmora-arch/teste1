@@ -77,11 +77,9 @@ export const insightsMetricsService = {
     const categories = Object.entries(categoriesMap).map(([category, value]) => ({ category, value })).sort((a, b) => b.value - a.value);
     const topCategory = categories[0] || { category: 'Nenhuma', value: 0 };
 
-    // Fetch existing reviews
-    const { data: existingReviews } = await supabase
-      .from('duplicate_reviews')
-      .select('*')
-      .eq('app_user_id', userId);
+    // Fetch existing reviews via Server Action (ignora RLS)
+    const { getDuplicateReviewsAction } = await import('../actions/duplicate.actions');
+    const existingReviews = await getDuplicateReviewsAction(userId);
     
     const reviewsMap: Record<string, any> = {};
     (existingReviews || []).forEach(r => {
