@@ -131,12 +131,12 @@ export const insightsMetricsService = {
             const r1 = records[0];
             const r2 = records[1];
             
-            const sameValue = r1.amountBruto === r2.amountBruto;
+            const sameLiquido = r1.amountLiquido === r2.amountLiquido;
             const sameCustomer = r1.cliente === r2.cliente;
             const sameService = r1.servico === r2.servico;
 
-            if (sameValue && sameCustomer && sameService) confidence = 'high';
-            else if (sameService) confidence = 'medium';
+            if (sameLiquido && sameCustomer && sameService) confidence = 'high';
+            else if (sameLiquido || sameService) confidence = 'medium';
             else confidence = 'low';
 
             duplicateGroups.push({
