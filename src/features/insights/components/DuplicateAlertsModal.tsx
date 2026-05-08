@@ -43,6 +43,7 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<DuplicateStatus | 'all'>('pending_review');
   const [loading, setLoading] = useState<string | null>(null);
+  const [processedGroups, setProcessedGroups] = useState<string[]>([]);
   
   const [editingRecord, setEditingRecord] = useState<DuplicateRecord | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<DuplicateRecord | null>(null);
@@ -50,12 +51,14 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
 
   const filteredGroups = useMemo(() => {
     return groups.filter(group => {
+      if (processedGroups.includes(group.groupKey)) return false;
+      
       const matchesSearch = group.placa.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            group.cliente?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' ? true : group.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [groups, searchTerm, statusFilter]);
+  }, [groups, searchTerm, statusFilter, processedGroups]);
 
   const handleUpdateStatus = async (groupKey: string, status: DuplicateStatus) => {
     setLoading(groupKey);
@@ -68,6 +71,12 @@ export function DuplicateAlertsModal({ isOpen, onClose, groups, userId, onRefres
       }
 
       toast.success(`Status atualizado para: ${status.replace('_', ' ')}`);
+      
+      // Remove da tela imediatamente
+      if (status !== 'pending_review' && statusFilter === 'pending_review') {
+        setProcessedGroups(prev => [...prev, groupKey]);
+      }
+      
       onRefresh();
       setConfirmAction(null);
     } catch (err: any) {
