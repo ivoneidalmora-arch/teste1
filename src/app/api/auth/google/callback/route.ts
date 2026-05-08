@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/services/supabase';
+import { supabaseAdmin } from '@/services/supabase-admin';
 import { encrypt } from '@/core/utils/encryption';
 
 export async function GET(request: Request) {
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
     // Save to database
-    const { error: dbError } = await supabase
+    const { error: dbError } = await supabaseAdmin
       .from('google_calendar_connections')
       .upsert({
         user_id: userId,

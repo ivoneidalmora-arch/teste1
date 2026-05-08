@@ -18,52 +18,72 @@ import {
   RefreshCw, 
   ExternalLink,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { CalendarEvent } from '../types/calendar.types';
 import { CalendarMonthGrid } from './CalendarMonthGrid';
-import { googleCalendarService } from '@/features/finance/services/google-calendar.service';
 import { IconBadge } from '@/core/components/ui/IconBadge';
+import { toast } from 'sonner';
 
 export function GoogleCalendarCard() {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [events, setEvents] = useState<any[]>([]); // Using any temporarily for backward compatibility
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ connected: boolean; status: string; email?: string }>({ 
     connected: false, 
     status: 'loading' 
   });
 
-  useEffect(() => {
-    if (user?.id) {
-      loadStatus();
-      loadEvents();
+  const loadStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/calendar/status');
+      if (response.ok) {
+        const res = await response.json();
+        setStatus(res);
+      } else {
+        setStatus({ connected: false, status: 'disconnected' });
+      }
+    } catch (error) {
+      console.error('Error loading status:', error);
+      setStatus({ connected: false, status: 'error' });
     }
-  }, [currentMonth, user?.id]);
+  }, []);
 
-  const loadStatus = async () => {
-    if (!user?.id) return;
-    const res = await googleCalendarService.getConnectionStatus(user.id);
-    setStatus(res);
-  };
-
-  const loadEvents = async () => {
-    if (!user?.id) return;
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await googleCalendarService.getEvents(user.id, currentMonth);
-      // Map these to the new internal structure if needed, but for now they work
-      setEvents(data.map(e => ({
-        ...e,
-        start_at: e.start,
-        end_at: e.end,
-      })));
+      const monthParam = format(currentMonth, 'yyyy-MM-dd');
+      const response = await fetch(`/api/calendar/events?month=${monthParam}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.map((e: any) => ({
+          ...e,
+          start_at: e.start,
+          end_at: e.end,
+        })));
+      } else {
+        console.error('Failed to load events');
+      }
+    } catch (error) {
+      console.error('Error loading events:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadStatus();
+    }
+  }, [user?.id, loadStatus]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadEvents();
+    }
+  }, [user?.id, loadEvents]);
 
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(currentMonth)),
@@ -75,7 +95,10 @@ export function GoogleCalendarCard() {
   const goToToday = () => setCurrentMonth(new Date());
 
   const handleConnect = () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      toast.error('Usuário não identificado');
+      return;
+    }
     window.location.href = `/api/auth/google/login?userId=${user.id}`;
   };
 
@@ -121,12 +144,19 @@ export function GoogleCalendarCard() {
       </div>
 
       {/* Grid Mensal Principal */}
-      <CalendarMonthGrid 
-        days={days} 
-        currentMonth={currentMonth} 
-        events={events as any} 
-        onDayClick={(day) => console.log('Click day:', day)}
-      />
+      <div className="relative flex-1">
+        {loading && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+          </div>
+        )}
+        <CalendarMonthGrid 
+          days={days} 
+          currentMonth={currentMonth} 
+          events={events} 
+          onDayClick={(day) => console.log('Click day:', day)}
+        />
+      </div>
 
       {/* Footer Sync Status Premium */}
       <div className="p-4 bg-slate-50/30 border-t border-slate-100">
@@ -177,7 +207,10 @@ export function GoogleCalendarCard() {
                 >
                   <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
                 </button>
-                <button className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400 hover:text-blue-600">
+                <button 
+                  onClick={() => window.open('https://calendar.google.com', '_blank')}
+                  className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-400 hover:text-blue-600"
+                >
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>

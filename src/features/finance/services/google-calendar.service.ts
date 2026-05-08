@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase';
+import { supabaseAdmin } from '@/services/supabase-admin';
 import { decrypt, encrypt } from '@/core/utils/encryption';
 import { getHolidays, Holiday } from './holiday.service';
 
@@ -15,13 +15,16 @@ export interface CalendarEvent {
 
 class GoogleCalendarService {
   private async getActiveConnection(userId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('google_calendar_connections')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error('Error fetching connection:', error);
+      return null;
+    }
     return data;
   }
 
@@ -50,7 +53,7 @@ class GoogleCalendarService {
     const encryptedAccessToken = encrypt(data.access_token);
     const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
 
-    await supabase
+    await supabaseAdmin
       .from('google_calendar_connections')
       .update({
         access_token: encryptedAccessToken,
