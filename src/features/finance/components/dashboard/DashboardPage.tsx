@@ -27,10 +27,10 @@ import { cn } from '@/core/utils/formatters';
 import { 
   calculateFinancialMetrics, 
   calculatePercentageChange, 
-  filterByMonth,
-  normalizeTransaction 
-} from '@/core/utils/finance';
 import { subMonths } from 'date-fns';
+import { prepareCashFlowChartData } from '../../utils/cashFlowChart';
+import { calculateDashboardMetrics } from '../../utils/financialValueUtils';
+import { filterByMonth as legacyFilterByMonth } from '@/core/utils/finance';
 
 // Modals
 import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';
@@ -46,6 +46,7 @@ export function DashboardPage() {
     error, 
     refresh, 
     selectedPeriod, 
+    selectedYear,
     availableMonths, 
     setPeriod,
     filteredTransactions 
@@ -94,10 +95,18 @@ export function DashboardPage() {
 
   // Cálculos Financeiros
   const metrics = useMemo(() => {
-    const current = calculateFinancialMetrics(dashboardTransactions);
+    const current = calculateDashboardMetrics(dashboardTransactions);
     
-    // Para variação, usamos o mês anterior com base no selectedPeriod (se não for global)
-    if (selectedPeriod === 'global') {
+    // Para variação, usamos o mês anterior
+    let prevTransactions: any[] = [];
+    if (selectedPeriod !== 'global') {
+      const [year, month] = selectedPeriod.split('-').map(Number);
+      const date = new Date(year, month - 1, 1);
+      const prevDate = subMonths(date, 1);
+      prevTransactions = legacyFilterByMonth(transactions || [], prevDate);
+    } else {
+      // Se global, pegamos o ano anterior para variação? 
+      // O requisito diz que para global retorna current como prev (variação 0)
       return {
         current,
         prev: current,
@@ -105,11 +114,7 @@ export function DashboardPage() {
       };
     }
 
-    const [year, month] = selectedPeriod.split('-').map(Number);
-    const date = new Date(year, month - 1, 1);
-    const prevDate = subMonths(date, 1);
-    const prevTransactions = filterByMonth(transactions || [], prevDate);
-    const prev = calculateFinancialMetrics(prevTransactions);
+    const prev = calculateDashboardMetrics(prevTransactions);
 
     return {
       current,
@@ -117,7 +122,7 @@ export function DashboardPage() {
       variations: {
         income: calculatePercentageChange(current.receitaBruta, prev.receitaBruta),
         net: calculatePercentageChange(current.receitaLiquida, prev.receitaLiquida),
-        expense: calculatePercentageChange(current.despesasTotal, prev.despesasTotal),
+        expense: calculatePercentageChange(current.despesasPagas, prev.despesasPagas),
         balance: calculatePercentageChange(current.saldoDisponivel, prev.saldoDisponivel)
       }
     };
@@ -156,26 +161,12 @@ export function DashboardPage() {
   [dashboardTransactions]);
 
   const cashFlowData = useMemo(() => {
-    const days: Record<string, { income: number; expense: number }> = {};
-    dashboardTransactions.forEach(rawT => {
-      const t = normalizeTransaction(rawT);
-      const day = new Date(t.date).getUTCDate();
-      if (!days[day]) days[day] = { income: 0, expense: 0 };
-      if (t.type === 'income') days[day].income += t.netAmount || 0;
-      else days[day].expense += t.amount;
+    return prepareCashFlowChartData({
+      transactions: transactions || [],
+      selectedPeriod,
+      selectedYear
     });
-    
-    let cumulativeSaldo = 0;
-    return Object.entries(days).map(([day, val]) => {
-      cumulativeSaldo += (val.income - val.expense);
-      return {
-        name: `${day}`,
-        entradas: val.income,
-        saidas: val.expense,
-        saldo: cumulativeSaldo
-      };
-    }).sort((a, b) => Number(a.name) - Number(b.name));
-  }, [dashboardTransactions]);
+  }, [transactions, selectedPeriod, selectedYear]);
 
   if (loading && (!transactions || transactions.length === 0)) {
     return (
@@ -215,13 +206,18 @@ export function DashboardPage() {
           />
           <MetricCard title="Receita Bruta" value={metrics.current.receitaBruta} trend={metrics.variations.income} icon={TrendingUp} variant="blue" />
           <MetricCard title="Receita Líquida" value={metrics.current.receitaLiquida} trend={metrics.variations.net} icon={ShieldCheck} variant="green" />
-          <MetricCard title="Despesa Total" value={metrics.current.despesasTotal} trend={metrics.variations.expense} icon={TrendingDown} variant="red" />
+          <MetricCard title="Despesa Paga" value={metrics.current.despesasPagas} trend={metrics.variations.expense} icon={TrendingDown} variant="red" />
           <MetricCard title="Despesas Pendentes" value={metrics.current.despesasPendentes} icon={Clock} variant="orange" />
         </div>
 
         {/* 2. Fluxo de Caixa + Top Clientes (8/4) */}
         <div className="col-span-12 lg:col-span-8">
-          <CashFlowChart data={cashFlowData} />
+          <CashFlowChart 
+            data={cashFlowData.data} 
+            title={cashFlowData.title}
+            subtitle={cashFlowData.subtitle}
+            mode={cashFlowData.mode}
+          />
         </div>
         <div className="col-span-12 lg:col-span-4">
           <TopClientsCard 

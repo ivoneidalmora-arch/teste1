@@ -7,14 +7,17 @@ import { transactionService } from '../services/transaction.service';
 import { approvedDuplicateService } from '../services/approved-duplicate.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { filterByMonth } from '@/core/utils/finance';
+import { filterByPeriodAndYear } from '../utils/financialFilters';
 
 interface FinanceContextType {
   transactions: Transaction[];
   loading: boolean;
   error: string | null;
-  selectedPeriod: string; // 'global' ou 'YYYY-MM'
+  selectedPeriod: string; // 'global' ou 'YYYY-MM' ou 'MM'
+  selectedYear: number;
   availableMonths: string[];
   setPeriod: (period: string) => void;
+  setYear: (year: number) => void;
   refresh: () => Promise<void>;
   filteredTransactions: Transaction[];
   approvedDuplicates: any[];
@@ -34,7 +37,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [approvedDuplicates, setApprovedDuplicates] = useState<any[]>([]);
 
   // O período vem da URL ou padrão 'global'
+  // Filtros vindos da URL
   const selectedPeriod = searchParams.get('periodo') || 'global';
+  const selectedYear = parseInt(searchParams.get('ano') || String(new Date().getFullYear()));
 
   const fetchTransactions = useCallback(async () => {
     if (!user) {
@@ -88,21 +93,25 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     router.push(`${pathname}?${params.toString()}`);
   }, [router, pathname, searchParams]);
 
+  const setYear = useCallback((year: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('ano', String(year));
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams]);
+
   const filteredTransactions = useMemo(() => {
-    if (selectedPeriod === 'global') return transactions;
-    
-    const [year, month] = selectedPeriod.split('-').map(Number);
-    // filterByMonth espera um objeto Date
-    return filterByMonth(transactions, new Date(year, month - 1, 1));
-  }, [transactions, selectedPeriod]);
+    return filterByPeriodAndYear(transactions, selectedPeriod, selectedYear);
+  }, [transactions, selectedPeriod, selectedYear]);
 
   const value = {
     transactions,
     loading,
     error,
     selectedPeriod,
+    selectedYear,
     availableMonths,
     setPeriod,
+    setYear,
     refresh: fetchTransactions,
     filteredTransactions,
     approvedDuplicates

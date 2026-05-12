@@ -13,34 +13,28 @@ export function FinancialPeriodFilter() {
     return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
   }
 
-  const { selectedPeriod, availableMonths, setPeriod } = context;
+  const { selectedPeriod, setPeriod } = context;
 
   const monthOptions = useMemo(() => {
     const options = [
       { value: 'global', label: 'Tudo (Global)' }
     ];
 
-    if (Array.isArray(availableMonths)) {
-      availableMonths.forEach(monthStr => {
-        try {
-          const parts = monthStr.split('-');
-          if (parts.length === 2) {
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            const d = new Date(year, month - 1, 1);
-            options.push({
-              value: monthStr,
-              label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-            });
-          }
-        } catch (err) {
-          console.error('Erro ao processar mês:', monthStr);
-        }
+    const monthNames = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    monthNames.forEach((name, index) => {
+      const monthValue = String(index + 1).padStart(2, '0');
+      options.push({
+        value: monthValue,
+        label: name
       });
-    }
+    });
 
     return options;
-  }, [availableMonths]);
+  }, []);
 
   return (
     <div className="relative w-full sm:w-auto min-w-[160px] z-10">

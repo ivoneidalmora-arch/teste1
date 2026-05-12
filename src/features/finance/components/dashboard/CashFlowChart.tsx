@@ -17,7 +17,10 @@ import { formatBRL } from '@/core/utils/formatters';
 import { CashFlowData } from '../../types/dashboard.types';
 
 interface Props {
-  data: CashFlowData[];
+  data: any[];
+  title?: string;
+  subtitle?: string;
+  mode?: "daily" | "monthly";
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -42,26 +45,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function CashFlowChart({ data }: Props) {
+export function CashFlowChart({ data, title, subtitle, mode }: Props) {
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
         <div>
-          <h3 className="text-sm font-black text-[#0F172A] tracking-tight">Fluxo de Caixa</h3>
-          <p className="text-[10px] font-bold text-slate-400">Comparativo mensal de entradas e saídas</p>
+          <h3 className="text-sm font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa"}</h3>
+          <p className="text-[10px] font-bold text-slate-400">{subtitle || "Comparativo mensal de entradas e saídas"}</p>
         </div>
         
-        <div className="flex bg-slate-50 p-0.5 rounded-lg border border-slate-100">
-          {['Mensal', 'Semanal', 'Diário'].map((opt) => (
-            <button 
-              key={opt}
-              className={`px-3 py-1 text-[9px] font-bold rounded-md transition-all ${
-                opt === 'Mensal' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
+        <div className="flex bg-slate-50 p-1 px-3 rounded-full border border-slate-100">
+           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+             {mode === 'monthly' ? 'Visão Mensal' : 'Visão Diária'}
+           </span>
         </div>
       </div>
 
@@ -81,7 +77,7 @@ export function CashFlowChart({ data }: Props) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
               <XAxis 
-                dataKey="name" 
+                dataKey="label" 
                 axisLine={false} 
                 tickLine={false} 
                 tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}

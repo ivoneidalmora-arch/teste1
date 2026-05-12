@@ -2,6 +2,7 @@
 
 import { Search, Calendar, Plus, Upload, FileText, ChevronDown } from 'lucide-react';
 import { FinancialPeriodFilter } from '../filters/FinancialPeriodFilter';
+import { FinancialYearFilter } from '../filters/FinancialYearFilter';
 
 interface Props {
   title: string;
@@ -50,6 +51,7 @@ export function DashboardHeader({
             />
           </div>
           <FinancialPeriodFilter />
+          <FinancialYearFilter />
         </div>
 
         {/* Ações Principais */}
