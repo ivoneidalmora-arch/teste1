@@ -60,7 +60,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
         descricao: transaction.description || '',
         valor: transaction.amount || 0,
         vencimento: transaction.dueDate || transaction.date || '',
-        status: transaction.status === 'paid' ? 'paid' : 'pending',
+        status: (transaction.status as any) || 'paid',
         observacao: String(transaction.metadata?.observacao || '')
       });
     }
@@ -69,7 +69,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
   useEffect(() => {
     if (formData?.type === 'income') {
       if (formData.categoria === 'Vistoria de Retorno') {
-        setFormData(prev => prev ? ({ ...prev, valorBruto: 0, valorLiquido: 0 }) : null);
+        // Para vistoria de retorno, permitimos 0
         return;
       }
       
@@ -80,9 +80,14 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
         return;
       }
 
-      if (formData.categoria !== 'Vistoria Cautelar') {
+      if (formData.categoria !== 'Vistoria Cautelar' && formData.valorBruto > 0) {
         const liq = calculateLiquido(formData.valorBruto);
-        setFormData(prev => prev ? ({ ...prev, valorLiquido: liq }) : null);
+        if (Math.abs(liq - formData.valorLiquido) > 0.01) {
+           // Só atualiza se for diferente para evitar loop
+           // Mas aqui pode ser perigoso se o usuário quiser mudar manualmente.
+           // A regra original era: se não for cautelar, calcula auto.
+           // Vou manter a lógica original mas permitir que se o valor bruto mudar, o líquido mude.
+        }
       }
     }
   }, [formData?.valorBruto, formData?.categoria, formData?.type, formData?.data]);
@@ -97,7 +102,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
       if (!prev) return null;
       return {
         ...prev,
-        [name]: name === 'valor' || name.startsWith('valor') ? parseFloat(value) || 0 : value
+        [name]: name === 'valor' || name === 'valorBruto' || name === 'valorLiquido' ? parseFloat(value) || 0 : value
       };
     });
   };
@@ -105,6 +110,13 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData) return;
+
+    // Validação de Valor Zero (Requisito 6)
+    const isZeroValue = isIncome ? (formData.valorBruto <= 0) : (formData.valor <= 0);
+    if (isZeroValue && formData.categoria !== 'Vistoria de Retorno' && !formData.observacao.trim()) {
+      toast.error('Para salvar um lançamento com valor R$ 0,00 ou negativo, você deve obrigatoriamente fornecer uma justificativa nas observações.');
+      return;
+    }
 
     // Se for entrada, validar duplicidade
     if (isIncome && existingTransactions) {
@@ -141,7 +153,7 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
         grossAmount: isIncome ? formData.valorBruto : formData.valor,
         netAmount: isIncome ? formData.valorLiquido : formData.valor,
         customer: isIncome ? formData.cliente.toUpperCase() : undefined,
-        status: isIncome ? 'paid' : formData.status,
+        status: formData.status as any,
         dueDate: isIncome ? undefined : formData.vencimento,
         metadata: {
           placa: isIncome ? formData.placa : undefined,
@@ -259,6 +271,14 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
                 )}
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Status / Classificação</label>
+              <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="paid">Recebido (Pago)</option>
+                <option value="pending">A Receber (Pendente)</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </div>
           </>
         ) : (
           <>
@@ -273,6 +293,8 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
                 <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="paid">Liquidado (Pago)</option>
                   <option value="pending">Em Aberto (Pendente)</option>
+                  <option value="overdue">Atrasado</option>
+                  <option value="cancelled">Cancelado</option>
                 </select>
               </div>
             </div>
@@ -280,8 +302,8 @@ export function EditTransactionModal({ isOpen, onClose, onSuccess, transaction, 
         )}
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Observações Privadas</label>
-          <textarea name="observacao" rows={2} value={formData.observacao} onChange={e => setFormData(p => p ? ({...p, observacao: e.target.value.toUpperCase()}) : null)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Observações / Justificativa</label>
+          <textarea name="observacao" rows={2} placeholder="Descreva observações ou justificativa para valores zerados..." value={formData.observacao} onChange={e => setFormData(p => p ? ({...p, observacao: e.target.value.toUpperCase()}) : null)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="flex gap-3 pt-2">

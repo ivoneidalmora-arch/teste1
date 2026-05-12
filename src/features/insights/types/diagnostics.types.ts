@@ -16,6 +16,7 @@ export interface DiagnosticResult {
   actionLabel?: string;
   actionId?: string; // identificador para a ação do botão
   hasData: boolean; // para exibir a mensagem "dados insuficientes"
+  factors?: string[]; // Lista de fatores detalhados para o diagnóstico de risco
 }
 
 // Interfaces específicas para inconsistências
@@ -37,4 +38,5 @@ export interface InconsistencyRecord {
   details: string; // Ex: "Mesma placa ABC-1234 em intervalo de 5 dias", ou "Receita sem cliente"
   groupId?: string; // Para agrupar duplicidades
   groupRecords?: any[]; // Array de records originais caso seja duplicidade
+  rawRecord?: any; // Registro original para edição
 }

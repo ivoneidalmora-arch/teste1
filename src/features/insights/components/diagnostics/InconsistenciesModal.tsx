@@ -13,7 +13,7 @@ interface InconsistenciesModalProps {
   records: InconsistencyRecord[];
   userId: string;
   onRefresh: () => void;
-  onEditTransaction?: (transactionId: string) => void;
+  onEditTransaction?: (transaction: any) => void;
 }
 
 export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefresh, onEditTransaction }: InconsistenciesModalProps) {
@@ -122,7 +122,7 @@ export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefre
                       )}
                       
                       <button
-                        onClick={() => onEditTransaction && onEditTransaction(record.transactionId)}
+                        onClick={() => onEditTransaction && onEditTransaction(record.rawRecord)}
                         className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold transition-colors"
                       >
                         <FileEdit className="w-3.5 h-3.5" />

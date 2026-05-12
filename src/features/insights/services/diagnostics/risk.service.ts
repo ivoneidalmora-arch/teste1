@@ -1,10 +1,18 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
 
 export const riskDiagnosticService = {
-  analyze(inputs: { health: DiagnosticResult, growth: DiagnosticResult, expense: DiagnosticResult, client: DiagnosticResult, service: DiagnosticResult, context: any }): DiagnosticResult {
+  analyze(inputs: { 
+    health: DiagnosticResult, 
+    growth: DiagnosticResult, 
+    expense: DiagnosticResult, 
+    client: DiagnosticResult, 
+    service: DiagnosticResult, 
+    context: any 
+  }): DiagnosticResult {
     const { health, growth, client, context } = inputs;
+    const { rawRevenues, rawExpenses, period } = context;
 
-    if (!health.hasData) {
+    if (!health.hasData || rawRevenues.length === 0) {
       return {
         id: 'risk',
         type: 'risk',
@@ -13,79 +21,113 @@ export const riskDiagnosticService = {
         severity: 'info',
         priority: 'low',
         mainMetric: '-',
-        text: 'Não é possível mensurar o risco financeiro sem dados suficientes.',
+        text: 'Não é possível mensurar o risco financeiro sem dados suficientes no período.',
         hasData: false
       };
     }
 
-    let riskScore = 0;
-    const riskFactors: string[] = [];
+    const factors: string[] = [];
+    let riskPoints = 0;
 
-    // 1. Dependência de cliente
+    // 1. Filtrar dados do período selecionado
+    const periodRevenues = period.type === 'month' 
+      ? rawRevenues.filter((r: any) => r.date >= period.startDate && r.date <= period.endDate)
+      : rawRevenues;
+    const periodExpenses = period.type === 'month' 
+      ? rawExpenses.filter((e: any) => e.date >= period.startDate && e.date <= period.endDate)
+      : rawExpenses;
+
+    // 2. Análise de Inconsistências Críticas
+    const zeroedRevenues = periodRevenues.filter((r: any) => (Number(r.amountLiquido) || Number(r.amount) || 0) <= 0);
+    if (zeroedRevenues.length > 0) {
+      factors.push(`${zeroedRevenues.length} ${zeroedRevenues.length === 1 ? 'receita está' : 'receitas estão'} com valor zerado ou negativo.`);
+      riskPoints += 2;
+    }
+
+    const uncategorizedExpenses = periodExpenses.filter((e: any) => !e.category || e.category.trim() === '' || e.category.toUpperCase() === 'OUTROS');
+    if (uncategorizedExpenses.length > 0) {
+      factors.push(`${uncategorizedExpenses.length} ${uncategorizedExpenses.length === 1 ? 'despesa está' : 'despesas estão'} sem categoria definida.`);
+      riskPoints += 1;
+    }
+
+    const incompleteRevenues = periodRevenues.filter((r: any) => !r.cliente || !r.category);
+    if (incompleteRevenues.length > 0) {
+      factors.push(`Existem lançamentos de receita incompletos (sem cliente ou serviço).`);
+      riskPoints += 1;
+    }
+
+    // 3. Análise de Rentabilidade e Caixa
+    const totalGrossRevenue = periodRevenues.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
+    const totalNetRevenue = periodRevenues.reduce((acc: number, r: any) => acc + (Number(r.amountLiquido) || Number(r.amount) || 0), 0);
+    const totalExpenses = periodExpenses.reduce((acc: number, e: any) => acc + (Number(e.amount) || 0), 0);
+    const netBalance = totalNetRevenue - totalExpenses;
+    const netMargin = totalNetRevenue > 0 ? (netBalance / totalNetRevenue) * 100 : 0;
+
+    if (netBalance < 0) {
+      factors.push(`O saldo líquido está negativo no período (${(netBalance).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
+      riskPoints += 4;
+    } else if (netMargin < 30 && totalNetRevenue > 0) {
+      factors.push(`A margem líquida está abaixo do ideal (${netMargin.toFixed(1)}%).`);
+      riskPoints += 2;
+    }
+
+    if (totalNetRevenue > 0 && (netBalance / totalGrossRevenue) < 0.15) {
+      factors.push(`O lucro líquido está muito baixo em relação ao faturamento bruto.`);
+      riskPoints += 2;
+    }
+
+    // 4. Concentração de Receita
     if (client.severity === 'critical') {
-      riskScore += 4;
-      riskFactors.push('Altíssima dependência de um único cliente.');
-    } else if (client.severity === 'warning') {
-      riskScore += 2;
-      riskFactors.push('Carteira de clientes concentrada.');
+      factors.push(`Há uma concentração excessiva de receita em um único cliente.`);
+      riskPoints += 3;
     }
 
-    // 2. Queda de receita ou aumento desproporcional de despesas
-    if (growth.classification === 'Queda Contínua') {
-      riskScore += 3;
-      riskFactors.push('Receita em queda contínua.');
-    } else if (growth.classification === 'Crescimento de Risco') {
-      riskScore += 2;
-      riskFactors.push('Despesas subindo mais rápido que a receita.');
+    // 5. Tendências (Growth)
+    if (growth.classification === 'Crescimento de Risco') {
+      factors.push(`As despesas cresceram acima das receitas no período.`);
+      riskPoints += 2;
     }
 
-    // 3. Saúde Financeira
-    if (health.classification === 'Crítica') {
-      riskScore += 5;
-      riskFactors.push('Despesas maiores que a receita líquida ou saldo negativo.');
-    } else if (health.classification === 'Atenção') {
-      riskScore += 3;
-      riskFactors.push('Baixa margem líquida e alto comprometimento da receita.');
-    }
+    // Determinar Nível de Risco
+    let classification: "Baixo" | "Moderado" | "Alto" | "Crítico" = "Baixo";
+    let severity: any = 'positive';
+    let impact = '';
+    let strategicAction = '';
 
-    let classification = '';
-    let severity: any = 'info';
-    let text = '';
-    let recommendation = '';
-
-    if (riskScore >= 7) {
-      classification = 'Risco Crítico';
+    if (riskPoints >= 7 || netBalance < -1000) {
+      classification = "Crítico";
       severity = 'critical';
-      text = `A empresa apresenta múltiplos alertas vermelhos. Fatores: ${riskFactors.slice(0, 2).join(' ')}`;
-      recommendation = 'Convoque uma reunião emergencial de caixa. Interrompa gastos não operacionais e foque exclusivamente na recuperação de margem.';
-    } else if (riskScore >= 4) {
-      classification = 'Risco Alto';
+      impact = "Inconsistências graves e saldo negativo ameaçam a continuidade saudável da operação.";
+      strategicAction = "Corte despesas não essenciais imediatamente e revise todos os lançamentos zerados.";
+    } else if (riskPoints >= 4 || netBalance < 0) {
+      classification = "Alto";
+      severity = 'critical';
+      impact = "Múltiplos fatores de risco detectados que podem comprometer o lucro do mês.";
+      strategicAction = "Execute um plano de contenção de custos e regularize os cadastros incompletos.";
+    } else if (riskPoints >= 2) {
+      classification = "Moderado";
       severity = 'warning';
-      text = `O negócio está exposto a riscos significativos. Fatores: ${riskFactors.slice(0, 2).join(' ')}`;
-      recommendation = 'Execute um plano de contenção de riscos: renegocie prazos com fornecedores e diversifique sua entrada de receitas.';
-    } else if (riskScore >= 2) {
-      classification = 'Risco Moderado';
-      severity = 'info';
-      text = 'Existem pontos de atenção pontuais, mas a operação não está ameaçada a curto prazo.';
-      recommendation = 'Trabalhe para corrigir pequenas ineficiências identificadas nos diagnósticos de despesas e crescimento.';
+      impact = "Existem falhas de classificação ou margens apertadas que exigem atenção da gestão.";
+      strategicAction = "Corrija os lançamentos inválidos e revise as despesas antes de fechar o relatório.";
     } else {
-      classification = 'Risco Baixo';
+      classification = "Baixo";
       severity = 'positive';
-      text = 'A operação apresenta um perfil sólido, com fluxo de caixa protegido e margens operacionais seguras.';
-      recommendation = 'Mantenha as políticas atuais de gestão financeira.';
+      impact = "A operação demonstra saúde financeira e os dados estão bem classificados.";
+      strategicAction = "Mantenha o rigor no registro dos dados para garantir análises precisas.";
     }
 
     return {
       id: 'risk',
       type: 'risk',
       title: 'Diagnóstico de Risco Financeiro',
-      classification,
+      classification: `Risco ${classification}`,
       severity,
       priority: severity === 'critical' ? 'urgent' : severity === 'warning' ? 'high' : 'medium',
       mainMetric: classification,
-      secondaryMetric: `Fatores: ${riskFactors.length}`,
-      text,
-      recommendation,
+      secondaryMetric: `Fatores encontrados: ${factors.length}`,
+      text: impact,
+      recommendation: strategicAction,
+      factors: factors.length > 0 ? factors : ["Nenhum fator de risco relevante detectado."],
       hasData: true
     };
   }

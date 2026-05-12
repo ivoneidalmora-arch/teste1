@@ -34,7 +34,7 @@ export function InsightsPage() {
   
   // Modais
   const [showInconsistenciesModal, setShowInconsistenciesModal] = useState(false);
-  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
   
   const { selectedPeriod, transactions, refresh: refreshFinance } = useFinanceContext();
   
@@ -89,21 +89,17 @@ export function InsightsPage() {
     }
   };
 
-  const handleEditTransaction = (transactionId: string) => {
+  const handleEditTransaction = (transaction: any) => {
     setShowInconsistenciesModal(false);
-    setEditingTransactionId(transactionId);
+    setEditingTransaction(transaction);
   };
 
   const onTransactionEdited = () => {
-    setEditingTransactionId(null);
+    setEditingTransaction(null);
     refreshFinance();
     loadDiagnostics(true);
   };
 
-  const transactionToEdit = useMemo(() => {
-    if (!editingTransactionId || !transactions) return null;
-    return transactions.find(t => String(t.id) === editingTransactionId) || null;
-  }, [editingTransactionId, transactions]);
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-8 p-6 animate-in fade-in duration-500 pb-20">
@@ -182,11 +178,11 @@ export function InsightsPage() {
         />
       )}
 
-      {transactionToEdit && (
+      {editingTransaction && (
         <EditTransactionModal 
-          isOpen={!!transactionToEdit}
-          onClose={() => setEditingTransactionId(null)}
-          transaction={transactionToEdit}
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          transaction={editingTransaction}
           onSuccess={onTransactionEdited}
           existingTransactions={transactions || []}
         />

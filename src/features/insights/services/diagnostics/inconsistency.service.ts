@@ -26,7 +26,8 @@ export const inconsistencyDiagnosticService = {
           date: r.date,
           description: r.description || 'Receita sem cliente',
           value: val,
-          details: 'Lançamento efetuado sem identificação do cliente.'
+          details: 'Lançamento efetuado sem identificação do cliente.',
+          rawRecord: r
         });
       }
 
@@ -39,7 +40,8 @@ export const inconsistencyDiagnosticService = {
           date: r.date,
           description: r.description || 'Receita sem serviço',
           value: val,
-          details: 'Lançamento efetuado sem categorização do serviço prestado.'
+          details: 'Lançamento efetuado sem categorização do serviço prestado.',
+          rawRecord: r
         });
       }
 
@@ -52,7 +54,8 @@ export const inconsistencyDiagnosticService = {
           date: r.date,
           description: r.description || 'Receita inválida',
           value: val,
-          details: 'Lançamento com valor zerado ou negativo.'
+          details: 'Lançamento com valor zerado ou negativo.',
+          rawRecord: r
         });
       }
     });
@@ -69,7 +72,8 @@ export const inconsistencyDiagnosticService = {
           date: e.date,
           description: e.description || 'Despesa sem categoria',
           value: val,
-          details: 'Despesa lançada sem centro de custo (categoria).'
+          details: 'Despesa lançada sem centro de custo (categoria).',
+          rawRecord: e
         });
       }
 
@@ -82,7 +86,8 @@ export const inconsistencyDiagnosticService = {
           date: e.date,
           description: e.description || 'Despesa inválida',
           value: val,
-          details: 'Despesa com valor zerado ou negativo.'
+          details: 'Despesa com valor zerado ou negativo.',
+          rawRecord: e
         });
       }
     });
@@ -140,7 +145,8 @@ export const inconsistencyDiagnosticService = {
               value: v2,
               details: `Placa ${r1.placa} e serviço ${r1.category} repetidos em ${Math.round(diffDays)} dias.${sameValue ? ' (Mesmo valor)' : ''}${sameCustomer ? ' (Mesmo cliente)' : ''}`,
               groupId: groupKey,
-              groupRecords: [r1, r2]
+              groupRecords: [r1, r2],
+              rawRecord: r2
             });
             break; // Apenas o primeiro par para simplificar
           }

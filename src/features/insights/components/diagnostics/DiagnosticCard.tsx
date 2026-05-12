@@ -123,11 +123,30 @@ export function DiagnosticCard({ diagnostic, onAction }: DiagnosticCardProps) {
       </div>
 
       {/* Texto Explicativo */}
-      <div className="flex-1 mb-6 relative z-10">
+      <div className="mb-4 relative z-10">
         <p className="text-[13px] font-medium text-slate-600 leading-relaxed">
           {diagnostic.text}
         </p>
       </div>
+
+      {/* Lista de Fatores (Novo) */}
+      {diagnostic.factors && diagnostic.factors.length > 0 && (
+        <div className="mb-6 relative z-10 space-y-2">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] block mb-2">Fatores Detectados:</span>
+          <ul className="space-y-2">
+            {diagnostic.factors.map((factor, index) => (
+              <li key={index} className="flex items-start gap-2 text-xs font-bold text-slate-700">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
+                  diagnostic.severity === 'critical' ? "bg-rose-400" : 
+                  diagnostic.severity === 'warning' ? "bg-orange-400" : "bg-emerald-400"
+                )} />
+                <span className="leading-tight">{factor}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Recomendação Prática */}
       {diagnostic.recommendation && (
