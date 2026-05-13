@@ -64,6 +64,7 @@ export function getAvailableMonths(
   });
 
   return Array.from(monthMap.entries())
+    .filter(([_, count]) => count > 0)
     .sort(([monthA], [monthB]) => monthA - monthB)
     .map(([monthIndex, count]) => ({
       value: String(monthIndex + 1).padStart(2, "0"),

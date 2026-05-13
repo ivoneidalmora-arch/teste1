@@ -11,10 +11,10 @@ export function FinancialPeriodFilter() {
 
   const monthOptions = useMemo(() => {
     return [
-      { value: 'global', label: 'Tudo (Global) - DEBUG' },
+      { value: 'global', label: 'Tudo (Global)' },
       ...availableMonths.map(m => ({
         value: m.value,
-        label: `${m.label} (${m.count})`
+        label: m.label
       }))
     ];
   }, [availableMonths]);

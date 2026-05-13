@@ -56,9 +56,9 @@ export function ReportsPage() {
         end: `${selectedYear}-12-31`
       });
     } else {
-      const monthIdx = parseInt(selectedPeriod);
-      const start = startOfMonth(new Date(selectedYear, monthIdx));
-      const end = endOfMonth(new Date(selectedYear, monthIdx));
+      const monthIdx = parseInt(selectedPeriod) - 1;
+      const start = startOfMonth(new Date(selectedYear, monthIdx, 1));
+      const end = endOfMonth(new Date(selectedYear, monthIdx, 1));
       setManualPeriod({
         start: format(start, 'yyyy-MM-dd'),
         end: format(end, 'yyyy-MM-dd')
