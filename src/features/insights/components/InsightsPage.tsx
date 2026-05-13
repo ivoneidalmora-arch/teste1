@@ -205,7 +205,3 @@ export function InsightsPage() {
     </div>
   );
 }
-
-    </div>
-  );
-}

@@ -20,14 +20,18 @@ export function DiagnosticPanel({ diagnostics, onAction }: DiagnosticPanelProps)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-      {sortedDiagnostics.map(diagnostic => (
-        <div key={diagnostic.id} className={diagnostic.priority === 'urgent' ? 'lg:col-span-2' : ''}>
-          <DiagnosticCard 
-            diagnostic={diagnostic} 
-            onAction={onAction}
-          />
-        </div>
-      ))}
+      {sortedDiagnostics.map(diagnostic => {
+        const isUrgent = diagnostic.priority === 'urgent' || (diagnostic.id === 'inconsistency' && diagnostic.severity === 'critical');
+        
+        return (
+          <div key={diagnostic.id} className={isUrgent ? 'lg:col-span-2' : ''}>
+            <DiagnosticCard 
+              diagnostic={diagnostic} 
+              onAction={onAction}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
