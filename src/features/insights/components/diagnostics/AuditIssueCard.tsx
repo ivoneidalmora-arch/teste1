@@ -110,7 +110,7 @@ export function AuditIssueCard({ record, onEdit, onApprove, onDelete, onViewDeta
 
           <div className="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ação Recomendada</p>
-            <p className="text-xs font-bold text-blue-600 italic">"{record.recommendation || 'Revise o lançamento e corrija os dados ausentes.'}"</p>
+            <p className="text-xs font-bold text-blue-600 italic">{`"${record.recommendation || 'Revise o lançamento e corrija os dados ausentes.'}"`}</p>
           </div>
         </div>
       </div>

@@ -14,6 +14,8 @@ import {
   Settings, 
   LogOut,
   MoreVertical,
+  Trash2,
+  ShieldCheck,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
@@ -46,6 +48,7 @@ const MENU_GROUPS: SidebarSection[] = [
       { icon: TrendingUp, label: 'Receitas', href: '/receitas', variant: 'green' },
       { icon: TrendingDown, label: 'Despesas', href: '/despesas', variant: 'red' },
       { icon: FileText, label: 'Relatórios', href: '/relatorios', variant: 'purple' },
+      { icon: Trash2, label: 'Lixeira', href: '/lixeira', variant: 'orange' },
     ]
   },
   {
@@ -59,7 +62,8 @@ const MENU_GROUPS: SidebarSection[] = [
   {
     title: 'Sistema',
     items: [
-      { icon: Settings, label: 'Configurações', href: '/configuracoes', variant: 'teal' },
+      { icon: ShieldCheck, label: 'Auditoria', href: '/auditoria', variant: 'teal' },
+      { icon: Settings, label: 'Configurações', href: '/configuracoes', variant: 'blue' },
     ]
   }
 ];

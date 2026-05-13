@@ -56,7 +56,8 @@ export const normalizeDate = (date: any): string => {
       return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
 
-    let [d, m, y] = parts;
+    const [d, m] = parts;
+    let y = parts[2];
     
     // Se não tem ano, assume o ano atual
     if (!y || y.length === 0) {
@@ -79,6 +80,8 @@ export const normalizeDate = (date: any): string => {
       }
 
       if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        const d = String(today.getDate()).padStart(2, '0');
+        const m = String(today.getMonth() + 1).padStart(2, '0');
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       }
     }

@@ -130,13 +130,8 @@ export const ingestionService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const savedKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
-    const headers: Record<string, string> = {};
-    if (savedKey) headers['x-api-key'] = savedKey;
-
     const response = await fetch('/api/import-report', {
       method: 'POST',
-      headers,
       body: formData,
     });
 

@@ -1,3 +1,4 @@
+import { getNetValueFor2025 } from '@/lib/financial-rules';
 import { supabase } from '@/lib/supabase/client';
 import { FinancialMetrics, PeriodFilter } from '../types/insights.types';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
@@ -109,7 +110,6 @@ export const insightsMetricsService = {
           const diffDays = Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
           
           if (diffDays <= 30) {
-            const { getNetValueFor2025 } = require('@/lib/financial-rules');
             
             const records = items.map(it => {
               const autoNetValue = getNetValueFor2025(it.amountBruto, it.date);

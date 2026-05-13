@@ -5,16 +5,8 @@ import { useMemo } from 'react';
 import { useFinanceContext } from '../../contexts/FinanceContext';
 
 export function FinancialPeriodFilter() {
-  // Use try-catch or check if context exists to avoid crashing if used outside provider
-  let context;
-  try {
-    context = useFinanceContext();
-  } catch (e) {
-    return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
-  }
-
-  const { selectedPeriod, setPeriod } = context;
-
+  const context = useFinanceContext();
+  
   const monthOptions = useMemo(() => {
     const options = [
       { value: 'global', label: 'Tudo (Global)' }
@@ -35,6 +27,12 @@ export function FinancialPeriodFilter() {
 
     return options;
   }, []);
+
+  if (!context) {
+    return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
+  }
+
+  const { selectedPeriod, setPeriod } = context;
 
   return (
     <div className="relative w-full sm:w-auto min-w-[160px] z-10">

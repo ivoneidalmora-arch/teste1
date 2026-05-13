@@ -1,97 +1,68 @@
 import { Transaction } from '@/core/types/finance';
-import { isSameMonth, isSameYear, subMonths } from 'date-fns';
-import { normalizeCurrencyValue } from '@/lib/financial-rules';
+import { isSameMonth, isSameYear } from 'date-fns';
 
 /**
- * Constantes e Tipos Legados para compatibilidade com Modais
+ * Normaliza um valor monetário para número
  */
-export const CONVERSAO_VRTE_2025: Record<number, number> = {
-  // VRTE 2025 = 4.67. Exemplo de mapeamento:
-  15: 70.05,
-  20: 93.40,
-  25: 116.75
-};
-
-export type VistoriaCategory = 'Vistoria de Transferência' | 'Vistoria de Entrada' | 'Vistoria de Retorno' | 'Vistoria Cautelar' | 'Outros';
-
-export const VISTORIA_CATEGORIES: VistoriaCategory[] = [
-  'Vistoria de Transferência',
-  'Vistoria de Entrada',
-  'Vistoria de Retorno',
-  'Vistoria Cautelar',
-  'Outros',
-];
-
-export function calculateLiquido(bruto: number, taxa: number = 0, desconto: number = 0) {
-  return bruto - taxa - desconto;
+export function normalizeCurrencyValue(value: any): number {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  const str = String(value).replace(/[^\d.,-]/g, '');
+  if (!str) return 0;
+  // Trata formato brasileiro (1.000,00) -> 1000.00
+  if (str.includes(',') && str.includes('.')) {
+    return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+  }
+  if (str.includes(',')) {
+    return parseFloat(str.replace(',', '.'));
+  }
+  return parseFloat(str);
 }
 
 /**
- * Auxiliares de Tipo
+ * Normaliza uma transação bruta do banco para o tipo Transaction padrão do sistema
  */
-export function isIncome(t: any): boolean {
-  const type = String(t.type ?? t.tipo ?? "").toLowerCase();
-  return ["receita", "income", "entrada", "revenue"].includes(type);
-}
+export function normalizeTransaction(raw: any): Transaction {
+  // Se já estiver normalizada, retorna
+  if (raw.type && (raw.type === 'income' || raw.type === 'expense')) {
+    return raw as Transaction;
+  }
 
-export function isExpense(t: any): boolean {
-  const type = String(t.type ?? t.tipo ?? "").toLowerCase();
-  return ["despesa", "expense", "saida", "saída", "outcome"].includes(type);
-}
-
-/**
- * Normaliza dados de transação para um padrão único.
- */
-export function normalizeTransaction(t: any): Transaction {
-  const dateStr = t.date ?? t.data ?? new Date().toISOString();
-  const dateObj = dateStr instanceof Date ? dateStr : new Date(dateStr);
+  const isIncome = raw.amountBruto !== undefined || raw.cliente !== undefined || raw.placa !== undefined;
   
-  const amount = normalizeCurrencyValue(t.amount ?? t.valor ?? 0);
-  
-  // Prioridade Receita Bruta: valor_bruto, gross_value, valor, amount
-  const grossValue = normalizeCurrencyValue(
-    t.valor_bruto ??
-    t.grossAmount ??
-    t.gross_value ??
-    t.valor ??
-    t.amount ??
-    0
-  );
-
-  // Prioridade Receita Líquida: valor_liquido, net_value, liquid_value, valor_bruto, gross_value, valor, amount
-  const netValue = normalizeCurrencyValue(
-    t.valor_liquido ??
-    t.netAmount ??
-    t.net_value ??
-    t.liquid_value ??
-    t.valor_bruto ??
-    t.grossAmount ??
-    t.gross_value ??
-    t.valor ??
-    t.amount ??
-    0
-  );
+  if (isIncome) {
+    return {
+      id: String(raw.id),
+      type: 'income',
+      amount: normalizeCurrencyValue(raw.amount || raw.amountBruto || 0),
+      grossAmount: normalizeCurrencyValue(raw.amountBruto || raw.amount || 0),
+      netAmount: normalizeCurrencyValue(raw.amountLiquido || raw.amount || 0),
+      date: raw.date || raw.data || '',
+      category: raw.category || raw.categoria || 'Outros',
+      customer: raw.cliente || raw.customer || 'S/N',
+      status: 'paid',
+      source: 'database',
+      metadata: {
+        placa: raw.placa,
+        nf: raw.nf,
+        pagamento: raw.pagamento,
+        observacao: raw.observacao
+      }
+    };
+  }
 
   return {
-    id: String(t.id),
-    app_user_id: t.app_user_id,
-    date: dateObj.toISOString().split('T')[0],
-    description: t.description ?? t.descricao ?? "Sem descrição",
-    customer: t.customer ?? t.cliente ?? t.client ?? "N/A",
-    category: t.category ?? t.categoria ?? "Outros",
-    amount,
-    grossAmount: grossValue,
-    netAmount: netValue,
-    type: isIncome(t) ? 'income' : 'expense',
-    status: (t.status === 'paid' || t.status === 'pago' || t.status === 'Pago') ? 'paid' : 
-            (t.status === 'pending' || t.status === 'pendente' || t.status === 'Pendente') ? 'pending' :
-            t.status === 'overdue' || t.status === 'atrasado' ? 'overdue' : 'cancelled',
-    source: t.source ?? t.origem ?? t.origin ?? "manual",
-    metadata: t.metadata ?? {
-      placa: t.placa,
-      nf: t.nf,
-      pagamento: t.pagamento,
-      observacao: t.observacao
+    id: String(raw.id),
+    type: 'expense',
+    amount: normalizeCurrencyValue(raw.amount || 0),
+    date: raw.date || raw.data || '',
+    category: raw.category || raw.categoria || 'Outros',
+    description: raw.description || raw.descricao || 'Despesa sem descrição',
+    status: (raw.status === 'Pago' || raw.status === 'paid') ? 'paid' : ((raw.status === 'Pendente' || raw.status === 'pending') ? 'pending' : 'overdue'),
+    dueDate: raw.vencimento || raw.date || '',
+    source: 'database',
+    metadata: {
+      observacao: raw.observacao
     }
   };
 }
@@ -99,38 +70,27 @@ export function normalizeTransaction(t: any): Transaction {
 /**
  * Calcula métricas financeiras para um conjunto de transações
  */
-export function calculateFinancialMetrics(transactions: any[]) {
+export function calculateFinancialMetrics(transactions: (Transaction | any)[]) {
   const normalized = transactions.map(normalizeTransaction);
   
   const receitas = normalized.filter(t => t.type === 'income');
   const despesas = normalized.filter(t => t.type === 'expense');
 
-  // Receita Bruta: soma dos valores brutos das receitas
-  const receitaBruta = receitas.reduce((sum, t) => sum + t.grossAmount!, 0);
+  const receitaBruta = receitas.reduce((sum, t) => sum + (t.grossAmount || 0), 0);
+  const receitaLiquida = receitas.reduce((sum, t) => sum + (t.netAmount || 0), 0);
 
-  // Receita Líquida: soma dos valores líquidos das receitas
-  const receitaLiquida = receitas.reduce((sum, t) => sum + t.netAmount!, 0);
-
-  // Despesas Pagas
   const despesasPagas = despesas
     .filter(t => t.status === 'paid')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Despesas Pendentes
   const despesasPendentes = despesas
     .filter(t => t.status === 'pending')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Despesas Total
   const despesasTotal = despesasPagas + despesasPendentes;
 
-  // Saldo Disponível = Receita Líquida - Despesas Pagas (Regra: O que eu já recebi e paguei)
   const saldoDisponivel = receitaLiquida - despesasPagas;
-
-  // Saldo Projetado = Receita Líquida - Despesas Total (Regra: O que sobrará no final do período)
   const saldoProjetado = receitaLiquida - despesasTotal;
-  
-  // Lucro do Mês (DRE Simplificada)
   const lucroMes = receitaLiquida - despesasTotal;
 
   return {
@@ -157,9 +117,28 @@ export function calculatePercentageChange(current: number, previous: number) {
 /**
  * Filtra transações por mês e ano específicos
  */
-export function filterByMonth(transactions: any[], selectedDate: Date) {
+export function filterByMonth(transactions: Transaction[], selectedDate: Date) {
   return transactions.filter(t => {
-    const d = new Date(t.date ?? t.data);
-    return isSameMonth(d, selectedDate) && isSameYear(d, selectedDate);
+    try {
+      const d = new Date(t.date);
+      return isSameMonth(d, selectedDate) && isSameYear(d, selectedDate);
+    } catch (e) {
+      return false;
+    }
   });
+}
+
+// Constantes legadas mantidas para compatibilidade de UI se necessário
+export const CONVERSAO_VRTE_2025 = 4.6732;
+export const VISTORIA_CATEGORIES = [
+  'Vistoria de Entrada',
+  'Vistoria de Saída',
+  'Vistoria Cautelar',
+  'Vistoria de Retorno',
+  'Transferência'
+] as const;
+export type VistoriaCategory = typeof VISTORIA_CATEGORIES[number];
+
+export function calculateLiquido(bruto: number) {
+  return Math.max(0, bruto - 50.72);
 }

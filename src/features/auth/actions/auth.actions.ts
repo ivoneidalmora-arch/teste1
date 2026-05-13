@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
@@ -88,30 +88,61 @@ export async function registerUser(formData: FormData) {
 }
 
 export async function loginUser(formData: FormData) {
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for")?.split(",")[0] || "127.0.0.1";
+  const userAgent = headersList.get("user-agent") || "unknown";
+
   try {
-    const username = (formData.get("username") as string)?.trim();
+    const username = (formData.get("username") as string)?.trim().toLowerCase();
     const password = formData.get("password") as string;
 
     if (!username || !password) {
       return { error: "Usuário e senha são obrigatórios." };
     }
 
+    // 1. Rate Limiting: Verificar tentativas nos últimos 15 minutos
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { count: recentAttempts } = await supabaseAdmin
+      .from("auth_attempts")
+      .select("*", { count: "exact", head: true })
+      .eq("username", username)
+      .eq("success", false)
+      .gt("attempted_at", fifteenMinsAgo);
+
+    if (recentAttempts && recentAttempts >= 5) {
+      return { error: "Muitas tentativas falhas. Tente novamente em 15 minutos." };
+    }
+
     const { data: user, error: dbError } = await supabaseAdmin
       .from("app_users")
       .select("*")
-      .eq("username", username.toLowerCase())
+      .eq("username", username)
       .maybeSingle();
 
     if (dbError || !user) {
-      if (dbError) console.error("[Login] DB error:", dbError);
+      // Registrar tentativa falha
+      await supabaseAdmin.from("auth_attempts").insert([{ username, ip_address: ip, success: false }]);
       return { error: "Usuário ou senha inválidos." };
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordCorrect) {
+      // Registrar tentativa falha
+      await supabaseAdmin.from("auth_attempts").insert([{ username, ip_address: ip, success: false }]);
+      // Log de segurança
+      await supabaseAdmin.from("auth_logs").insert([{ 
+        app_user_id: user.id, 
+        action: 'failed_login', 
+        ip_address: ip, 
+        user_agent: userAgent,
+        details: { reason: 'wrong_password' }
+      }]);
       return { error: "Usuário ou senha inválidos." };
     }
+
+    // Sucesso: Limpar tentativas anteriores (opcional ou marcar como sucesso)
+    await supabaseAdmin.from("auth_attempts").insert([{ username, ip_address: ip, success: true }]);
 
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const session = await encrypt({ user: { id: user.id, username: user.username }, expires });
@@ -124,6 +155,14 @@ export async function loginUser(formData: FormData) {
       sameSite: "lax",
       path: "/"
     });
+
+    // Log de Sucesso
+    await supabaseAdmin.from("auth_logs").insert([{ 
+      app_user_id: user.id, 
+      action: 'login', 
+      ip_address: ip, 
+      user_agent: userAgent 
+    }]);
 
     return { success: true, user: { id: user.id, username: user.username } };
   } catch (error: any) {

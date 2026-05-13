@@ -22,8 +22,8 @@ export const diagnosticGeneratorService = {
     let queryDes = supabase.from('Despesas').select('*').eq('app_user_id', userId);
 
     // Se for um mês específico, precisamos buscar o mês atual e os 2 meses anteriores para análise de crescimento
-    let startDate = period.type === 'month' ? period.startDate : undefined;
-    let endDate = period.type === 'month' ? period.endDate : undefined;
+    const startDate = period.type === 'month' ? period.startDate : undefined;
+    const endDate = period.type === 'month' ? period.endDate : undefined;
     let threeMonthsAgo = '';
 
     if (period.type === 'month') {

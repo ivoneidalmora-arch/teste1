@@ -55,7 +55,7 @@ export const clientDiagnosticService = {
 
     let classification = '';
     let severity: any = 'info';
-    let text = `O cliente principal no período foi "${topClientName}", responsável por ${formatBRL(topClientValue)} (${topClientCount} serviços), o que representa ${topClientPerc.toFixed(1)}% do faturamento.`;
+    const text = `O cliente principal no período foi "${topClientName}", responsável por ${formatBRL(topClientValue)} (${topClientCount} serviços), o que representa ${topClientPerc.toFixed(1)}% do faturamento.`;
     let recommendation = '';
 
     if (topClientPerc > 50 && totalRevenueLiquido > 1000) {
