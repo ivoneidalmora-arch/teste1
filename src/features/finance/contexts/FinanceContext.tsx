@@ -7,15 +7,15 @@ import { transactionService } from '../services/transaction.service';
 import { approvedDuplicateService } from '../services/approved-duplicate.service';
 import { useAuthContext } from '@/features/auth/contexts/AuthContext';
 import { filterByMonth } from '@/core/utils/finance';
-import { filterByPeriodAndYear } from '../utils/financialFilters';
+import { filterByPeriodAndYear, getAvailableMonths, AvailableMonth } from '../utils/financialFilters';
 
 interface FinanceContextType {
   transactions: Transaction[];
   loading: boolean;
   error: string | null;
-  selectedPeriod: string; // 'global' ou 'YYYY-MM' ou 'MM'
+  selectedPeriod: string; // 'global' ou 'MM'
   selectedYear: number;
-  availableMonths: string[];
+  availableMonths: AvailableMonth[];
   setPeriod: (period: string) => void;
   setYear: (year: number) => void;
   refresh: () => Promise<void>;
@@ -72,18 +72,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, [fetchTransactions]);
 
   const availableMonths = useMemo(() => {
-    if (!Array.isArray(transactions)) return [];
-    const months = new Set<string>();
-    transactions.forEach(t => {
-      try {
-        const d = new Date(t.date);
-        if (!isNaN(d.getTime())) {
-          months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-        }
-      } catch (e) {}
-    });
-    return Array.from(months).sort((a, b) => b.localeCompare(a));
-  }, [transactions]);
+    return getAvailableMonths(transactions, selectedYear);
+  }, [transactions, selectedYear]);
 
   const setPeriod = useCallback((period: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -105,10 +95,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return filterByPeriodAndYear(transactions, selectedPeriod, selectedYear);
   }, [transactions, selectedPeriod, selectedYear]);
 
+  // Proteção para período selecionado inexistente (Requisito 16, 17 e 19)
+  useEffect(() => {
+    if (loading) return;
+    
+    const isInvalidMonth = selectedPeriod !== 'global' && !availableMonths.some(m => m.value === selectedPeriod);
+    
+    if (isInvalidMonth) {
+      setPeriod('global');
+    }
+  }, [availableMonths, selectedPeriod, loading, setPeriod]);
+
   // Fallback inteligente para anos com dados (Requisito 5 e 7)
   useEffect(() => {
     if (!loading && transactions.length > 0 && filteredTransactions.length === 0 && !urlYear) {
-      // Se não houver filtro de ano na URL e o ano atual estiver vazio, busca o ano mais recente com dados
       const yearsWithData = Array.from(new Set(transactions.map(t => new Date(t.date).getFullYear()))).sort((a, b) => b - a);
       if (yearsWithData.length > 0 && yearsWithData[0] !== selectedYear) {
         setYear(yearsWithData[0]);

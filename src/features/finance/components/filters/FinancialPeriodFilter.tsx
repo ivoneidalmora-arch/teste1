@@ -7,32 +7,22 @@ import { useFinanceContext } from '../../contexts/FinanceContext';
 export function FinancialPeriodFilter() {
   const context = useFinanceContext();
   
+  const { selectedPeriod, setPeriod, availableMonths } = context;
+
   const monthOptions = useMemo(() => {
-    const options = [
-      { value: 'global', label: 'Tudo (Global)' }
+    return [
+      { value: 'global', label: 'Tudo (Global)' },
+      ...availableMonths.map(m => ({
+        value: m.value,
+        label: `${m.label} (${m.count})`
+      }))
     ];
-
-    const monthNames = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-
-    monthNames.forEach((name, index) => {
-      const monthValue = String(index + 1).padStart(2, '0');
-      options.push({
-        value: monthValue,
-        label: name
-      });
-    });
-
-    return options;
-  }, []);
+  }, [availableMonths]);
 
   if (!context) {
     return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
   }
 
-  const { selectedPeriod, setPeriod } = context;
 
   return (
     <div className="relative w-full sm:w-auto min-w-[160px] z-10">
