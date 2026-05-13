@@ -66,9 +66,11 @@ export const metricsService = {
     return {
       totalIncome: coreMetrics.receitaLiquida,
       totalGrossIncome: coreMetrics.receitaBruta,
-      totalExpense: coreMetrics.despesasTotal,
+      totalExpense: coreMetrics.despesasPagas, // Apenas o que foi pago
+      totalTotalExpense: coreMetrics.despesasTotal, // Total (Pago + Pendente)
       totalPendingExpense: coreMetrics.despesasPendentes,
-      netBalance: coreMetrics.saldoDisponivel,
+      netBalance: coreMetrics.saldoDisponivel, // Receita Líquida - Despesas Pagas
+      projectedBalance: coreMetrics.saldoProjetado, // Receita Líquida - Despesas Totais
       ticketMedio: coreMetrics.totalTransactions > 0 ? coreMetrics.receitaLiquida / coreMetrics.totalTransactions : 0,
       incomeChart,
       expenseChart,

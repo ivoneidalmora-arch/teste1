@@ -39,7 +39,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   // O período vem da URL ou padrão 'global'
   // Filtros vindos da URL
   const selectedPeriod = searchParams.get('periodo') || 'global';
-  const selectedYear = parseInt(searchParams.get('ano') || String(new Date().getFullYear()));
+  const urlYear = searchParams.get('ano');
+  const [currentYear] = useState(new Date().getFullYear());
+  const selectedYear = parseInt(urlYear || String(currentYear));
 
   const fetchTransactions = useCallback(async () => {
     if (!user) {
@@ -102,6 +104,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const filteredTransactions = useMemo(() => {
     return filterByPeriodAndYear(transactions, selectedPeriod, selectedYear);
   }, [transactions, selectedPeriod, selectedYear]);
+
+  // Fallback inteligente para anos com dados (Requisito 5 e 7)
+  useEffect(() => {
+    if (!loading && transactions.length > 0 && filteredTransactions.length === 0 && !urlYear) {
+      // Se não houver filtro de ano na URL e o ano atual estiver vazio, busca o ano mais recente com dados
+      const yearsWithData = Array.from(new Set(transactions.map(t => new Date(t.date).getFullYear()))).sort((a, b) => b - a);
+      if (yearsWithData.length > 0 && yearsWithData[0] !== selectedYear) {
+        setYear(yearsWithData[0]);
+      }
+    }
+  }, [loading, transactions, filteredTransactions, urlYear, selectedYear, setYear]);
 
   const value = {
     transactions,

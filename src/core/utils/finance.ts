@@ -111,26 +111,36 @@ export function calculateFinancialMetrics(transactions: any[]) {
   // Receita Líquida: soma dos valores líquidos das receitas
   const receitaLiquida = receitas.reduce((sum, t) => sum + t.netAmount!, 0);
 
-  // Despesas: soma das despesas do período
-  const despesasTotal = despesas.reduce((sum, t) => sum + t.amount, 0);
+  // Despesas Pagas
+  const despesasPagas = despesas
+    .filter(t => t.status === 'paid')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   // Despesas Pendentes
   const despesasPendentes = despesas
     .filter(t => t.status === 'pending')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Saldo Disponível = Receita Líquida - Despesas Total
-  const saldoDisponivel = receitaLiquida - despesasTotal;
+  // Despesas Total
+  const despesasTotal = despesasPagas + despesasPendentes;
+
+  // Saldo Disponível = Receita Líquida - Despesas Pagas (Regra: O que eu já recebi e paguei)
+  const saldoDisponivel = receitaLiquida - despesasPagas;
+
+  // Saldo Projetado = Receita Líquida - Despesas Total (Regra: O que sobrará no final do período)
+  const saldoProjetado = receitaLiquida - despesasTotal;
   
-  // Lucro do Mês = Receita Líquida - Despesas Total (conforme regra solicitada)
-  const lucroMes = saldoDisponivel;
+  // Lucro do Mês (DRE Simplificada)
+  const lucroMes = receitaLiquida - despesasTotal;
 
   return {
     receitaBruta,
     receitaLiquida,
-    despesasTotal,
+    despesasPagas,
     despesasPendentes,
+    despesasTotal,
     saldoDisponivel,
+    saldoProjetado,
     lucroMes,
     totalTransactions: normalized.length
   };

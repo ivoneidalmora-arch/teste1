@@ -62,7 +62,8 @@ export const inconsistencyDiagnosticService = {
       }
 
       // Cliente ausente
-      if (!r.customer || r.customer.trim() === '' || ['SN', 'S/N', 'SEM CLIENTE'].includes(r.customer.toUpperCase())) {
+      const cliente = r.customer || r.cliente;
+      if (!cliente || cliente.trim() === '' || ['SN', 'S/N', 'SEM CLIENTE'].includes(cliente.toUpperCase())) {
         addRecord({
           id: `${r.id}-no-client`,
           type: 'no_client',
@@ -74,7 +75,7 @@ export const inconsistencyDiagnosticService = {
           details: 'Lançamento efetuado sem identificação do cliente.',
           severity: 'alert',
           affectedField: 'Cliente',
-          currentValue: r.customer || 'Vazio',
+          currentValue: cliente || 'Vazio',
           expectedRule: 'Obrigatório identificar o tomador do serviço',
           impact: 'Impede a análise de clientes mais lucrativos e histórico de inadimplência.',
           recommendation: 'Identifique o cliente no lançamento para melhorar seus relatórios.',
@@ -104,7 +105,8 @@ export const inconsistencyDiagnosticService = {
       }
 
       // Placa ausente (se for vistoria)
-      if (r.category?.includes('Vistoria') && (!r.metadata?.placa || r.metadata.placa.trim() === '')) {
+      const placa = r.metadata?.placa || r.placa;
+      if (r.category?.includes('Vistoria') && (!placa || placa.trim() === '')) {
         addRecord({
           id: `${r.id}-no-placa`,
           type: 'incomplete_registration',

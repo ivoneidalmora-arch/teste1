@@ -9,6 +9,7 @@ import { clientDiagnosticService } from './client.service';
 import { serviceDiagnosticService } from './service.service';
 import { riskDiagnosticService } from './risk.service';
 import { inconsistencyDiagnosticService } from './inconsistency.service';
+import { TransactionMapper } from '@/features/finance/mappers/transaction.mapper';
 
 export const diagnosticGeneratorService = {
   async generateDiagnostics(userId: string, period: PeriodFilter): Promise<{
@@ -51,10 +52,14 @@ export const diagnosticGeneratorService = {
       getAuditIssuesAction(userId)
     ]);
 
+    // Mapear dados para o formato padronizado Transaction
+    const revenues = rawRevenues.map(r => TransactionMapper.toIncome(r));
+    const expenses = rawExpenses.map(e => TransactionMapper.toExpense(e));
+
     // Contexto de dados para os serviços
     const context = {
-      rawRevenues,
-      rawExpenses,
+      rawRevenues: revenues,
+      rawExpenses: expenses,
       existingReviews,
       auditIssues,
       period,

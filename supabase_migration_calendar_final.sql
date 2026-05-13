@@ -1,15 +1,16 @@
 -- FINAL CALENDAR & GOOGLE INTEGRATION MIGRATION
 -- Author: Senior Dev
 -- Timestamp: 2026-05-08
+-- [ROLLBACK] Este script é incremental. Para reverter, as tabelas devem ser removidas manualmente se necessário.
 
--- 0. Limpeza controlada
-DROP TABLE IF EXISTS google_calendar_connections CASCADE;
-DROP TABLE IF EXISTS calendar_events CASCADE;
-DROP TABLE IF EXISTS approved_duplicates CASCADE;
+-- 0. Limpeza controlada (COMENTADA PARA SEGURANÇA EM PRODUÇÃO)
+-- DROP TABLE IF EXISTS google_calendar_connections CASCADE;
+-- DROP TABLE IF EXISTS calendar_events CASCADE;
+-- DROP TABLE IF EXISTS approved_duplicates CASCADE;
 
 -- 1. Google Calendar Connections
 -- Armazena tokens e status da conexão OAuth do Google
-CREATE TABLE google_calendar_connections (
+CREATE TABLE IF NOT EXISTS google_calendar_connections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     app_user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     google_email TEXT NOT NULL,
@@ -27,7 +28,7 @@ CREATE TABLE google_calendar_connections (
 
 -- 2. Calendar Events
 -- Armazena feriados sincronizados e eventos locais
-CREATE TABLE calendar_events (
+CREATE TABLE IF NOT EXISTS calendar_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     app_user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -52,7 +53,7 @@ CREATE TABLE calendar_events (
 );
 
 -- 3. Approved Duplicates (Para validação de vistorias)
-CREATE TABLE approved_duplicates (
+CREATE TABLE IF NOT EXISTS approved_duplicates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     app_user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     vehicle_plate TEXT NOT NULL,
