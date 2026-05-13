@@ -19,23 +19,42 @@ export interface DiagnosticResult {
   factors?: string[]; // Lista de fatores detalhados para o diagnóstico de risco
 }
 
-// Interfaces específicas para inconsistências
+export type AuditSeverity = 'critical' | 'alert' | 'info';
+export type AuditStatus = 'pending' | 'resolved' | 'approved' | 'ignored' | 'deleted';
+
 export type InconsistencyType = 
   | 'duplicate' 
   | 'no_client' 
   | 'no_service' 
   | 'no_category' 
-  | 'invalid_value';
+  | 'invalid_value'
+  | 'no_description'
+  | 'no_date'
+  | 'no_due_date'
+  | 'expired_unpaid'
+  | 'no_status'
+  | 'incomplete_registration'
+  | 'invalid_nomenclatura';
 
 export interface InconsistencyRecord {
-  id: string;
+  id: string; // ID da inconsistência (ex: transactionId-type)
   type: InconsistencyType;
   transactionId: string;
   transactionType: 'income' | 'expense';
   date: string;
-  description: string;
+  description: string; // Título curto do problema
   value: number;
-  details: string; // Ex: "Mesma placa ABC-1234 em intervalo de 5 dias", ou "Receita sem cliente"
+  details: string; // Descrição longa/técnica
+  
+  // Novos campos para Auditoria Profissional
+  severity: AuditSeverity;
+  affectedField?: string;
+  currentValue?: string | number;
+  expectedRule?: string;
+  impact?: string;
+  recommendation?: string;
+  status: AuditStatus;
+  
   groupId?: string; // Para agrupar duplicidades
   groupRecords?: any[]; // Array de records originais caso seja duplicidade
   rawRecord?: any; // Registro original para edição

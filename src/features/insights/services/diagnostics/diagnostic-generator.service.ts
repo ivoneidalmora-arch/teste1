@@ -42,15 +42,21 @@ export const diagnosticGeneratorService = {
     const rawRevenues = resRec.data || [];
     const rawExpenses = resDes.data || [];
 
-    // Buscar reviews de duplicidade
+    // Buscar reviews de duplicidade e inconsistências auditadas
     const { getDuplicateReviewsAction } = await import('../../actions/duplicate.actions');
-    const existingReviews = await getDuplicateReviewsAction(userId);
+    const { getAuditIssuesAction } = await import('../../actions/audit.actions');
+    
+    const [existingReviews, auditIssues] = await Promise.all([
+      getDuplicateReviewsAction(userId),
+      getAuditIssuesAction(userId)
+    ]);
 
     // Contexto de dados para os serviços
     const context = {
       rawRevenues,
       rawExpenses,
       existingReviews,
+      auditIssues,
       period,
       userId
     };

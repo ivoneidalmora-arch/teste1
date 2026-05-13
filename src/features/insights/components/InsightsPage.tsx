@@ -12,6 +12,7 @@ import { cn } from '@/core/utils/formatters';
 import { useFinanceContext } from '../../finance/contexts/FinanceContext';
 import { FinancialPeriodFilter } from '../../finance/components/filters/FinancialPeriodFilter';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { toast } from 'sonner';
 
 // Novos Serviços e Tipos
 import { diagnosticGeneratorService } from '../services/diagnostics/diagnostic-generator.service';
@@ -90,6 +91,10 @@ export function InsightsPage() {
   };
 
   const handleEditTransaction = (transaction: any) => {
+    // Garantir que o tipo está presente para o modal de edição
+    if (!transaction.type && transaction.amountBruto !== undefined) transaction.type = 'income';
+    if (!transaction.type && transaction.dueDate !== undefined) transaction.type = 'expense';
+    
     setShowInconsistenciesModal(false);
     setEditingTransaction(transaction);
   };
@@ -98,6 +103,7 @@ export function InsightsPage() {
     setEditingTransaction(null);
     refreshFinance();
     loadDiagnostics(true);
+    toast.success('Inconsistência resolvida após edição!');
   };
 
 

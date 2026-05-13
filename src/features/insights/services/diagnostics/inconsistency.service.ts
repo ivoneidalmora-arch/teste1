@@ -1,8 +1,8 @@
-import { DiagnosticResult, InconsistencyRecord } from '../../types/diagnostics.types';
+import { DiagnosticResult, InconsistencyRecord, AuditSeverity, AuditStatus } from '../../types/diagnostics.types';
 
 export const inconsistencyDiagnosticService = {
   analyze(context: any): { diagnostic: DiagnosticResult, records: InconsistencyRecord[] } {
-    const { rawRevenues, rawExpenses, existingReviews, period } = context;
+    const { rawRevenues, rawExpenses, existingReviews, auditIssues = [], period } = context;
 
     let targetRevenues = rawRevenues;
     let targetExpenses = rawExpenses;
@@ -14,89 +14,212 @@ export const inconsistencyDiagnosticService = {
 
     const records: InconsistencyRecord[] = [];
 
-    // 1. Receitas sem cliente ou sem serviço
+    // Map de auditoria para filtro rápido
+    const auditMap: Record<string, any> = {};
+    auditIssues.forEach((issue: any) => {
+      const key = `${issue.transaction_id}-${issue.issue_type}`;
+      auditMap[key] = issue;
+    });
+
+    // Helper para adicionar record se não estiver resolvido/aprovado
+    const addRecord = (record: Omit<InconsistencyRecord, 'status'>) => {
+      const auditKey = `${record.transactionId}-${record.type}`;
+      const existingAudit = auditMap[auditKey];
+      
+      if (existingAudit && (existingAudit.status === 'approved' || existingAudit.status === 'ignored' || existingAudit.status === 'resolved')) {
+        return;
+      }
+
+      records.push({
+        ...record,
+        status: (existingAudit?.status as AuditStatus) || 'pending'
+      });
+    };
+
+    // 1. ANALISE DE RECEITAS
     targetRevenues.forEach((r: any) => {
       const val = Number(r.amountLiquido) || Number(r.amount) || 0;
-      if (!r.cliente || r.cliente.trim() === '' || r.cliente.toUpperCase() === 'S/N' || r.cliente.toUpperCase() === 'SN') {
-        records.push({
-          id: `inc-${r.id}-noclient`,
+      
+      // Valor inválido
+      if (val <= 0 && r.category !== 'Vistoria de Retorno') {
+        addRecord({
+          id: `${r.id}-invalid-value`,
+          type: 'invalid_value',
+          transactionId: r.id,
+          transactionType: 'income',
+          date: r.date,
+          description: 'Valor Financeiro Inválido',
+          value: val,
+          details: 'A receita possui valor zerado ou negativo.',
+          severity: 'critical',
+          affectedField: 'Valor Bruto / Líquido',
+          currentValue: val,
+          expectedRule: 'Receita deve ter valor positivo (exceto retornos)',
+          impact: 'Distorce o faturamento total, lucro líquido e projeções de fluxo de caixa.',
+          recommendation: 'Corrija o valor no lançamento ou adicione uma justificativa se for um caso especial.',
+          rawRecord: { ...r, type: 'income' }
+        });
+      }
+
+      // Cliente ausente
+      if (!r.customer || r.customer.trim() === '' || ['SN', 'S/N', 'SEM CLIENTE'].includes(r.customer.toUpperCase())) {
+        addRecord({
+          id: `${r.id}-no-client`,
           type: 'no_client',
           transactionId: r.id,
           transactionType: 'income',
           date: r.date,
-          description: r.description || 'Receita sem cliente',
+          description: 'Cadastro de Cliente Incompleto',
           value: val,
           details: 'Lançamento efetuado sem identificação do cliente.',
-          rawRecord: r
+          severity: 'alert',
+          affectedField: 'Cliente',
+          currentValue: r.customer || 'Vazio',
+          expectedRule: 'Obrigatório identificar o tomador do serviço',
+          impact: 'Impede a análise de clientes mais lucrativos e histórico de inadimplência.',
+          recommendation: 'Identifique o cliente no lançamento para melhorar seus relatórios.',
+          rawRecord: { ...r, type: 'income' }
         });
       }
 
+      // Serviço/Categoria ausente
       if (!r.category || r.category.trim() === '' || r.category.toUpperCase() === 'OUTROS') {
-        records.push({
-          id: `inc-${r.id}-noservice`,
+        addRecord({
+          id: `${r.id}-no-service`,
           type: 'no_service',
           transactionId: r.id,
           transactionType: 'income',
           date: r.date,
-          description: r.description || 'Receita sem serviço',
+          description: 'Serviço não Categorizado',
           value: val,
-          details: 'Lançamento efetuado sem categorização do serviço prestado.',
-          rawRecord: r
+          details: 'Lançamento sem classificação de serviço.',
+          severity: 'alert',
+          affectedField: 'Categoria / Serviço',
+          currentValue: r.category || 'Outros',
+          expectedRule: 'Classificar o serviço conforme o catálogo',
+          impact: 'Prejudica o ranking de serviços e a análise de margem por categoria.',
+          recommendation: 'Selecione a categoria correta do serviço prestado.',
+          rawRecord: { ...r, type: 'income' }
         });
       }
 
-      if (val <= 0) {
-        records.push({
-          id: `inc-${r.id}-invalid`,
-          type: 'invalid_value',
+      // Placa ausente (se for vistoria)
+      if (r.category?.includes('Vistoria') && (!r.metadata?.placa || r.metadata.placa.trim() === '')) {
+        addRecord({
+          id: `${r.id}-no-placa`,
+          type: 'incomplete_registration',
           transactionId: r.id,
           transactionType: 'income',
           date: r.date,
-          description: r.description || 'Receita inválida',
+          description: 'Placa não Identificada',
           value: val,
-          details: 'Lançamento com valor zerado ou negativo.',
-          rawRecord: r
+          details: 'Serviço de vistoria sem registro de placa.',
+          severity: 'alert',
+          affectedField: 'Placa (Metadados)',
+          currentValue: 'Vazio',
+          expectedRule: 'Toda vistoria deve ter uma placa associada',
+          impact: 'Dificulta a auditoria de duplicidade e a localização futura do serviço.',
+          recommendation: 'Informe a placa do veículo vistoriado.',
+          rawRecord: { ...r, type: 'income' }
         });
       }
     });
 
-    // 2. Despesas sem categoria ou inválidas
+    // 2. ANALISE DE DESPESAS
     targetExpenses.forEach((e: any) => {
       const val = Number(e.amount) || 0;
+
+      // Valor inválido
+      if (val <= 0) {
+        addRecord({
+          id: `${e.id}-invalid-value`,
+          type: 'invalid_value',
+          transactionId: e.id,
+          transactionType: 'expense',
+          date: e.date,
+          description: 'Despesa com Valor Inválido',
+          value: val,
+          details: 'Lançamento de saída com valor zerado ou negativo.',
+          severity: 'critical',
+          affectedField: 'Valor da Despesa',
+          currentValue: val,
+          expectedRule: 'Despesas devem ter valor positivo',
+          impact: 'Afeta o cálculo de despesas fixas/variáveis e o saldo disponível.',
+          recommendation: 'Corrija o valor ou exclua o lançamento se for um erro.',
+          rawRecord: { ...e, type: 'expense' }
+        });
+      }
+
+      // Categoria ausente
       if (!e.category || e.category.trim() === '' || e.category.toUpperCase() === 'OUTROS') {
-        records.push({
-          id: `inc-${e.id}-nocategory`,
+        addRecord({
+          id: `${e.id}-no-category`,
           type: 'no_category',
           transactionId: e.id,
           transactionType: 'expense',
           date: e.date,
-          description: e.description || 'Despesa sem categoria',
+          description: 'Despesa sem Centro de Custo',
           value: val,
-          details: 'Despesa lançada sem centro de custo (categoria).',
-          rawRecord: e
+          details: 'Despesa não categorizada.',
+          severity: 'alert',
+          affectedField: 'Categoria',
+          currentValue: e.category || 'Vazio',
+          expectedRule: 'Classificar a despesa em uma categoria válida',
+          impact: 'Impede o controle de teto de gastos por categoria e análise de DRE.',
+          recommendation: 'Categorize a despesa para um melhor controle financeiro.',
+          rawRecord: { ...e, type: 'expense' }
         });
       }
 
-      if (val <= 0) {
-        records.push({
-          id: `inc-${e.id}-invalid`,
-          type: 'invalid_value',
+      // Descrição ausente
+      if (!e.description || e.description.trim() === '') {
+        addRecord({
+          id: `${e.id}-no-description`,
+          type: 'no_description',
           transactionId: e.id,
           transactionType: 'expense',
           date: e.date,
-          description: e.description || 'Despesa inválida',
+          description: 'Falta Descrição Detalhada',
           value: val,
-          details: 'Despesa com valor zerado ou negativo.',
-          rawRecord: e
+          details: 'Despesa sem identificação do que foi pago.',
+          severity: 'info',
+          affectedField: 'Descrição',
+          currentValue: 'Vazio',
+          expectedRule: 'Descrever o destinatário ou motivo do gasto',
+          impact: 'Dificulta a auditoria futura e transparência dos gastos.',
+          recommendation: 'Adicione uma descrição breve sobre esta despesa.',
+          rawRecord: { ...e, type: 'expense' }
+        });
+      }
+
+      // Vencida e não paga
+      if (e.status === 'pending' && e.dueDate && new Date(e.dueDate) < new Date(new Date().setHours(0,0,0,0))) {
+        addRecord({
+          id: `${e.id}-expired`,
+          type: 'expired_unpaid',
+          transactionId: e.id,
+          transactionType: 'expense',
+          date: e.date,
+          description: 'Despesa Vencida e Não Paga',
+          value: val,
+          details: 'O vencimento desta despesa já passou e o status ainda é pendente.',
+          severity: 'critical',
+          affectedField: 'Vencimento / Status',
+          currentValue: e.dueDate,
+          expectedRule: 'Manter pagamentos em dia ou atualizar status',
+          impact: 'Pode gerar multas, juros e comprometer o score financeiro da empresa.',
+          recommendation: 'Efetue o pagamento ou atualize a data de vencimento.',
+          rawRecord: { ...e, type: 'expense' }
         });
       }
     });
 
-    // 3. Duplicidades (mesma placa, mesmo serviço, mesmo cliente se tiver, mesmo valor, < 30 dias)
+    // 3. DUPLICIDADES (LOGICA AVANÇADA)
     const rawGroups: Record<string, any[]> = {};
     targetRevenues.forEach((r: any) => {
-      if (r.placa && r.placa.trim() !== '') {
-        const key = `${r.placa}-${r.category || ''}`;
+      const placa = r.metadata?.placa || r.placa;
+      if (placa && placa.trim() !== '') {
+        const key = `${placa}-${r.category || ''}`;
         if (!rawGroups[key]) rawGroups[key] = [];
         rawGroups[key].push(r);
       }
@@ -121,62 +244,64 @@ export const inconsistencyDiagnosticService = {
           if (diffDays <= 30) {
             const v1 = Number(r1.amountLiquido) || Number(r1.amount) || 0;
             const v2 = Number(r2.amountLiquido) || Number(r2.amount) || 0;
-            
-            // Verificar "mesmo valor" e "mesmo cliente" para aumentar precisão (ou notificar de qualquer forma se a placa for igual no período)
             const sameValue = Math.abs(v1 - v2) < 0.01;
-            const sameCustomer = (!r1.cliente && !r2.cliente) || (r1.cliente === r2.cliente);
 
-            // Gerar Group Key
             const ids = [r1.id, r2.id].sort();
-            const groupKey = `${r1.placa}-${r1.category}-${ids.join('-')}`;
+            const groupKey = `${(r1.metadata?.placa || r1.placa)}-${r1.category}-${ids.join('-')}`;
             
-            // Se já foi revisada como NÃO duplicidade, pula.
             if (reviewsMap[groupKey] && (reviewsMap[groupKey].status === 'not_duplicate' || reviewsMap[groupKey].status === 'ignored')) {
                continue;
             }
 
-            records.push({
-              id: `inc-dup-${groupKey}`,
+            addRecord({
+              id: `dup-${groupKey}`,
               type: 'duplicate',
               transactionId: r2.id,
               transactionType: 'income',
               date: r2.date,
-              description: `Possível Duplicidade - Placa ${r1.placa}`,
+              description: 'Possível Duplicidade Detectada',
               value: v2,
-              details: `Placa ${r1.placa} e serviço ${r1.category} repetidos em ${Math.round(diffDays)} dias.${sameValue ? ' (Mesmo valor)' : ''}${sameCustomer ? ' (Mesmo cliente)' : ''}`,
+              details: `Placa ${r1.metadata?.placa || r1.placa} repetida para o serviço ${r1.category} em um intervalo de ${Math.round(diffDays)} dias.`,
+              severity: sameValue ? 'critical' : 'alert',
+              affectedField: 'Múltiplos Campos',
+              currentValue: `IDs: ${r1.id}, ${r2.id}`,
+              expectedRule: 'Evitar lançamentos idênticos para o mesmo veículo em curto prazo',
+              impact: 'Infla artificialmente o faturamento e gera impostos sobre valores inexistentes.',
+              recommendation: 'Valide se são serviços distintos ou um erro de lançamento duplo.',
               groupId: groupKey,
               groupRecords: [r1, r2],
-              rawRecord: r2
+              rawRecord: { ...r2, type: 'income' }
             });
-            break; // Apenas o primeiro par para simplificar
+            break;
           }
         }
       }
     });
 
+    // Diagnóstico Resumido
     let classification = '';
     let severity: any = 'info';
     let text = '';
     let recommendation = '';
 
-    const duplicatesCount = records.filter(r => r.type === 'duplicate').length;
-    const othersCount = records.length - duplicatesCount;
+    const criticalCount = records.filter(r => r.severity === 'critical').length;
+    const alertCount = records.filter(r => r.severity === 'alert').length;
 
     if (records.length === 0) {
       classification = 'Base Íntegra';
       severity = 'positive';
-      text = 'Sua base de dados está limpa. Não foram encontradas duplicidades ou lançamentos inválidos.';
-      recommendation = 'Continue preenchendo os dados com atenção aos clientes, categorias e placas.';
-    } else if (duplicatesCount > 0) {
-      classification = 'Auditoria Necessária';
-      severity = 'warning';
-      text = `Foram encontradas ${duplicatesCount} possíveis duplicidades e ${othersCount} lançamentos incompletos. Lançamentos duplicados podem inflar artificialmente o seu lucro.`;
-      recommendation = 'Clique em "Ver Inconsistências" e valide os lançamentos repetidos. Quando validada como correta, a duplicidade não voltará a aparecer.';
+      text = 'Excelente! Não foram encontradas inconsistências nos seus lançamentos.';
+      recommendation = 'Mantenha o padrão de preenchimento para garantir relatórios precisos.';
+    } else if (criticalCount > 0) {
+      classification = 'Ação Crítica Necessária';
+      severity = 'critical';
+      text = `Existem ${criticalCount} problemas críticos que estão distorcendo seus resultados financeiros agora.`;
+      recommendation = 'Priorize a resolução dos itens marcados como Críticos na Central de Auditoria.';
     } else {
-      classification = 'Cadastros Incompletos';
-      severity = 'info';
-      text = `Existem ${othersCount} lançamentos precisando de ajustes (sem cliente, serviço ou categoria). Isso prejudica a qualidade dos outros diagnósticos.`;
-      recommendation = 'Reserve um momento na semana para editar os lançamentos incompletos e classificar as receitas e despesas.';
+      classification = 'Ajustes Sugeridos';
+      severity = 'warning';
+      text = `Foram detectados ${alertCount} alertas de cadastros incompletos ou dados divergentes.`;
+      recommendation = 'Corrija os alertas para melhorar a precisão dos seus indicadores de performance.';
     }
 
     return {
@@ -186,7 +311,7 @@ export const inconsistencyDiagnosticService = {
         title: 'Diagnóstico de Inconsistências',
         classification,
         severity,
-        priority: records.length > 5 ? 'high' : 'medium',
+        priority: criticalCount > 0 ? 'urgent' : (alertCount > 5 ? 'high' : 'medium'),
         mainMetric: `${records.length}`,
         secondaryMetric: 'Pendências',
         text,
