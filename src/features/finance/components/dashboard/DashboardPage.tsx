@@ -24,13 +24,15 @@ import {
 
 import { useFinance } from '../../hooks/useFinance';
 import { cn } from '@/core/utils/formatters';
-import { 
-  calculateFinancialMetrics, 
-  calculatePercentageChange, 
 import { subMonths } from 'date-fns';
 import { prepareCashFlowChartData } from '../../utils/cashFlowChart';
 import { calculateDashboardMetrics } from '../../utils/financialValueUtils';
-import { filterByMonth as legacyFilterByMonth } from '@/core/utils/finance';
+import { 
+  calculateFinancialMetrics, 
+  calculatePercentageChange, 
+  filterByMonth as legacyFilterByMonth,
+  normalizeTransaction 
+} from '@/core/utils/finance';
 
 // Modals
 import { NovaVistoriaModal } from '@/features/finance/components/modals/NovaVistoriaModal';

@@ -13,7 +13,8 @@ import {
   Sparkles,
   Settings, 
   LogOut,
-  MoreVertical
+  MoreVertical,
+  LucideIcon
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -21,7 +22,7 @@ import { IconBadge } from '@/core/components/ui/IconBadge';
 import { SidebarBrandCard } from './SidebarBrandCard';
 
 type SidebarItem = {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   label: string;
   href: string;
   variant: 'blue' | 'green' | 'red' | 'purple' | 'violet' | 'orange' | 'teal';

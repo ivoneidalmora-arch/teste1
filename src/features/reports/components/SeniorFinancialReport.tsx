@@ -25,16 +25,16 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
     },
     expenses: {
       operacionais: metrics.expenseChart
-        .filter(e => ['Operacional', 'Manutenção', 'Suprimentos'].includes(e.name))
+        .filter(e => ['Operacional', 'Manutenção', 'Suprimentos', 'Custo Operacional'].includes(e.name))
         .reduce((acc, curr) => acc + curr.value, 0),
       fixas: metrics.expenseChart
-        .filter(e => ['Aluguel', 'Folha'].includes(e.name))
+        .filter(e => ['Aluguel', 'Folha', 'Sistema/Software', 'Folha de Pagamento'].includes(e.name))
         .reduce((acc, curr) => acc + curr.value, 0),
       variaveis: metrics.expenseChart
-        .filter(e => ['Outros'].includes(e.name))
+        .filter(e => ['Outros', 'Variável'].includes(e.name))
         .reduce((acc, curr) => acc + curr.value, 0),
       impostos: metrics.expenseChart
-        .filter(e => ['Impostos'].includes(e.name))
+        .filter(e => ['Impostos', 'Tributos'].includes(e.name))
         .reduce((acc, curr) => acc + curr.value, 0),
     }
   };
