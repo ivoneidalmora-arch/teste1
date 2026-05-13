@@ -11,7 +11,7 @@ export function FinancialPeriodFilter() {
 
   const monthOptions = useMemo(() => {
     return [
-      { value: 'global', label: 'Tudo (Global)' },
+      { value: 'global', label: 'Tudo (Global) - DEBUG' },
       ...availableMonths.map(m => ({
         value: m.value,
         label: `${m.label} (${m.count})`

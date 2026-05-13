@@ -50,7 +50,7 @@ export function DashboardHeader({
               className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all"
             />
           </div>
-          <FinancialPeriodFilter />
+          {/* <FinancialPeriodFilter /> */}
           <FinancialYearFilter />
         </div>
 

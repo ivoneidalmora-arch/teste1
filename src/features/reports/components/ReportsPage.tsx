@@ -23,6 +23,7 @@ import { cn } from '@/core/utils/formatters';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { SeniorFinancialReport } from './SeniorFinancialReport';
 import { calculateReportMetrics } from '../utils/reportMetrics';
+import { IncomeTransaction, ExpenseTransaction, Transaction } from '@/core/types/finance';
 import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 import { FinancialYearFilter } from '@/features/finance/components/filters/FinancialYearFilter';
@@ -66,7 +67,7 @@ export function ReportsPage() {
   }, [selectedPeriod, selectedYear]);
 
   const revenues = useMemo(() => 
-    filteredTransactions.filter(t => {
+    (filteredTransactions as IncomeTransaction[]).filter(t => {
       if (t.type !== 'income') return false;
       if (!manualPeriod.start || !manualPeriod.end) return true;
       return t.date >= manualPeriod.start && t.date <= manualPeriod.end;
@@ -75,7 +76,7 @@ export function ReportsPage() {
   );
   
   const expenses = useMemo(() => 
-    filteredTransactions.filter(t => {
+    (filteredTransactions as ExpenseTransaction[]).filter(t => {
       if (t.type !== 'expense') return false;
       if (!manualPeriod.start || !manualPeriod.end) return true;
       return t.date >= manualPeriod.start && t.date <= manualPeriod.end;
@@ -83,14 +84,16 @@ export function ReportsPage() {
     [filteredTransactions, manualPeriod]
   );
 
-  const filteredRevenues = useMemo(() => revenues.filter(item => 
-    item.placa?.toLowerCase().includes(search.toLowerCase()) ||
-    (item && 'customer' in item ? String(item.customer).toLowerCase().includes(search.toLowerCase()) : false)
-  ), [revenues, search]);
+  const filteredRevenues = useMemo(() => revenues.filter(item => {
+    const placaMatch = item.placa?.toLowerCase().includes(search.toLowerCase());
+    const clientMatch = item.cliente?.toLowerCase().includes(search.toLowerCase());
+    const customerMatch = item.customer?.toLowerCase().includes(search.toLowerCase());
+    return placaMatch || clientMatch || customerMatch;
+  }), [revenues, search]);
 
   const reportMetrics = useMemo(() => {
-    return calculateReportMetrics(filteredTransactions);
-  }, [filteredTransactions]);
+    return calculateReportMetrics([...revenues, ...expenses]);
+  }, [revenues, expenses]);
 
   const handleExportPDF = () => {
     const periodStr = selectedPeriod === 'global' 
