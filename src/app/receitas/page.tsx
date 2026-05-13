@@ -26,10 +26,14 @@ export default function ReceitasPage() {
 
   const incomeTransactions = transactions.filter(t => {
     const searchLower = searchQuery.toLowerCase();
+    const description = (('description' in t ? t.description : '') || '').toString();
+    const customer = (('customer' in t ? t.customer : ('cliente' in t ? t.cliente : '')) || '').toString();
+    const placa = (('placa' in t ? t.placa : '') || '').toString();
+    
     return (
-      t.description?.toLowerCase().includes(searchLower) ||
-      t.customer?.toLowerCase().includes(searchLower) ||
-      String(t.metadata?.placa || '').toLowerCase().includes(searchLower)
+      description.toLowerCase().includes(searchLower) ||
+      customer.toLowerCase().includes(searchLower) ||
+      placa.toLowerCase().includes(searchLower)
     );
   });
 

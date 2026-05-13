@@ -88,11 +88,14 @@ function prepareMonthlyData(transactions: any[], year: number) {
     });
   }
 
+  // REQUISITO 15: Filtrar somente meses com movimentação real
+  const filteredData = data.filter(d => d.entradas !== 0 || d.saidas !== 0);
+
   return {
     mode: "monthly" as const,
     title: "Fluxo de Caixa Global",
     subtitle: "Comparativo mensal consolidado de entradas e saídas",
-    data
+    data: filteredData.length > 0 ? filteredData : data // Fallback para não quebrar layout se estiver tudo zerado
   };
 }
 

@@ -12,4 +12,7 @@ export const transactionSchema = z.object({
 
 export const ingestionResultSchema = z.array(transactionSchema);
 
-export type TransactionInput = z.infer<typeof transactionSchema>;
+export type Transaction = z.infer<typeof transactionSchema>;
+export type NewTransaction = z.infer<typeof transactionSchema>;
+export type TransactionInput = Transaction;
+export type IngestionResult = z.infer<typeof ingestionResultSchema>;

@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "backups",
-    "backup-before-*"
+    "backup-before-*",
+    "scratch"
   ]
 }

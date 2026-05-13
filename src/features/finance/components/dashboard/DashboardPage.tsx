@@ -69,7 +69,7 @@ export function DashboardPage() {
       const lowSearch = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
         (t.description || '').toLowerCase().includes(lowSearch) ||
-        (t.customer || '').toLowerCase().includes(lowSearch)
+        (('customer' in t ? t.customer : '') || '').toLowerCase().includes(lowSearch)
       );
     }
 
@@ -150,13 +150,13 @@ export function DashboardPage() {
         id: String(norm.id),
         date: norm.date,
         description: norm.description,
-        customer: norm.customer || 'N/A',
+        customer: (('customer' in norm ? norm.customer : '') || 'N/A'),
         category: norm.category || 'Outros',
         amount: norm.amount,
         netAmount: norm.netAmount,
         grossAmount: norm.grossAmount,
         status: norm.status,
-        source: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source) ? norm.source : 'manual') as any,
+        source: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source || '') ? norm.source : 'manual') as any,
         type: norm.type as any
       } as any;
     }),
@@ -192,6 +192,17 @@ export function DashboardPage() {
         onGenerateReport={() => window.location.href = '/relatorios'}
         onSearch={setSearchQuery}
       />
+
+      {filteredTransactions.length === 0 && !loading && (
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-6 flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+            <Clock className="w-4 h-4 text-amber-600" />
+          </div>
+          <p className="text-amber-800 text-xs font-bold uppercase tracking-widest">
+            Nenhum lançamento encontrado para este período em {selectedYear}.
+          </p>
+        </div>
+      )}
 
       {/* Grid Principal Compacto */}
       <div className="grid grid-cols-12 gap-6">

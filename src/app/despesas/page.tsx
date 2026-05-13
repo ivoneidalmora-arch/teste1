@@ -26,9 +26,12 @@ export default function DespesasPage() {
 
   const expenseTransactions = transactions.filter(t => {
     const searchLower = searchQuery.toLowerCase();
+    const description = ('description' in t ? t.description : '') || '';
+    const category = t.category || '';
+    
     return (
-      t.description?.toLowerCase().includes(searchLower) ||
-      t.category?.toLowerCase().includes(searchLower)
+      description.toLowerCase().includes(searchLower) ||
+      category.toLowerCase().includes(searchLower)
     );
   });
 

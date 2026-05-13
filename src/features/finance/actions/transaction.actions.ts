@@ -60,8 +60,8 @@ export async function saveTransactionAction(transaction: NewTransaction) {
     payload.pagamento = transaction.metadata?.pagamento;
     payload.observacao = transaction.metadata?.observacao;
   } else {
-    payload.description = transaction.description;
-    payload.vencimento = transaction.dueDate || transaction.date;
+    payload.description = (transaction as any).description;
+    payload.vencimento = (transaction as any).dueDate || transaction.date;
     payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
     payload.observacao = transaction.metadata?.observacao;
   }
@@ -108,12 +108,12 @@ export async function updateTransactionAction(id: string | number, type: 'income
   if (type === 'income') {
     if (transaction.grossAmount !== undefined) payload.amountBruto = transaction.grossAmount;
     if (transaction.netAmount !== undefined) payload.amountLiquido = transaction.netAmount;
-    if (transaction.customer !== undefined) payload.cliente = transaction.customer;
+    if ((transaction as any).customer !== undefined) payload.cliente = (transaction as any).customer;
     if (transaction.metadata?.placa !== undefined) payload.placa = transaction.metadata.placa;
   } else {
-    if (transaction.description !== undefined) payload.description = transaction.description;
+    if ((transaction as any).description !== undefined) payload.description = (transaction as any).description;
     if (transaction.status !== undefined) payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
-    if (transaction.dueDate !== undefined) payload.vencimento = transaction.dueDate;
+    if ((transaction as any).dueDate !== undefined) payload.vencimento = (transaction as any).dueDate;
   }
   
   // Buscar valor antigo para o log

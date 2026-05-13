@@ -1,13 +1,13 @@
 import * as XLSX from 'xlsx';
 import { normalizePlaca, normalizeDate, capitalizeName } from '../utils/normalization';
 import { calculateLiquido } from '@/core/utils/finance';
-import { IngestionResult } from '@/core/schemas/transaction.schema';
+import { IngestionResult, Transaction } from '@/core/schemas/transaction.schema';
 
 export const ingestionService = {
   /**
    * Processa o documento identificando o formato automaticamente.
    */
-  async processDocument(file: File): Promise<{ data: IngestionResult[], rawResponse: string, logs: string[] }> {
+  async processDocument(file: File): Promise<{ data: IngestionResult, rawResponse: string, logs: string[] }> {
     const extension = file.name.split('.').pop()?.toLowerCase();
 
     if (extension === 'xlsx' || extension === 'xls' || extension === 'csv') {
@@ -23,7 +23,7 @@ export const ingestionService = {
    * Parsing para Excel e CSV usando a biblioteca SheetJS (xlsx).
    * Suporta .xlsx, .xls, .csv.
    */
-  async parseExcel(file: File): Promise<{ data: IngestionResult[], rawResponse: string, logs: string[] }> {
+  async parseExcel(file: File): Promise<{ data: IngestionResult, rawResponse: string, logs: string[] }> {
     const logs: string[] = [];
     const addLog = (msg: string) => logs.push(msg);
     
@@ -126,7 +126,7 @@ export const ingestionService = {
   /**
    * Parsing para PDF usando o fluxo de IA existente.
    */
-  async parsePDF(file: File): Promise<{ data: IngestionResult[], rawResponse: string, logs: string[] }> {
+  async parsePDF(file: File): Promise<{ data: IngestionResult, rawResponse: string, logs: string[] }> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -155,7 +155,7 @@ export const ingestionService = {
   /**
    * Mapper Central: Normaliza qualquer objeto para o formato IngestionResult.
    */
-  mapToStandard(row: any): IngestionResult {
+  mapToStandard(row: any): Transaction {
     const keys = Object.keys(row);
     
     const stripHtml = (html: string) => String(html || '').replace(/<[^>]*>?/gm, '');
@@ -274,7 +274,7 @@ export const ingestionService = {
     const serviceName = standardizeService(String(rawServico));
 
     return {
-      data: normalizeDate(rawData),
+      date: normalizeDate(rawData),
       placa: placa || '', // Garantir string para o estado do componente
       cliente: capitalizeName(String(rawCliente)),
       categoria: serviceName,

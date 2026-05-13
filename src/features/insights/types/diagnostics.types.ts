@@ -59,3 +59,10 @@ export interface InconsistencyRecord {
   groupRecords?: any[]; // Array de records originais caso seja duplicidade
   rawRecord?: any; // Registro original para edição
 }
+export interface InconsistencyGroup {
+  id: string;
+  title: string;
+  description: string;
+  severity: AuditSeverity;
+  items: InconsistencyRecord[];
+}

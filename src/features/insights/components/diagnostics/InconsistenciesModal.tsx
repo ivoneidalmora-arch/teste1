@@ -2,27 +2,27 @@
 
 import { useState, useMemo } from 'react';
 import { X, ShieldAlert, CheckCircle2, Filter, ChevronDown } from 'lucide-react';
-import { InconsistencyRecord, AuditStatus } from '../../types/diagnostics.types';
+import { InconsistencyRecord, AuditStatus, InconsistencyGroup } from '../../types/diagnostics.types';
 import { AuditIssueCard } from './AuditIssueCard';
 import { AuditApprovalModal } from './AuditApprovalModal';
-import { cn } from '@/core/utils/formatters';
 import { transactionService } from '@/features/finance/services/transaction.service';
 import { toast } from 'sonner';
 
 interface InconsistenciesModalProps {
-  isOpen: boolean;
+  group: InconsistencyGroup | null;
   onClose: () => void;
-  records: InconsistencyRecord[];
-  userId: string;
-  onRefresh: () => void;
+  onResolve: () => void;
+  userId?: string;
   onEditTransaction?: (transaction: any) => void;
 }
 
 type FilterStatus = 'all' | 'pending' | 'critical' | 'alert' | 'income' | 'expense';
 
-export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefresh, onEditTransaction }: InconsistenciesModalProps) {
-  const [filter, setFilter] = useState<FilterStatus>('pending');
+export function InconsistenciesModal({ group, onClose, onResolve, userId, onEditTransaction }: InconsistenciesModalProps) {
+  const [filter, setFilter] = useState<FilterStatus>('all');
   const [approvingRecord, setApprovingRecord] = useState<InconsistencyRecord | null>(null);
+
+  const records = group?.items || [];
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
@@ -36,7 +36,7 @@ export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefre
     });
   }, [records, filter]);
 
-  if (!isOpen) return null;
+  if (!group) return null;
 
   const handleDelete = async (record: InconsistencyRecord) => {
     if (!window.confirm('Tem certeza que deseja excluir este lançamento permanentemente?')) return;
@@ -44,7 +44,7 @@ export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefre
     try {
       await transactionService.delete(record.transactionId, record.transactionType, userId);
       toast.success('Lançamento excluído com sucesso.');
-      onRefresh();
+      onResolve();
     } catch (err) {
       toast.error('Erro ao excluir lançamento.');
     }
@@ -60,12 +60,12 @@ export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefre
             <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-[1.25rem] flex items-center justify-center border border-rose-100 shadow-inner">
               <ShieldAlert className="w-7 h-7" />
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Central de Auditoria</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                {records.length} {records.length === 1 ? 'Inconsistência identificada' : 'Inconsistências identificadas'}
-              </p>
-            </div>
+             <div>
+               <h2 className="text-2xl font-black text-slate-900 tracking-tight">{group.title}</h2>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                 {records.length} {records.length === 1 ? 'Ocorrência identificada' : 'Ocorrências identificadas'}
+               </p>
+             </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export function InconsistenciesModal({ isOpen, onClose, records, userId, onRefre
         onClose={() => setApprovingRecord(null)}
         record={approvingRecord}
         userId={userId}
-        onSuccess={() => onRefresh()}
+        onSuccess={() => onResolve()}
       />
     </div>
   );

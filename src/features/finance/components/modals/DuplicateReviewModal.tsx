@@ -128,7 +128,7 @@ export function DuplicateReviewModal({ isOpen, onClose, duplicateGroups }: Props
                           <User className="w-3 h-3" /> Cliente
                         </span>
                         <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">
-                          {t.customer || '---'}
+                          {(('customer' in t ? t.customer : '') || '---')}
                         </span>
                       </div>
                       <div className="flex flex-col">

@@ -86,7 +86,7 @@ export function DuplicateAlertModal({ isOpen, onClose, onConfirm, duplicate }: P
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Cliente</span>
-                <span className="text-sm font-bold text-slate-700 truncate max-w-[140px]">{duplicate.customer || 'Particular'}</span>
+                <span className="text-sm font-bold text-slate-700 truncate max-w-[140px]">{(('customer' in duplicate ? duplicate.customer : '') || 'Particular')}</span>
               </div>
             </div>
 

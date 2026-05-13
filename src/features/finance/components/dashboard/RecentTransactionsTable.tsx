@@ -65,8 +65,10 @@ export function RecentTransactionsTable({ transactions, onAction }: Props) {
                 const status = STATUS_MAP[t.status as keyof typeof STATUS_MAP] || STATUS_MAP.pending;
                 
                 // Escolha de ícone baseada na descrição
-                const Icon = t.description.toLowerCase().includes('vistoria') ? Car : (isIncome ? ArrowUpRight : ArrowDownRight);
-                const iconColor = t.description.toLowerCase().includes('vistoria') ? 'bg-blue-50 text-blue-500' : (isIncome ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500');
+                const description = t.description || '';
+                const isVistoria = description.toLowerCase().includes('vistoria');
+                const Icon = isVistoria ? Car : (isIncome ? ArrowUpRight : ArrowDownRight);
+                const iconColor = isVistoria ? 'bg-blue-50 text-blue-500' : (isIncome ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500');
 
                 return (
                   <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-200 cursor-default">
@@ -88,7 +90,7 @@ export function RecentTransactionsTable({ transactions, onAction }: Props) {
                           <span className="text-[12px] font-black text-[#0F172A] truncate leading-tight group-hover:text-blue-600 transition-colors">{t.description}</span>
                           <span className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tight flex items-center gap-1.5 mt-0.5">
                             <User className="w-2.5 h-2.5" />
-                            {t.customer}
+                            {('customer' in t ? t.customer : '') || 'N/A'}
                           </span>
                         </div>
                       </div>
