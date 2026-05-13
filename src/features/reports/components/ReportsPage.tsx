@@ -15,6 +15,14 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
+import { reportPDFService } from '../services/report-pdf.service';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { formatBRL } from '@/core/utils/formatters';
+import { cn } from '@/core/utils/formatters';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { SeniorFinancialReport } from './SeniorFinancialReport';
+import { calculateReportMetrics } from '../utils/reportMetrics';
 import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 import { FinancialYearFilter } from '@/features/finance/components/filters/FinancialYearFilter';
@@ -58,13 +66,21 @@ export function ReportsPage() {
   }, [selectedPeriod, selectedYear]);
 
   const revenues = useMemo(() => 
-    filteredTransactions.filter(t => t.type === 'income'),
-    [filteredTransactions]
+    filteredTransactions.filter(t => {
+      if (t.type !== 'income') return false;
+      if (!manualPeriod.start || !manualPeriod.end) return true;
+      return t.date >= manualPeriod.start && t.date <= manualPeriod.end;
+    }),
+    [filteredTransactions, manualPeriod]
   );
   
   const expenses = useMemo(() => 
-    filteredTransactions.filter(t => t.type === 'expense'),
-    [filteredTransactions]
+    filteredTransactions.filter(t => {
+      if (t.type !== 'expense') return false;
+      if (!manualPeriod.start || !manualPeriod.end) return true;
+      return t.date >= manualPeriod.start && t.date <= manualPeriod.end;
+    }),
+    [filteredTransactions, manualPeriod]
   );
 
   const filteredRevenues = useMemo(() => revenues.filter(item => 
@@ -104,7 +120,7 @@ export function ReportsPage() {
           </div>
 
           <div className="flex items-center bg-slate-50 px-4 h-12 rounded-2xl border border-slate-100">
-            <CalendarIcon className="w-4 h-4 text-slate-400 mr-3" />
+            <Calendar className="w-4 h-4 text-slate-400 mr-3" />
             <input 
               type="date" 
               value={manualPeriod.start}
@@ -221,21 +237,27 @@ export function ReportsPage() {
                     filteredRevenues.map((item) => (
                       <tr key={item.id} className="group hover:bg-slate-50/50 transition-all cursor-default">
                         <td className="px-8 py-5 text-[11px] font-bold text-slate-500">
-                          {format(new Date(item.data), 'dd/MM/yyyy')}
+                          {format(new Date(item.date), 'dd/MM/yyyy')}
                         </td>
                         <td className="px-8 py-5">
                           <span className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-700 uppercase tracking-tight">
-                            {item.placa}
+                            {item.placa || '---'}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-[11px] font-black text-slate-900 uppercase truncate max-w-[240px]">{item.cliente || 'AVULSO'}</td>
+                        <td className="px-8 py-5 text-[11px] font-black text-slate-900 uppercase truncate max-w-[240px]">
+                          {item.cliente || item.customer || 'AVULSO'}
+                        </td>
                         <td className="px-8 py-5">
                           <span className="px-3 py-1 bg-purple-50 border border-purple-100/50 rounded-xl text-[9px] font-black text-purple-500 uppercase tracking-tighter">
-                            {item.categoria}
+                            {item.category}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-right text-[11px] font-bold text-slate-400">{formatBRL(item.valor_bruto)}</td>
-                        <td className="px-8 py-5 text-right text-[13px] font-black text-slate-900">{formatBRL(item.valor_liquido)}</td>
+                        <td className="px-8 py-5 text-right text-[11px] font-bold text-slate-400">
+                          {formatBRL(item.amountBruto || item.amount)}
+                        </td>
+                        <td className="px-8 py-5 text-right text-[13px] font-black text-slate-900">
+                          {formatBRL(item.amountLiquido || item.amount)}
+                        </td>
                       </tr>
                     ))
                   )}
