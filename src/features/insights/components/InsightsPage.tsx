@@ -1,35 +1,36 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Sparkles, 
-  RefreshCw,
-  AlertTriangle,
-} from 'lucide-react';
-import { IconBadge } from '@/core/components/ui/IconBadge';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { cn } from '@/core/utils/formatters';
-import { useFinanceContext } from '../../finance/contexts/FinanceContext';
-import { FinancialPeriodFilter } from '../../finance/components/filters/FinancialPeriodFilter';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { toast } from 'sonner';
 
-// Novos Serviços e Tipos
-import { diagnosticGeneratorService } from '../services/diagnostics/diagnostic-generator.service';
+// Hooks e Contextos
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useFinanceContext } from '../../finance/contexts/FinanceContext';
+
+// Server Actions
+import { generateDiagnosticsAction } from '../actions/diagnostics.actions';
+
+// Tipos
 import { DiagnosticResult, InconsistencyRecord } from '../types/diagnostics.types';
 import { PeriodFilter } from '../types/insights.types';
 
 // Componentes
+import { InsightsHeader } from './InsightsHeader';
+import { MetricsSummaryCards } from './MetricsSummaryCards';
 import { DiagnosticPanel, DiagnosticPanelSkeleton } from './diagnostics/DiagnosticPanel';
 import { InconsistenciesModal } from './diagnostics/InconsistenciesModal';
 import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
+
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 export function InsightsPage() {
   const { user } = useAuth();
   
   const [diagnostics, setDiagnostics] = useState<DiagnosticResult[]>([]);
   const [inconsistencies, setInconsistencies] = useState<InconsistencyRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState<any>(null);
+  
+  const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -44,16 +45,22 @@ export function InsightsPage() {
     if (selectedPeriod === 'global') {
       return { type: 'global', label: 'Tudo (Global)' };
     }
-    const [y, m] = selectedPeriod.split('-').map(Number);
-    const d = new Date(y, m - 1, 1);
-    return {
-      type: 'month',
-      label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
-      month: m,
-      year: y,
-      startDate: format(startOfMonth(d), 'yyyy-MM-dd'),
-      endDate: format(endOfMonth(d), 'yyyy-MM-dd')
-    };
+    try {
+      const [y, m] = selectedPeriod.split('-').map(Number);
+      if (isNaN(y) || isNaN(m)) return { type: 'global', label: 'Tudo (Global)' };
+      
+      const d = new Date(y, m - 1, 1);
+      return {
+        type: 'month',
+        label: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+        month: m,
+        year: y,
+        startDate: format(startOfMonth(d), 'yyyy-MM-dd'),
+        endDate: format(endOfMonth(d), 'yyyy-MM-dd')
+      };
+    } catch (e) {
+      return { type: 'global', label: 'Tudo (Global)' };
+    }
   }, [selectedPeriod]);
 
   const loadDiagnostics = useCallback(async (isRefresh = false) => {
@@ -67,12 +74,21 @@ export function InsightsPage() {
     
     setError(null);
     try {
-      const data = await diagnosticGeneratorService.generateDiagnostics(user.id, periodFilter);
-      setDiagnostics(data.diagnostics);
-      setInconsistencies(data.inconsistencies);
+      const res = await generateDiagnosticsAction(periodFilter);
+      
+      if (res.success && res.data) {
+        setDiagnostics(res.data.diagnostics || []);
+        setInconsistencies(res.data.inconsistencies || []);
+        setSummary(res.data.summary);
+      } else {
+        throw new Error(res.error || "Erro ao processar diagnósticos");
+      }
     } catch (err: any) {
       console.error("Erro ao gerar diagnósticos:", err);
-      setError("Não foi possível carregar os dados financeiros para este período.");
+      setError("Não foi possível carregar os dados financeiros para este período. O sistema utilizará diagnósticos locais.");
+      // Fallback para arrays vazios para não quebrar a UI
+      setDiagnostics([]);
+      setInconsistencies([]);
     } finally {
       setLoading(false);
       setGenerating(false);
@@ -106,63 +122,41 @@ export function InsightsPage() {
     toast.success('Inconsistência resolvida após edição!');
   };
 
-
   return (
     <div className="max-w-[1600px] mx-auto space-y-8 p-6 animate-in fade-in duration-500 pb-20">
       
-      {/* Header & Filtros */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-        {/* Decorative background element */}
-        <div className="absolute right-0 top-0 w-64 h-64 bg-blue-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        
-        <div className="flex items-center gap-5 relative z-10">
-          <IconBadge icon={Sparkles} variant="blue" size="lg" gradient />
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-              {periodFilter.type === 'global' ? 'Análise do Histórico Completo' : `Análise de ${periodFilter.label}`}
-            </p>
-          </div>
-        </div>
+      {/* Header Unificado */}
+      <InsightsHeader 
+        periodFilter={periodFilter}
+        onRefresh={() => loadDiagnostics(true)}
+        loading={loading}
+        generating={generating}
+        error={error}
+      />
 
-        <div className="flex flex-wrap items-center gap-3 relative z-10">
-          <FinancialPeriodFilter />
-
-          <button 
-            onClick={() => loadDiagnostics(true)}
-            disabled={generating || loading}
-            className={cn(
-              "flex items-center gap-3 px-8 h-14 rounded-[1.25rem] text-[11px] font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-lg disabled:opacity-50",
-              generating 
-                ? "bg-slate-900 text-white" 
-                : "bg-gradient-to-br from-blue-600 to-blue-800 text-white hover:shadow-blue-200/50 hover:-translate-y-0.5"
-            )}
-          >
-            {generating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {generating ? 'Atualizando...' : 'Atualizar Diagnóstico'}
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-4">
-          <AlertTriangle className="w-5 h-5 text-rose-500" />
-          <p className="text-xs font-bold text-rose-700">{error}</p>
-        </div>
+      {/* Resumo Inteligente */}
+      {summary && (
+        <MetricsSummaryCards 
+          metrics={summary} 
+          loading={loading && !generating} 
+        />
       )}
 
       {/* Painel de Diagnósticos */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            Painel Executivo
+            Central de Auditoria & Inteligência
           </h2>
           {diagnostics.length > 0 && !loading && !generating && (
-             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">Sincronizado</span>
+             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5">
+               <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+               Análise Atualizada
+             </span>
           )}
         </div>
         
-        {loading ? (
+        {loading && !generating ? (
           <DiagnosticPanelSkeleton />
         ) : (
           <DiagnosticPanel 
@@ -171,6 +165,20 @@ export function InsightsPage() {
           />
         )}
       </div>
+
+      {/* Estados Vazios */}
+      {!loading && !generating && diagnostics.length === 0 && (
+        <div className="bg-white p-20 rounded-[3rem] border border-slate-100 text-center shadow-sm">
+          <div className="max-w-sm mx-auto space-y-4">
+            <p className="text-slate-400 text-sm font-medium">
+              Ainda não existem dados suficientes para gerar diagnósticos avançados neste período.
+            </p>
+            <p className="text-xs text-slate-300">
+              Cadastre receitas e despesas para ativar a inteligência financeira.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Modais */}
       {user && (
@@ -193,6 +201,10 @@ export function InsightsPage() {
           existingTransactions={transactions || []}
         />
       )}
+
+    </div>
+  );
+}
 
     </div>
   );

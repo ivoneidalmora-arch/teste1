@@ -3,8 +3,44 @@
 import { inconsistencyService } from "../services/diagnostics/inconsistency.service";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
+import { InconsistencyRecord, InconsistencyGroup } from "../types/diagnostics.types";
+
 export async function getInconsistencyGroupsAction() {
-  return await inconsistencyService.getInconsistencyGroups();
+  const { data: revenues } = await supabaseAdmin.from('Receitas').select('*').is('deleted_at', null);
+  const { data: expenses } = await supabaseAdmin.from('Despesas').select('*').is('deleted_at', null);
+  const { data: issues } = await supabaseAdmin.from('audit_issues').select('*');
+
+  const result = inconsistencyService.analyze({
+    rawRevenues: revenues || [],
+    rawExpenses: expenses || [],
+    auditIssues: issues || [],
+    period: { type: 'all' }
+  });
+
+  const groups: Record<string, InconsistencyRecord[]> = {};
+  result.records.forEach(r => {
+    if (!groups[r.type]) groups[r.type] = [];
+    groups[r.type].push(r);
+  });
+
+  return Object.entries(groups).map(([type, items]) => ({
+    id: type,
+    title: items[0].description,
+    description: items[0].details,
+    severity: items[0].severity,
+    items: items.map(i => ({
+      id: i.id,
+      transactionId: i.transactionId,
+      transactionType: i.transactionType,
+      date: i.date,
+      description: i.description,
+      value: i.value,
+      details: i.details,
+      severity: i.severity,
+      status: i.status,
+      type: i.type
+    }))
+  })) as InconsistencyGroup[];
 }
 
 export async function getAuditIssuesAction(userId: string) {
@@ -31,7 +67,7 @@ export async function updateAuditIssueAction(
         issue_type: issueType,
         status,
         ...details
-      }, { onConflict: 'transaction_id, issue_type' });
+      }, { onConflict: 'app_user_id, transaction_id, issue_type' });
 
     if (error) throw error;
     return { success: true };

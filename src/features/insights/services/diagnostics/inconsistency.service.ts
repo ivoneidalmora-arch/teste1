@@ -1,6 +1,8 @@
 import { DiagnosticResult, InconsistencyRecord, AuditSeverity, AuditStatus, InconsistencyGroup } from '../../types/diagnostics.types';
 
-import { supabaseAdmin } from '@/lib/supabase/server';
+// REMOVIDO: import { supabaseAdmin } from '@/lib/supabase/server';
+// Este arquivo agora é focado 100% em lógica pura de análise, permitindo uso seguro no bundle de cliente se necessário,
+// embora agora seja executado preferencialmente no servidor via Actions.
 
 export const inconsistencyService = {
   analyze(context: any): { diagnostic: DiagnosticResult, records: InconsistencyRecord[] } {
@@ -328,43 +330,5 @@ export const inconsistencyService = {
     };
   },
 
-  async getInconsistencyGroups(): Promise<InconsistencyGroup[]> {
-    // Busca dados reais para auditoria global
-    const { data: revenues } = await supabaseAdmin.from('Receitas').select('*').is('deleted_at', null);
-    const { data: expenses } = await supabaseAdmin.from('Despesas').select('*').is('deleted_at', null);
-    const { data: issues } = await supabaseAdmin.from('audit_issues').select('*');
-
-    const result = this.analyze({
-      rawRevenues: revenues || [],
-      rawExpenses: expenses || [],
-      auditIssues: issues || [],
-      period: { type: 'all' }
-    });
-
-    // Agrupa records por tipo para o Dashboard de Auditoria
-    const groups: Record<string, InconsistencyRecord[]> = {};
-    result.records.forEach(r => {
-      if (!groups[r.type]) groups[r.type] = [];
-      groups[r.type].push(r);
-    });
-
-    return Object.entries(groups).map(([type, items]) => ({
-      id: type,
-      title: items[0].description,
-      description: items[0].details,
-      severity: items[0].severity,
-      items: items.map(i => ({
-        id: i.id,
-        transactionId: i.transactionId,
-        transactionType: i.transactionType,
-        date: i.date,
-        description: i.description,
-        value: i.value,
-        details: i.details,
-        severity: i.severity,
-        status: i.status,
-        type: i.type
-      }))
-    }));
   }
 };

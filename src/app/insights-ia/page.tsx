@@ -1,4 +1,5 @@
 import { InsightsPage } from '@/features/insights/components/InsightsPage';
+import { InsightsErrorBoundary } from '@/features/insights/components/InsightsErrorBoundary';
 
 export const metadata = {
   title: 'Insights IA - Alfa Perícia',
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <InsightsPage />;
+  return (
+    <InsightsErrorBoundary>
+      <InsightsPage />
+    </InsightsErrorBoundary>
+  );
 }
