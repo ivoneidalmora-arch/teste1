@@ -12,15 +12,15 @@ export function filterByPeriodAndYear(
     const date = normalizeDate(item);
     if (!date) return false;
 
-    // REQUISITO HARDCORE: Se o período for global/all, ignora inclusive o filtro de ano
+    const itemYear = date.getUTCFullYear();
+    
+    // Se não for o ano selecionado, descarta (Mesmo no modo Global, conforme Requisito 12)
+    if (itemYear !== selectedYear) return false;
+
+    // Se o período for global/all, já passou no teste do ano, retorna true
     if (selectedPeriod === 'global' || selectedPeriod === 'all' || selectedPeriod === 'tudo') {
       return true;
     }
-
-    const itemYear = date.getUTCFullYear();
-    
-    // Se não for o ano selecionado, descarta
-    if (itemYear !== selectedYear) return false;
 
     // Se for um mês específico (formato YYYY-MM ou apenas MM)
     const itemMonth = date.getUTCMonth() + 1;
@@ -30,6 +30,47 @@ export function filterByPeriodAndYear(
 
     return itemMonth === targetMonth;
   });
+}
+
+/**
+ * Retorna os meses que possuem lançamentos no ano selecionado.
+ */
+export type AvailableMonth = {
+  value: string;
+  label: string;
+  monthIndex: number;
+  count: number;
+};
+
+export const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
+export function getAvailableMonths(
+  transactions: any[],
+  selectedYear: number
+): AvailableMonth[] {
+  const monthMap = new Map<number, number>();
+
+  transactions.forEach((transaction) => {
+    const date = normalizeDate(transaction);
+    if (!date) return;
+
+    if (date.getUTCFullYear() !== selectedYear) return;
+
+    const monthIndex = date.getUTCMonth();
+    monthMap.set(monthIndex, (monthMap.get(monthIndex) || 0) + 1);
+  });
+
+  return Array.from(monthMap.entries())
+    .sort(([monthA], [monthB]) => monthA - monthB)
+    .map(([monthIndex, count]) => ({
+      value: String(monthIndex + 1).padStart(2, "0"),
+      label: MONTH_NAMES[monthIndex],
+      monthIndex,
+      count,
+    }));
 }
 
 /**
