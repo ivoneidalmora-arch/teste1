@@ -24,11 +24,11 @@ export const transactionService = {
   },
 
   async deleteAll(app_user_id: string): Promise<boolean> {
-    // Bloqueado em produção conforme Requisito 1
-    if (process.env.NODE_ENV === 'production') {
+    // PROTEÇÃO CRÍTICA: Bloqueado em produção
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+      console.error("🛑 BLOQUEIO DE SEGURANÇA: Tentativa de DELETE em massa detectada em PRODUÇÃO.");
       throw new Error("A exclusão em massa está desabilitada em ambiente de produção para sua segurança.");
     }
-    // Para dev, poderíamos implementar, mas o foco é segurança.
     return false;
   },
 

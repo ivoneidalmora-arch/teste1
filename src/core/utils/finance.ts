@@ -92,6 +92,8 @@ export function calculateFinancialMetrics(transactions: (Transaction | any)[]) {
   const saldoDisponivel = receitaLiquida - despesasPagas;
   const saldoProjetado = receitaLiquida - despesasTotal;
   const lucroMes = receitaLiquida - despesasTotal;
+  const margemLiquida = receitaBruta > 0 ? (receitaLiquida / receitaBruta) * 100 : 0;
+  const ticketMedio = receitas.length > 0 ? receitaBruta / receitas.length : 0;
 
   return {
     receitaBruta,
@@ -102,6 +104,8 @@ export function calculateFinancialMetrics(transactions: (Transaction | any)[]) {
     saldoDisponivel,
     saldoProjetado,
     lucroMes,
+    margemLiquida,
+    ticketMedio,
     totalTransactions: normalized.length
   };
 }

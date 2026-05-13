@@ -14,16 +14,16 @@ import {
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { importParserService } from '../services/import-parser.service';
-import { ImportItem } from '../types/import.types';
 import { formatBRL } from '@/core/utils/formatters';
 import { cn } from '@/core/utils/formatters';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
+import { ValidatedImportItem, ImportItemSchema } from '../schemas/import.schema';
 
 export function ImportPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<ImportItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -34,7 +34,18 @@ export function ImportPage() {
     setLoading(true);
     try {
       const data = await importParserService.parseFile(file);
-      setItems(data);
+      
+      // Validar cada item com Zod
+      const validatedData = data.map(item => {
+        const result = ImportItemSchema.safeParse(item);
+        return {
+          ...item,
+          isValid: result.success,
+          errors: result.success ? [] : result.error.errors.map(err => err.message)
+        };
+      });
+
+      setItems(validatedData);
       toast.success(`${data.length} vistorias encontradas.`);
     } catch (error: any) {
       toast.error(error.message);
@@ -45,24 +56,32 @@ export function ImportPage() {
 
   const handleSave = async () => {
     if (!user?.id || items.length === 0) return;
+    
+    const validItems = items.filter(i => i.isValid);
+    if (validItems.length === 0) {
+      toast.error('Nenhum item válido para importar.');
+      return;
+    }
+
     setSaving(true);
     try {
-      const transactions = items.map(item => ({
+      const transactions = validItems.map(item => ({
         app_user_id: user.id,
-        data: item.data,
+        date: item.data,
         placa: item.placa,
         cliente: item.cliente,
-        categoria: item.categoria,
-        valor_bruto: item.valorBruto,
-        valor_liquido: item.valorLiquido,
-        source: 'import',
-        status: 'paid'
+        category: item.categoria,
+        amountBruto: item.valorBruto,
+        amountLiquido: item.valorLiquido,
+        amount: item.valorBruto,
+        status: 'paid',
+        observacao: 'IMPORTADO VIA SISTEMA'
       }));
 
       const { error } = await supabase.from('Receitas').insert(transactions);
       if (error) throw error;
 
-      toast.success('Importação concluída com sucesso!');
+      toast.success(`${validItems.length} registros salvos com sucesso!`);
       setItems([]);
     } catch (error: any) {
       toast.error('Erro ao salvar: ' + error.message);
@@ -79,7 +98,7 @@ export function ImportPage() {
           <IconBadge icon={Upload} variant="blue" size="lg" gradient />
           <div>
             <h1 className="text-2xl font-black text-[#0F172A] tracking-tight">Importação de Dados</h1>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Processamento inteligente de CSV, XLSX e PDF</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Validação rigorosa pré-inserção</p>
           </div>
         </div>
         
@@ -96,77 +115,86 @@ export function ImportPage() {
             <input type="file" className="hidden" onChange={handleFileUpload} accept=".csv,.xlsx,.pdf" />
             <div className="flex items-center gap-2 px-6 h-12 bg-white border-2 border-dashed border-slate-200 text-slate-500 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all">
               {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {loading ? 'Processando...' : 'Selecionar Arquivo'}
+              {loading ? 'Validando...' : 'Importar Arquivo'}
             </div>
           </label>
         </div>
       </div>
 
-      {items.length === 0 ? (
-        <div className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-3xl p-20 text-center">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mx-auto mb-6">
-            <FileText className="w-8 h-8 text-slate-300" />
-          </div>
-          <h3 className="text-lg font-black text-slate-400 mb-2">Nenhum arquivo processado</h3>
-          <p className="text-sm font-bold text-slate-300 max-w-sm mx-auto">
-            Arraste seu relatório financeiro ou clique no botão para iniciar a extração inteligente de dados.
-          </p>
-        </div>
-      ) : (
+      {items.length > 0 && (
         <div className="space-y-6">
-          {/* Resumo da Importação */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-600 p-6 rounded-3xl text-white shadow-lg shadow-blue-600/20">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Total de Itens</p>
+            <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-lg">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Total Detectado</p>
               <h3 className="text-3xl font-black">{items.length}</h3>
             </div>
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Valor Total Bruto</p>
-              <h3 className="text-2xl font-black text-slate-900">
-                {formatBRL(items.reduce((acc, curr) => acc + curr.valorBruto, 0))}
-              </h3>
+            <div className="bg-emerald-600 p-6 rounded-3xl text-white shadow-lg">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Prontos para Salvar</p>
+              <h3 className="text-3xl font-black">{items.filter(i => i.isValid).length}</h3>
             </div>
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Pronto para salvar</p>
-                <h3 className="text-2xl font-black text-emerald-600">{items.length} itens</h3>
-              </div>
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-6 h-12 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                Confirmar Salvar
-              </button>
+            <div className="bg-rose-600 p-6 rounded-3xl text-white shadow-lg">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Inconsistentes</p>
+              <h3 className="text-3xl font-black">{items.filter(i => !i.isValid).length}</h3>
             </div>
           </div>
 
-          {/* Tabela de Preview */}
           <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+              <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                Pré-visualização e Validação
+              </h2>
+              <button 
+                onClick={handleSave}
+                disabled={saving || items.filter(i => i.isValid).length === 0}
+                className="flex items-center gap-2 px-6 h-10 bg-emerald-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all"
+              >
+                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                Processar {items.filter(i => i.isValid).length} Válidos
+              </button>
+            </div>
+            
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50">
+                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                     <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</th>
                     <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Placa</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Valor</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Cliente / Serviço</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Valores</th>
                     <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {items.map((item, idx) => (
-                    <tr key={item.id} className="group hover:bg-slate-50/30 transition-all">
+                    <tr key={idx} className={cn("group transition-all", !item.isValid && "bg-rose-50/30")}>
+                      <td className="px-6 py-4">
+                        {item.isValid ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        ) : (
+                          <div className="group/error relative">
+                            <AlertTriangle className="w-5 h-5 text-rose-500 cursor-help" />
+                            <div className="absolute left-8 top-0 hidden group-hover/error:block z-50 w-48 p-2 bg-slate-900 text-[10px] text-white rounded-lg shadow-xl">
+                              {item.errors.map((e: string, i: number) => (
+                                <div key={i}>• {e}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-[11px] font-bold text-slate-500">{item.data}</td>
                       <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-slate-100 rounded text-[10px] font-black text-slate-700 uppercase tracking-tighter">
+                        <span className="px-2 py-1 bg-slate-100 rounded text-[10px] font-black text-slate-700">
                           {item.placa}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-[11px] font-black text-slate-900 uppercase truncate max-w-[150px]">{item.cliente}</td>
-                      <td className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase">{item.categoria}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-slate-900 uppercase truncate max-w-[200px]">{item.cliente}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{item.categoria}</span>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex flex-col items-end">
                           <span className="text-[11px] font-black text-slate-900">{formatBRL(item.valorBruto)}</span>

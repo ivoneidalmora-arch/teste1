@@ -16,6 +16,7 @@ import {
   MoreVertical,
   Trash2,
   ShieldCheck,
+  Activity,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
@@ -63,6 +64,7 @@ const MENU_GROUPS: SidebarSection[] = [
     title: 'Sistema',
     items: [
       { icon: ShieldCheck, label: 'Auditoria', href: '/auditoria', variant: 'teal' },
+      { icon: Activity, label: 'Saúde do Sistema', href: '/admin/saude', variant: 'blue' },
       { icon: Settings, label: 'Configurações', href: '/configuracoes', variant: 'blue' },
     ]
   }

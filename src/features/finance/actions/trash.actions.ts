@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { getSession } from "@/features/auth/actions/auth.actions";
 import { TransactionMapper } from "../mappers/transaction.mapper";
+import { auditLogService } from "@/features/audit/services/audit-log.service";
 
 /**
  * Busca itens excluídos logicamente (Soft Deleted).
@@ -46,6 +47,14 @@ export async function restoreTransactionAction(id: string | number, type: 'incom
     .eq('app_user_id', userId);
 
   if (error) throw error;
+
+  await auditLogService.log({
+    userId,
+    action: 'RESTORE',
+    entityType: type === 'income' ? 'RECEITA' : 'DESPESA',
+    entityId: String(id)
+  });
+
   return true;
 }
 
@@ -60,13 +69,25 @@ export async function permanentDeleteTransactionAction(id: string | number, type
   const table = type === 'income' ? 'Receitas' : 'Despesas';
 
   // Opcional: Logar em tabela de auditoria permanente antes de deletar
+  // Buscar valor antes de deletar permanentemente
+  const { data: oldRecord } = await supabaseAdmin.from(table).select('*').eq('id', id).single();
+
   const { error } = await supabaseAdmin
     .from(table)
     .delete()
     .eq('id', id)
     .eq('app_user_id', userId)
-    .not('deleted_at', 'is', null); // Garantir que só deleta o que já estava na lixeira
+    .not('deleted_at', 'is', null);
 
   if (error) throw error;
+
+  await auditLogService.log({
+    userId,
+    action: 'DELETE',
+    entityType: type === 'income' ? 'RECEITA' : 'DESPESA',
+    entityId: String(id),
+    oldValues: { ...oldRecord, permanent: true }
+  });
+
   return true;
 }

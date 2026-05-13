@@ -6,6 +6,7 @@ import { NewTransaction, Transaction } from "@/core/types/finance";
 import { TransactionMapper } from "../mappers/transaction.mapper";
 import { normalizePlaca } from "@/features/ai-ocr/utils/normalization";
 import { normalizeRevenueName } from "../utils/normalization";
+import { auditLogService } from "@/features/audit/services/audit-log.service";
 
 /**
  * Server Action para buscar todas as transações de um usuário de forma segura.
@@ -72,9 +73,19 @@ export async function saveTransactionAction(transaction: NewTransaction) {
     throw new Error(error.message);
   }
   
-  return transaction.type === 'income' 
+  const saved = transaction.type === 'income' 
     ? TransactionMapper.toIncome(data) 
     : TransactionMapper.toExpense(data);
+
+  await auditLogService.log({
+    userId,
+    action: 'CREATE',
+    entityType: transaction.type === 'income' ? 'RECEITA' : 'DESPESA',
+    entityId: String(saved.id),
+    newValues: payload
+  });
+  
+  return saved;
 }
 
 /**
@@ -105,8 +116,21 @@ export async function updateTransactionAction(id: string | number, type: 'income
     if (transaction.dueDate !== undefined) payload.vencimento = transaction.dueDate;
   }
   
+  // Buscar valor antigo para o log
+  const { data: oldRecord } = await supabaseAdmin.from(table).select('*').eq('id', id).single();
+
   const { error } = await supabaseAdmin.from(table).update(payload).eq('id', id).eq('app_user_id', userId);
   if (error) throw error;
+
+  await auditLogService.log({
+    userId,
+    action: 'UPDATE',
+    entityType: type === 'income' ? 'RECEITA' : 'DESPESA',
+    entityId: String(id),
+    oldValues: oldRecord,
+    newValues: payload
+  });
+
   return true;
 }
 
@@ -120,6 +144,9 @@ export async function deleteTransactionAction(id: string | number, type: 'income
   const userId = session.user.id;
   const table = type === 'income' ? 'Receitas' : 'Despesas';
   
+  // Buscar valor antigo para o log
+  const { data: oldRecord } = await supabaseAdmin.from(table).select('*').eq('id', id).single();
+
   const { error } = await supabaseAdmin
     .from(table)
     .update({ 
@@ -130,5 +157,14 @@ export async function deleteTransactionAction(id: string | number, type: 'income
     .eq('app_user_id', userId);
   
   if (error) throw error;
+
+  await auditLogService.log({
+    userId,
+    action: 'DELETE',
+    entityType: type === 'income' ? 'RECEITA' : 'DESPESA',
+    entityId: String(id),
+    oldValues: oldRecord
+  });
+
   return true;
 }

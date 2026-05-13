@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { getDeletedTransactionsAction, restoreTransactionAction, permanentDeleteTransactionAction } from '@/features/finance/actions/trash.actions';
 import { Transaction } from '@/core/types/finance';
-import { formatCurrency } from '@/core/utils/formatters';
+import { formatBRL } from '@/core/utils/formatters';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Trash2, RotateCcw, AlertTriangle, ArrowLeft, Search } from 'lucide-react';
@@ -133,7 +133,7 @@ export default function TrashPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
-                        {formatCurrency(item.amount)}
+                        {formatBRL(item.amount)}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500">
                         {item.deletedAt ? format(new Date(item.deletedAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '-'}

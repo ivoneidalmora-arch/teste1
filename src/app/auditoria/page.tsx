@@ -2,10 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, AlertCircle, CheckCircle2, Search, Filter, Database, RefreshCw } from 'lucide-react';
-import { diagnosticGeneratorService } from '@/features/insights/services/diagnostics/diagnostic-generator.service';
-import { inconsistencyService } from '@/features/insights/services/diagnostics/inconsistency.service';
+import { getInconsistencyGroupsAction } from '@/features/insights/actions/audit.actions';
 import { InconsistencyGroup } from '@/features/insights/types/diagnostics.types';
-import { InconsistenciesModal } from '@/features/insights/services/diagnostics/InconsistenciesModal';
+import { InconsistenciesModal } from '@/features/insights/components/diagnostics/InconsistenciesModal';
 import { toast } from 'sonner';
 
 export default function AuditoriaPage() {
@@ -17,8 +16,8 @@ export default function AuditoriaPage() {
   const loadAudit = async () => {
     setLoading(true);
     try {
-      // Usando o serviço de diagnóstico real
-      const allGroups = await inconsistencyService.getInconsistencyGroups();
+      // Usando a Action do Servidor para auditoria global
+      const allGroups = await getInconsistencyGroupsAction();
       setGroups(allGroups);
       
       const critical = allGroups.filter(g => g.severity === 'critical').length;

@@ -32,7 +32,10 @@ export const duplicateReviewService = {
   async deleteReview(userId: string, groupKey: string) {
     const { error } = await supabase
       .from('duplicate_reviews')
-      .delete()
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        deleted_by: userId
+      })
       .eq('app_user_id', userId)
       .eq('duplicate_group_key', groupKey);
 

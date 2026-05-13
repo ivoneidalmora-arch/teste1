@@ -35,7 +35,10 @@ export const approvedDuplicateService = {
   async delete(id: string, app_user_id: string): Promise<boolean> {
     const { error } = await supabase
       .from('approved_duplicates')
-      .delete()
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        deleted_by: app_user_id
+      })
       .eq('id', id)
       .eq('app_user_id', app_user_id);
 

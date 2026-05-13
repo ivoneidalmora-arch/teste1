@@ -12,15 +12,15 @@ export function filterByPeriodAndYear(
     const date = normalizeDate(item);
     if (!date) return false;
 
+    // REQUISITO HARDCORE: Se o período for global/all, ignora inclusive o filtro de ano
+    if (selectedPeriod === 'global' || selectedPeriod === 'all' || selectedPeriod === 'tudo') {
+      return true;
+    }
+
     const itemYear = date.getUTCFullYear();
     
     // Se não for o ano selecionado, descarta
     if (itemYear !== selectedYear) return false;
-
-    // Se o período for global/all, já passou no filtro de ano
-    if (selectedPeriod === 'global' || selectedPeriod === 'all' || selectedPeriod === 'tudo') {
-      return true;
-    }
 
     // Se for um mês específico (formato YYYY-MM ou apenas MM)
     const itemMonth = date.getUTCMonth() + 1;

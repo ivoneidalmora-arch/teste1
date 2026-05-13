@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { auditLogService } from "@/features/audit/services/audit-log.service";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -78,6 +79,14 @@ export async function registerUser(formData: FormData) {
       secure: process.env.NODE_ENV === "production", 
       sameSite: "lax",
       path: "/"
+    });
+
+    await auditLogService.log({
+      userId: data.id,
+      action: 'CREATE',
+      entityType: 'RECEITA', // Usando RECEITA como placeholder ou criar entity USER
+      entityId: data.id,
+      newValues: { username: data.username }
     });
 
     return { success: true, user: { id: data.id, username: data.username } };
@@ -157,12 +166,13 @@ export async function loginUser(formData: FormData) {
     });
 
     // Log de Sucesso
-    await supabaseAdmin.from("auth_logs").insert([{ 
-      app_user_id: user.id, 
-      action: 'login', 
-      ip_address: ip, 
-      user_agent: userAgent 
-    }]);
+    await auditLogService.log({
+      userId: user.id,
+      action: 'LOGIN',
+      entityType: 'RECEITA',
+      entityId: user.id,
+      status: 'SUCCESS'
+    });
 
     return { success: true, user: { id: user.id, username: user.username } };
   } catch (error: any) {

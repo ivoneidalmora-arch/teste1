@@ -1,58 +1,41 @@
 "use server";
 
+import { inconsistencyService } from "../services/diagnostics/inconsistency.service";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { AuditStatus } from "../types/diagnostics.types";
-import { revalidatePath } from "next/cache";
+
+export async function getInconsistencyGroupsAction() {
+  return await inconsistencyService.getInconsistencyGroups();
+}
+
+export async function getAuditIssuesAction(userId: string) {
+  const { data } = await supabaseAdmin
+    .from('audit_issues')
+    .select('*')
+    .eq('app_user_id', userId);
+  return data || [];
+}
 
 export async function updateAuditIssueAction(
-  userId: string, 
-  transactionId: string, 
-  issueType: string, 
-  status: AuditStatus, 
-  payload: any = {}
+  userId: string,
+  transactionId: string,
+  issueType: string,
+  status: string,
+  details: any
 ) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('audit_issues')
       .upsert({
         app_user_id: userId,
         transaction_id: transactionId,
         issue_type: issueType,
         status,
-        updated_at: new Date().toISOString(),
-        ...payload
-      }, { onConflict: 'app_user_id,transaction_id,issue_type' })
-      .select()
-      .single();
+        ...details
+      }, { onConflict: 'transaction_id, issue_type' });
 
-    if (error) {
-      console.error("[updateAuditIssueAction] DB Error:", error);
-      return { error: `Erro no Banco: ${error.message}` };
-    }
-
-    revalidatePath('/insights-ia');
-    return { success: true, data };
+    if (error) throw error;
+    return { success: true };
   } catch (err: any) {
-    console.error("[updateAuditIssueAction] Critical Error:", err);
-    return { error: `Erro Crítico: ${err.message || "Erro interno"}` };
-  }
-}
-
-export async function getAuditIssuesAction(userId: string) {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('audit_issues')
-      .select('*')
-      .eq('app_user_id', userId);
-
-    if (error) {
-      console.error("[getAuditIssuesAction] Error:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (err) {
-    console.error("[getAuditIssuesAction] Critical Error:", err);
-    return [];
+    return { error: err.message };
   }
 }

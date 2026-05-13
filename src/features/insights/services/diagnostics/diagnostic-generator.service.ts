@@ -8,7 +8,7 @@ import { expenseDiagnosticService } from './expense.service';
 import { clientDiagnosticService } from './client.service';
 import { serviceDiagnosticService } from './service.service';
 import { riskDiagnosticService } from './risk.service';
-import { inconsistencyDiagnosticService } from './inconsistency.service';
+import { inconsistencyService } from './inconsistency.service';
 import { TransactionMapper } from '@/features/finance/mappers/transaction.mapper';
 
 export const diagnosticGeneratorService = {
@@ -74,7 +74,7 @@ export const diagnosticGeneratorService = {
     const service = serviceDiagnosticService.analyze(context);
     const risk = riskDiagnosticService.analyze({ health, growth, expense, client, service, context });
     
-    const inconsistencyData = inconsistencyDiagnosticService.analyze(context);
+    const inconsistencyData = inconsistencyService.analyze(context);
     const inconsistencyDiag = inconsistencyData.diagnostic;
 
     const diagnostics = [health, growth, expense, client, service, risk, inconsistencyDiag];

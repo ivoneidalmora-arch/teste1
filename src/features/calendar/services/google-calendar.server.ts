@@ -219,7 +219,10 @@ export class GoogleCalendarServerService {
 
     await supabaseAdmin
       .from('google_calendar_connections')
-      .delete()
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        status: 'disconnected'
+      })
       .eq('app_user_id', userId);
 
     return { success: true };
