@@ -1,4 +1,4 @@
-import { DiagnosticResult, InconsistencyRecord, AuditSeverity, AuditStatus } from '../../types/diagnostics.types';
+import { DiagnosticResult, InconsistencyRecord, AuditSeverity, AuditStatus, InconsistencyGroup } from '../../types/diagnostics.types';
 
 import { supabaseAdmin } from '@/lib/supabase/server';
 
@@ -362,7 +362,8 @@ export const inconsistencyService = {
         value: i.value,
         details: i.details,
         severity: i.severity,
-        status: i.status
+        status: i.status,
+        type: i.type
       }))
     }));
   }

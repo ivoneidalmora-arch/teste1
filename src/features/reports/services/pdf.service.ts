@@ -57,7 +57,7 @@ export const pdfService = {
     const tableData = transactions.map(t => {
       const isInc = t.type === 'income';
       const val = isInc ? (t.netAmount || t.amount) : t.amount;
-      const desc = t.description || t.customer || t.category || 'N/A';
+      const desc = t.description || (('customer' in t ? t.customer : '') || t.category || 'N/A');
       
       return [
         format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy'),

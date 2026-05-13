@@ -106,7 +106,7 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-bold text-slate-800 truncate">
-                          {t.description || t.customer || 'Lançamento'}
+                          {t.description || (('customer' in t ? t.customer : '') || 'Lançamento')}
                         </span>
                         {t.metadata?.placa && (
                           <span className="text-[10px] font-mono text-brand-primary font-bold">{String(t.metadata.placa)}</span>
@@ -216,7 +216,7 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
         onConfirm={handleDelete}
         loading={isDeleting}
         title="Excluir Lançamento?"
-        description={`Você está prestes a excluir "${deletingTransaction?.description || deletingTransaction?.customer}". Esta ação não pode ser desfeita.`}
+        description={`Você está prestes a excluir "${deletingTransaction?.description || (deletingTransaction && 'customer' in deletingTransaction ? deletingTransaction.customer : '') || 'Lançamento'}". Esta ação não pode ser desfeita.`}
         confirmText="Sim, Excluir"
       />
     </Card>

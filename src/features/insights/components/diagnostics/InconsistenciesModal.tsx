@@ -9,20 +9,34 @@ import { transactionService } from '@/features/finance/services/transaction.serv
 import { toast } from 'sonner';
 
 interface InconsistenciesModalProps {
-  group: InconsistencyGroup | null;
+  isOpen: boolean;
   onClose: () => void;
-  onResolve: () => void;
+  group?: InconsistencyGroup | null;
+  records?: InconsistencyRecord[];
+  onResolve?: () => void;
+  onRefresh?: () => void;
   userId?: string;
   onEditTransaction?: (transaction: any) => void;
 }
 
 type FilterStatus = 'all' | 'pending' | 'critical' | 'alert' | 'income' | 'expense';
 
-export function InconsistenciesModal({ group, onClose, onResolve, userId, onEditTransaction }: InconsistenciesModalProps) {
+export function InconsistenciesModal({ 
+  isOpen, 
+  onClose, 
+  group, 
+  records: directRecords, 
+  onResolve, 
+  onRefresh, 
+  userId, 
+  onEditTransaction 
+}: InconsistenciesModalProps) {
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [approvingRecord, setApprovingRecord] = useState<InconsistencyRecord | null>(null);
 
-  const records = group?.items || [];
+  const finalResolve = onResolve || onRefresh || (() => {});
+  const records = directRecords || group?.items || [];
+  const title = group?.title || 'Inconsistências Identificadas';
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
@@ -36,15 +50,15 @@ export function InconsistenciesModal({ group, onClose, onResolve, userId, onEdit
     });
   }, [records, filter]);
 
-  if (!group) return null;
+  if (!isOpen) return null;
 
   const handleDelete = async (record: InconsistencyRecord) => {
     if (!window.confirm('Tem certeza que deseja excluir este lançamento permanentemente?')) return;
     
     try {
-      await transactionService.delete(record.transactionId, record.transactionType, userId);
+      await transactionService.delete(record.transactionId, record.transactionType, userId || '');
       toast.success('Lançamento excluído com sucesso.');
-      onResolve();
+      finalResolve();
     } catch (err) {
       toast.error('Erro ao excluir lançamento.');
     }
@@ -61,7 +75,7 @@ export function InconsistenciesModal({ group, onClose, onResolve, userId, onEdit
               <ShieldAlert className="w-7 h-7" />
             </div>
              <div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight">{group.title}</h2>
+               <h2 className="text-2xl font-black text-slate-900 tracking-tight">{title}</h2>
                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                  {records.length} {records.length === 1 ? 'Ocorrência identificada' : 'Ocorrências identificadas'}
                </p>
@@ -134,8 +148,8 @@ export function InconsistenciesModal({ group, onClose, onResolve, userId, onEdit
         isOpen={!!approvingRecord}
         onClose={() => setApprovingRecord(null)}
         record={approvingRecord}
-        userId={userId}
-        onSuccess={() => onResolve()}
+        userId={userId || ''}
+        onSuccess={() => finalResolve()}
       />
     </div>
   );

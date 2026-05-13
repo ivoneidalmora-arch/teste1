@@ -15,76 +15,71 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
-import { reportPDFService } from '../services/report-pdf.service';
-import { supabase } from '@/lib/supabase/client';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { formatBRL } from '@/core/utils/formatters';
-import { cn } from '@/core/utils/formatters';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { SeniorFinancialReport } from './SeniorFinancialReport';
-import { calculateReportMetrics } from '../utils/reportMetrics';
+import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
+import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
+import { FinancialYearFilter } from '@/features/finance/components/filters/FinancialYearFilter';
 
 export function ReportsPage() {
   const { user } = useAuth();
-  const [revenues, setRevenues] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const { 
+    selectedPeriod, 
+    selectedYear, 
+    filteredTransactions, 
+    loading: contextLoading,
+    refresh 
+  } = useFinanceContext();
+  
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'analytics'>('analytics');
-  const [period, setPeriod] = useState({
-    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    end: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+
+  // Filtro de data manual (opcional, integrado com o mensal)
+  const [manualPeriod, setManualPeriod] = useState({
+    start: '',
+    end: ''
   });
 
+  // Sincroniza manualPeriod com o selecionado no contexto inicialmente ou quando muda
   useEffect(() => {
-    if (user?.id) {
-      loadData();
+    if (selectedPeriod === 'global') {
+      setManualPeriod({
+        start: `${selectedYear}-01-01`,
+        end: `${selectedYear}-12-31`
+      });
+    } else {
+      const monthIdx = parseInt(selectedPeriod);
+      const start = startOfMonth(new Date(selectedYear, monthIdx));
+      const end = endOfMonth(new Date(selectedYear, monthIdx));
+      setManualPeriod({
+        start: format(start, 'yyyy-MM-dd'),
+        end: format(end, 'yyyy-MM-dd')
+      });
     }
-  }, [user?.id, period]);
+  }, [selectedPeriod, selectedYear]);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [revRes, expRes] = await Promise.all([
-        supabase
-          .from('Receitas')
-          .select('*')
-          .eq('app_user_id', user!.id)
-          .gte('data', period.start)
-          .lte('data', period.end)
-          .order('data', { ascending: false }),
-        supabase
-          .from('Despesas')
-          .select('*')
-          .eq('app_user_id', user!.id)
-          .gte('date', period.start)
-          .lte('date', period.end)
-          .order('date', { ascending: false })
-      ]);
-
-      if (revRes.error) throw revRes.error;
-      if (expRes.error) throw expRes.error;
-
-      setRevenues(revRes.data || []);
-      setExpenses(expRes.data || []);
-    } catch (err) {
-      console.error("Erro ao carregar dados:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredRevenues = revenues.filter(item => 
-    item.placa?.toLowerCase().includes(search.toLowerCase()) ||
-    item.cliente?.toLowerCase().includes(search.toLowerCase())
+  const revenues = useMemo(() => 
+    filteredTransactions.filter(t => t.type === 'income'),
+    [filteredTransactions]
+  );
+  
+  const expenses = useMemo(() => 
+    filteredTransactions.filter(t => t.type === 'expense'),
+    [filteredTransactions]
   );
 
+  const filteredRevenues = useMemo(() => revenues.filter(item => 
+    item.placa?.toLowerCase().includes(search.toLowerCase()) ||
+    (item && 'customer' in item ? String(item.customer).toLowerCase().includes(search.toLowerCase()) : false)
+  ), [revenues, search]);
+
   const reportMetrics = useMemo(() => {
-    return calculateReportMetrics([...revenues, ...expenses]);
-  }, [revenues, expenses]);
+    return calculateReportMetrics(filteredTransactions);
+  }, [filteredTransactions]);
 
   const handleExportPDF = () => {
-    const periodStr = `${format(new Date(period.start), 'dd/MM')} a ${format(new Date(period.end), 'dd/MM/yyyy')}`;
+    const periodStr = selectedPeriod === 'global' 
+      ? `Ano Todo - ${selectedYear}`
+      : `${format(new Date(manualPeriod.start), 'MMMM', { locale: undefined })} de ${selectedYear}`;
     reportPDFService.generateFinancialReport(filteredRevenues, periodStr);
   };
 
@@ -103,8 +98,30 @@ export function ReportsPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3 relative z-10">
+          <div className="flex items-center gap-2">
+            <FinancialYearFilter />
+            <FinancialPeriodFilter />
+          </div>
+
+          <div className="flex items-center bg-slate-50 px-4 h-12 rounded-2xl border border-slate-100">
+            <CalendarIcon className="w-4 h-4 text-slate-400 mr-3" />
+            <input 
+              type="date" 
+              value={manualPeriod.start}
+              onChange={(e) => setManualPeriod(prev => ({ ...prev, start: e.target.value }))}
+              className="bg-transparent border-none text-[11px] font-black uppercase text-slate-600 focus:ring-0 p-0 w-28"
+            />
+            <span className="text-slate-300 px-3 font-bold">→</span>
+            <input 
+              type="date" 
+              value={manualPeriod.end}
+              onChange={(e) => setManualPeriod(prev => ({ ...prev, end: e.target.value }))}
+              className="bg-transparent border-none text-[11px] font-black uppercase text-slate-600 focus:ring-0 p-0 w-28"
+            />
+          </div>
+
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-50 p-1 rounded-2xl border border-slate-100 mr-2">
+          <div className="flex items-center bg-slate-50 p-1 rounded-2xl border border-slate-100">
             <button 
               onClick={() => setViewMode('analytics')}
               className={cn(
@@ -125,23 +142,6 @@ export function ReportsPage() {
               <TableIcon className="w-3.5 h-3.5" />
               Listagem
             </button>
-          </div>
-
-          <div className="flex items-center bg-slate-50 px-4 h-12 rounded-2xl border border-slate-100">
-            <Calendar className="w-4 h-4 text-slate-400 mr-3" />
-            <input 
-              type="date" 
-              value={period.start}
-              onChange={(e) => setPeriod(prev => ({ ...prev, start: e.target.value }))}
-              className="bg-transparent border-none text-[11px] font-black uppercase text-slate-600 focus:ring-0 p-0 w-28"
-            />
-            <span className="text-slate-300 px-3 font-bold">→</span>
-            <input 
-              type="date" 
-              value={period.end}
-              onChange={(e) => setPeriod(prev => ({ ...prev, end: e.target.value }))}
-              className="bg-transparent border-none text-[11px] font-black uppercase text-slate-600 focus:ring-0 p-0 w-28"
-            />
           </div>
 
           <button 

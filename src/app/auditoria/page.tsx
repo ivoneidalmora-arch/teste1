@@ -21,7 +21,7 @@ export default function AuditoriaPage() {
       setGroups(allGroups);
       
       const critical = allGroups.filter(g => g.severity === 'critical').length;
-      const warning = allGroups.filter(g => g.severity === 'warning').length;
+      const warning = allGroups.filter(g => g.severity === 'alert').length;
       
       setStats({
         total: allGroups.length,
@@ -159,6 +159,7 @@ export default function AuditoriaPage() {
         {/* Modal de Detalhes */}
         {selectedGroup && (
           <InconsistenciesModal 
+            isOpen={!!selectedGroup}
             group={selectedGroup}
             onClose={() => setSelectedGroup(null)}
             onResolve={loadAudit}

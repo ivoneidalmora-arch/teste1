@@ -26,7 +26,7 @@ export function useReports() {
     
     if (searchCliente) {
       const cli = searchCliente.toUpperCase();
-      filtered = filtered.filter(t => (t.customer || '').toUpperCase().includes(cli));
+      filtered = filtered.filter(t => (('customer' in t ? t.customer : '') || '').toUpperCase().includes(cli));
     }
 
     if (filterType !== 'all') {
