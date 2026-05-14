@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Calendar, Plus, Upload, FileText, ChevronDown } from 'lucide-react';
+import { Search, Calendar, Plus, Upload, FileText, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { FinancialPeriodFilter } from '../filters/FinancialPeriodFilter';
 import { FinancialYearFilter } from '../filters/FinancialYearFilter';
 
