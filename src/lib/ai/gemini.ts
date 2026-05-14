@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || "");
+const modelName = process.env.GOOGLE_GEMINI_MODEL || "gemini-2.0-flash-001";
 
 export class GeminiService {
-  private static model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  private static model = genAI.getGenerativeModel({ model: modelName });
 
   static async generateContent(prompt: string): Promise<string> {
     if (!process.env.GOOGLE_GEMINI_API_KEY) {

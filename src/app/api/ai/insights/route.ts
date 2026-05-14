@@ -1,16 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GeminiService } from '@/lib/ai/gemini';
+import { z } from 'zod';
+
+const MetricsSchema = z.object({
+  metrics: z.object({
+    period: z.object({
+      type: z.string().default('global'),
+      label: z.string().default('Tudo (Global)'),
+      month: z.number().optional(),
+      year: z.number().optional()
+    }),
+    totalRevenueBruto: z.number().default(0),
+    totalRevenueLiquido: z.number().default(0),
+    totalExpense: z.number().default(0),
+    netProfit: z.number().default(0),
+    expensePercentage: z.number().default(0),
+    expenseStatus: z.string().default('Normal'),
+    topCustomer: z.object({
+      name: z.string().default('N/A'),
+      value: z.number().default(0),
+      count: z.number().default(0)
+    }).default({ name: 'N/A', value: 0, count: 0 }),
+    expenseDetails: z.object({
+      topCategory: z.string().default('Outros'),
+      topCategoryValue: z.number().default(0)
+    }).default({ topCategory: 'Outros', topCategoryValue: 0 }),
+    monthlyVariation: z.number().default(0),
+    duplicateGroups: z.array(z.any()).default([])
+  })
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { metrics } = await req.json();
+    const body = await req.json();
+    const result = MetricsSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json({ 
+        error: "Payload inválido para geração de insights.",
+        details: result.error.format()
+      }, { status: 400 });
+    }
+
+    const { metrics } = result.data;
 
     if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      return NextResponse.json({ error: "Gemini API Key não configurada" }, { status: 503 });
+      return NextResponse.json({ error: "Gemini API Key não configurada. Use diagnósticos locais." }, { status: 503 });
     }
 
     const isGlobal = metrics.period.type === 'global';
-    const periodLabel = isGlobal ? "HISTÓRICO COMPLETO (ANÁLISE GLOBAL)" : `${metrics.period.month}/${metrics.period.year}`;
+    const periodLabel = isGlobal ? "HISTÓRICO COMPLETO (ANÁLISE GLOBAL)" : metrics.period.label;
 
     const prompt = `
       Atue como um desenvolvedor full-stack sênior e analista financeiro sênior especializado em empresas de vistoria automotiva. 
@@ -28,16 +67,16 @@ export async function POST(req: NextRequest) {
       - Status das Despesas: ${metrics.expenseStatus}
       
       Destaques:
-      - Melhor Cliente Histórico: ${metrics.topCustomer.name} (R$ ${metrics.topCustomer.value.toLocaleString('pt-BR')} em ${metrics.topCustomer.count} serviços)
+      - Melhor Cliente: ${metrics.topCustomer.name} (R$ ${metrics.topCustomer.value.toLocaleString('pt-BR')})
       - Maior Categoria de Custo: ${metrics.expenseDetails.topCategory} (R$ ${metrics.expenseDetails.topCategoryValue.toLocaleString('pt-BR')})
-      - Variação (${isGlobal ? 'Último mês vs Anterior' : 'Mensal'}): ${metrics.monthlyVariation.toFixed(2)}%
-      - Auditoria de Duplicidades: ${metrics.duplicateGroups.filter((g: any) => g.status === 'pending_review').length} pendentes, ${metrics.duplicateGroups.filter((g: any) => g.status === 'confirmed_duplicate').length} confirmadas.
+      - Variação Mensal: ${metrics.monthlyVariation.toFixed(2)}%
+      - Auditoria de Duplicidades: ${metrics.duplicateGroups.length} grupos detectados.
       
       Regras de Resposta:
       1. Título curto e impactante em uppercase.
       2. Conteúdo humanizado, direto e executivo.
       3. No modo GLOBAL, deixe claro que os dados referem-se ao acumulado total.
-      4. Retorne APENAS um JSON válido:
+      4. Retorne APENAS um JSON válido no formato:
       [
         { "type": "summary", "severity": "info", "title": "...", "content": "..." },
         { "type": "alert", "severity": "warning", "title": "...", "content": "..." },
@@ -51,6 +90,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(insights);
   } catch (error: any) {
     console.error("[API AI Insights] Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno ao gerar insights da IA." }, { status: 500 });
   }
 }

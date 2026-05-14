@@ -17,6 +17,7 @@ import { PeriodFilter } from '../types/insights.types';
 // Componentes
 import { InsightsHeader } from './InsightsHeader';
 import { MetricsSummaryCards } from './MetricsSummaryCards';
+import { ExecutiveAIInsights } from './ExecutiveAIInsights';
 import { DiagnosticPanel, DiagnosticPanelSkeleton } from './diagnostics/DiagnosticPanel';
 import { InconsistenciesModal } from './diagnostics/InconsistenciesModal';
 import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
@@ -88,7 +89,7 @@ export function InsightsPage() {
       }
     } catch (err: any) {
       console.error("Erro ao gerar diagnósticos:", err);
-      setError("Não foi possível carregar os dados financeiros para este período. O sistema utilizará diagnósticos locais.");
+      setError("Não foi possível carregar os diagnósticos. Verifique sua sessão, conexão com o banco e configurações do Supabase.");
       // Fallback para arrays vazios para não quebrar a UI
       setDiagnostics([]);
       setInconsistencies([]);
@@ -142,6 +143,22 @@ export function InsightsPage() {
         <MetricsSummaryCards 
           metrics={summary} 
           loading={loading && !generating} 
+        />
+      )}
+
+      {/* Resumo Executivo IA */}
+      {summary && (
+        <ExecutiveAIInsights 
+          metrics={{
+            ...summary,
+            period: periodFilter,
+            expenseStatus: summary.netBalance >= 0 ? 'Saudável' : 'Crítico',
+            topCustomer: { name: 'N/A', value: 0, count: 0 }, // Será calculado no servidor ou enviado aqui
+            expenseDetails: { topCategory: 'Outros', topCategoryValue: 0 },
+            monthlyVariation: 0,
+            duplicateGroups: inconsistencies.filter(i => i.type === 'duplicate')
+          }}
+          loading={loading && !generating}
         />
       )}
 
