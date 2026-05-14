@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
+    "@headlessui/react": "^2.2.10",
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "2.4.3",
     "clsx": "^2.1.1",
