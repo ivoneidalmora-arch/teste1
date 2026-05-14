@@ -112,7 +112,7 @@ export function InsightsDashboard({
   }
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+    <div className="space-y-12 pb-24 animate-in fade-in duration-700">
       
       {/* 1. Sumário de Indicadores */}
       <InsightSummaryCards stats={stats} loading={loading && !generating} />

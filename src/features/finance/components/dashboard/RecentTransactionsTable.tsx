@@ -8,13 +8,19 @@ interface RecentTransactionsTableProps {
   onAction?: (id: string) => void;
 }
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+import { History } from 'lucide-react';
+
 export function RecentTransactionsTable({ transactions }: RecentTransactionsTableProps) {
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
-          <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Últimas movimentações registradas</p>
+        <div className="flex items-center gap-4">
+          <Icon3D icon={History} variant="slate" size="sm" />
+          <div>
+            <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
+            <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Últimas movimentações registradas</p>
+          </div>
         </div>
         <button 
           onClick={() => window.location.href = '/receitas'}

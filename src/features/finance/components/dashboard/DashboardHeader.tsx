@@ -14,6 +14,8 @@ interface Props {
   onSearch?: (query: string) => void;
 }
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+
 export function DashboardHeader({ 
   title, 
   subtitle,
@@ -25,70 +27,73 @@ export function DashboardHeader({
 }: Props) {
   
   return (
-    <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-8">
+    <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-10">
       {/* Título e Subtítulo */}
-      <div className="min-w-0">
-        <h1 className="text-2xl font-black tracking-tight text-[#0F172A] lg:text-[28px] leading-tight">
-          {title}
-        </h1>
-        <div className="flex items-center gap-2 mt-1.5">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-          <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em]">
-            {subtitle || 'Visão Geral Corporativa'}
-          </p>
+      <div className="flex items-center gap-5">
+        <Icon3D icon={LayoutDashboard} variant="blue" size="md" />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-black tracking-tight text-[#0F172A] lg:text-3xl leading-tight">
+            {title}
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
+              {subtitle || 'Visão Geral Corporativa'}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Busca, Filtros e Ações */}
-      <div className="flex flex-col md:flex-row items-center gap-3">
+      <div className="flex flex-col md:flex-row items-center gap-4">
         {/* Campo de Pesquisa */}
-        <div className="relative group w-full md:w-64">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+        <div className="relative group w-full md:w-72">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
           <input 
             type="text" 
-            placeholder="Pesquisar..." 
+            placeholder="Pesquisar transação..." 
             onChange={(e) => onSearch?.(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 bg-white border border-slate-100 rounded-2xl text-[12px] font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 shadow-sm transition-all placeholder:text-slate-400"
+            className="w-full h-12 pl-12 pr-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 shadow-sm transition-all placeholder:text-slate-400"
           />
         </div>
 
         {/* Filtros de Período e Ano */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
           <FinancialPeriodFilter />
           <FinancialYearFilter />
         </div>
 
         {/* Botões de Ação */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button 
             onClick={onGenerateReport}
-            className="flex items-center gap-2 px-4 h-11 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
+            className="flex items-center gap-3 px-5 h-12 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
           >
-            <FileText className="w-4 h-4" />
+            <Icon3D icon={FileText} variant="purple" size="xs" glow={false} />
             <span>Relatório</span>
           </button>
           
           <button 
             onClick={onImportFile}
-            className="flex items-center gap-2 px-4 h-11 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
+            className="flex items-center gap-3 px-5 h-12 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
           >
-            <Upload className="w-4 h-4" />
+            <Icon3D icon={Upload} variant="cyan" size="xs" glow={false} />
             <span>Importar</span>
           </button>
 
           <button 
             onClick={onNewExpense}
-            className="flex items-center gap-2 px-5 h-11 bg-rose-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-600/20 transition-all active:scale-95 shadow-md shadow-rose-600/10"
+            className="flex items-center gap-3 px-6 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-rose-500/30 transition-all active:scale-95 shadow-lg"
           >
-            <Plus className="w-4 h-4" />
+            <Icon3D icon={Plus} variant="red" size="xs" glow={false} className="bg-white/20 shadow-none" />
             <span>Despesa</span>
           </button>
 
           <button 
             onClick={onNewTransaction}
-            className="flex items-center gap-2 px-5 h-11 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 transition-all active:scale-95 shadow-md shadow-emerald-600/10"
+            className="flex items-center gap-3 px-6 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 shadow-lg"
           >
-            <Plus className="w-4 h-4" />
+            <Icon3D icon={Plus} variant="green" size="xs" glow={false} className="bg-white/20 shadow-none" />
             <span>Vistoria</span>
           </button>
         </div>

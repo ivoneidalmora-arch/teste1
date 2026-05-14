@@ -5,12 +5,12 @@ import { cn } from '@/core/utils/formatters';
 import { 
   Zap, 
   Target, 
-  TrendingUp, 
+  Star,
   Clock, 
-  MinusCircle,
   LayoutGrid
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { Icon3D } from '@/core/components/ui/Icon3D';
 
 interface PriorityMatrixCardProps {
   insights: DiagnosticResult[];
@@ -18,136 +18,111 @@ interface PriorityMatrixCardProps {
 }
 
 export function PriorityMatrixCard({ insights, loading }: PriorityMatrixCardProps) {
-  const quadrants = useMemo(() => {
-    const q = {
-      quick_wins: [] as DiagnosticResult[],
-      strategic: [] as DiagnosticResult[],
-      incremental: [] as DiagnosticResult[],
-      low_priority: [] as DiagnosticResult[]
+  const matrix = useMemo(() => {
+    const quadrants = {
+      quick_wins: {
+        title: 'GANHO RÁPIDO',
+        desc: 'Alto impacto / Baixo esforço',
+        icon: Zap,
+        variant: 'green' as const,
+        items: [] as DiagnosticResult[]
+      },
+      strategic: {
+        title: 'PROJETOS ESTRATÉGICOS',
+        desc: 'Alto impacto / Alto esforço',
+        icon: Target,
+        variant: 'purple' as const,
+        items: [] as DiagnosticResult[]
+      },
+      incremental: {
+        title: 'MELHORIAS INCREMENTAIS',
+        desc: 'Baixo impacto / Baixo esforço',
+        icon: Star,
+        variant: 'blue' as const,
+        items: [] as DiagnosticResult[]
+      },
+      low_priority: {
+        title: 'BAIXA PRIORIDADE',
+        desc: 'Baixo impacto / Alto esforço',
+        icon: LayoutGrid,
+        variant: 'slate' as const,
+        items: [] as DiagnosticResult[]
+      }
     };
 
     insights.forEach(insight => {
       const isHighImpact = insight.impactLevel === 'alto' || insight.impactLevel === 'critico';
       const isLowEffort = insight.effortLevel === 'baixo';
 
-      if (isHighImpact && isLowEffort) q.quick_wins.push(insight);
-      else if (isHighImpact && !isLowEffort) q.strategic.push(insight);
-      else if (!isHighImpact && isLowEffort) q.incremental.push(insight);
-      else q.low_priority.push(insight);
+      if (isHighImpact && isLowEffort) quadrants.quick_wins.items.push(insight);
+      else if (isHighImpact && !isLowEffort) quadrants.strategic.items.push(insight);
+      else if (!isHighImpact && isLowEffort) quadrants.incremental.items.push(insight);
+      else quadrants.low_priority.items.push(insight);
     });
 
-    return q;
+    return quadrants;
   }, [insights]);
-
-  const matrix = [
-    {
-      id: 'quick_wins',
-      title: 'GANHO RÁPIDO',
-      desc: 'Alto impacto / Baixo esforço',
-      items: quadrants.quick_wins,
-      icon: Zap,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-100'
-    },
-    {
-      id: 'strategic',
-      title: 'PROJETOS ESTRATÉGICOS',
-      desc: 'Alto impacto / Alto esforço',
-      items: quadrants.strategic,
-      icon: Target,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-100'
-    },
-    {
-      id: 'incremental',
-      title: 'MELHORIAS INCREMENTAIS',
-      desc: 'Baixo impacto / Baixo esforço',
-      items: quadrants.incremental,
-      icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-100'
-    },
-    {
-      id: 'low_priority',
-      title: 'BAIXA PRIORIDADE',
-      desc: 'Baixo impacto / Alto esforço',
-      items: quadrants.low_priority,
-      icon: MinusCircle,
-      color: 'text-slate-600',
-      bgColor: 'bg-slate-50',
-      borderColor: 'border-slate-200'
-    }
-  ];
 
   if (loading) {
     return (
-      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm animate-pulse">
-        <div className="h-6 w-40 bg-slate-100 rounded mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-40 bg-slate-50 rounded-2xl" />
-          ))}
-        </div>
-      </div>
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm h-[450px] animate-pulse" />
     );
   }
 
   return (
-    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-      <div className="flex items-center gap-3 mb-8">
-        <LayoutGrid className="w-5 h-5 text-slate-400" />
-        <h3 className="text-lg font-black text-slate-900">Matriz de Priorização</h3>
+    <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm h-full group">
+      <div className="flex items-center gap-4 mb-10">
+        <Icon3D icon={LayoutGrid} variant="purple" size="sm" glow={false} />
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Matriz de Priorização</h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {matrix.map((q) => {
-          const Icon = q.icon;
-          return (
-            <div 
-              key={q.id}
-              className={cn(
-                "p-5 rounded-2xl border transition-all hover:shadow-md relative overflow-hidden group bg-white",
-                q.borderColor
-              )}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-xl", q.bgColor)}>
-                    <Icon className={cn("w-4 h-4", q.color)} />
-                  </div>
-                  <div>
-                    <h4 className={cn("text-[10px] font-black uppercase tracking-widest leading-none mb-1", q.color)}>
-                      {q.title}
-                    </h4>
-                    <p className="text-[10px] font-medium text-slate-400">{q.desc}</p>
-                  </div>
-                </div>
-                <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100">
-                  <span className="text-[10px] font-black text-slate-600">{q.items.length}</span>
-                </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {Object.values(matrix).map((q, i) => (
+          <div 
+            key={i}
+            className="p-8 rounded-[2rem] bg-slate-50 border border-slate-100 flex items-start gap-6 transition-all hover:bg-white hover:shadow-2xl hover:-translate-y-1"
+          >
+            <Icon3D icon={q.icon} variant={q.variant} size="lg" />
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <span className={cn(
+                  "text-[11px] font-black uppercase tracking-widest",
+                  q.variant === 'green' ? "text-emerald-600" :
+                  q.variant === 'purple' ? "text-purple-600" :
+                  q.variant === 'blue' ? "text-blue-600" : "text-slate-500"
+                )}>
+                  {q.title}
+                </span>
+                <span className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-[11px] font-black text-slate-900 shadow-sm">
+                  {q.items.length}
+                </span>
               </div>
-
-              <div className="space-y-1.5 mt-4 min-h-[60px]">
+              <p className="text-[11px] font-bold text-slate-400 mb-5 leading-tight">{q.desc}</p>
+              
+              <div className="space-y-2">
                 {q.items.length > 0 ? (
-                  q.items.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <div className={cn("w-1 h-1 rounded-full", q.color.replace('text-', 'bg-'))} />
-                      <span className="text-[10px] font-bold text-slate-600 truncate">{item.title}</span>
+                  q.items.slice(0, 2).map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2.5">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full shrink-0",
+                        q.variant === 'green' ? "bg-emerald-400" :
+                        q.variant === 'purple' ? "bg-purple-400" :
+                        q.variant === 'blue' ? "bg-blue-400" : "bg-slate-400"
+                      )} />
+                      <span className="text-[11px] font-bold text-slate-600 truncate tracking-tight">{item.title}</span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-[10px] font-medium text-slate-300 italic">Nenhum diagnóstico</p>
+                  <span className="text-[11px] font-bold text-slate-300 italic">Nenhum diagnóstico</span>
                 )}
-                {q.items.length > 3 && (
-                  <p className="text-[9px] font-black text-slate-400 mt-1">+{q.items.length - 3} outros</p>
+                {q.items.length > 2 && (
+                  <span className="text-[10px] font-black text-slate-400 pl-4">+{q.items.length - 2} outros</span>
                 )}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

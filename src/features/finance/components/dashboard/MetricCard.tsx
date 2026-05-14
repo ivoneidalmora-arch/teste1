@@ -24,6 +24,8 @@ const COLOR_MAP: Record<MetricVariant, { iconBg: string; iconColor: string; shad
   slate: { iconBg: 'bg-slate-100', iconColor: 'text-slate-600', shadow: 'shadow-slate-100' }
 };
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+
 export function MetricCard({
   title,
   value,
@@ -33,30 +35,23 @@ export function MetricCard({
   variant = "blue",
   className
 }: MetricCardProps) {
-  const styles = COLOR_MAP[variant];
   const isPositive = trend && trend > 0;
   const formattedValue = typeof value === 'number' ? formatBRL(value) : value;
 
   return (
     <div className={cn(
-      "min-w-0 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl group relative overflow-hidden",
+      "min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:shadow-2xl group relative overflow-hidden",
       className
     )}>
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-full transition-all duration-500 group-hover:scale-110",
-            styles.iconBg,
-            styles.iconColor
-          )}>
-            <Icon className="h-5 w-5 stroke-[2.5]" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+        <div className="flex items-center gap-5 mb-5">
+          <Icon3D icon={Icon} variant={variant} size="md" />
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {title}
             </p>
-            <div className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center text-[8px] text-slate-400 font-bold">
-              i
+            <div className="w-4 h-4 rounded-full border border-slate-200 flex items-center justify-center text-[9px] text-slate-400 font-bold">
+              ?
             </div>
           </div>
         </div>

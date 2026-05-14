@@ -45,13 +45,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+import { BarChart3 } from 'lucide-react';
+
 export function CashFlowChart({ data, title, subtitle, mode }: Props) {
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h3 className="text-xl font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa (Global)"}</h3>
-          <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{subtitle || "Comparativo mensal consolidado de entradas e saídas"}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+        <div className="flex items-center gap-4">
+          <Icon3D icon={BarChart3} variant="blue" size="sm" />
+          <div>
+            <h3 className="text-xl font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa (Global)"}</h3>
+            <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{subtitle || "Comparativo mensal consolidado de entradas e saídas"}</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-6">
