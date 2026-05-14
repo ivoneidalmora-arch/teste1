@@ -14,7 +14,7 @@ export function ExecutiveAIInsights({ metrics, loading: parentLoading }: Executi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAIInsights = async () => {
+  const fetchAIInsights = useCallback(async () => {
     if (!metrics) return;
     
     setLoading(true);
@@ -39,13 +39,13 @@ export function ExecutiveAIInsights({ metrics, loading: parentLoading }: Executi
     } finally {
       setLoading(false);
     }
-  };
+  }, [metrics]);
 
   useEffect(() => {
     if (metrics && !parentLoading) {
       fetchAIInsights();
     }
-  }, [metrics, parentLoading]);
+  }, [metrics, parentLoading, fetchAIInsights]);
 
   if (parentLoading || loading) {
     return (

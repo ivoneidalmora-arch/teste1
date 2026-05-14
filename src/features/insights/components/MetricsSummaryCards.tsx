@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown, DollarSign, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { formatBRL } from '@/core/utils/formatters';
 import { cn } from '@/core/utils/formatters';
 

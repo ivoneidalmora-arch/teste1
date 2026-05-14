@@ -16,13 +16,13 @@ import { PeriodFilter } from '../types/insights.types';
 
 // Componentes
 import { InsightsHeader } from './InsightsHeader';
-import { MetricsSummaryCards } from './MetricsSummaryCards';
-import { ExecutiveAIInsights } from './ExecutiveAIInsights';
-import { DiagnosticPanel, DiagnosticPanelSkeleton } from './diagnostics/DiagnosticPanel';
-import { InconsistenciesModal } from './diagnostics/InconsistenciesModal';
+import { InsightsDashboard } from './InsightsDashboard';
+import { InsightsErrorBoundary } from './InsightsErrorBoundary';
 import { EditTransactionModal } from '@/features/finance/components/modals/EditTransactionModal';
 
+// Utilitários
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { standardizeInsights } from '../utils/insight-standardizer';
 
 export function InsightsPage() {
   const { user } = useAuth();
@@ -35,8 +35,6 @@ export function InsightsPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Modais
-  const [showInconsistenciesModal, setShowInconsistenciesModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
   const financeContext = useFinanceContext();
   
@@ -81,7 +79,36 @@ export function InsightsPage() {
       const res = await generateDiagnosticsAction(periodFilter);
       
       if (res.success && res.data) {
-        setDiagnostics(res.data.diagnostics || []);
+        // Padronizar diagnósticos para o novo layout
+        const standardDiagnostics = standardizeInsights(res.data.diagnostics || []);
+        
+        // Converter inconsistências críticas em insights se necessário
+        // (Isso permite que apareçam no grid principal do Dashboard)
+        const inconsistencyInsights: DiagnosticResult[] = (res.data.inconsistencies || [])
+          .filter((inc: InconsistencyRecord) => inc.severity === 'critical')
+          .map((inc: InconsistencyRecord) => ({
+            id: `inc-${inc.id}`,
+            type: 'inconsistency',
+            category: 'duplicidades',
+            title: inc.description,
+            classification: 'Auditório',
+            severity: 'critical',
+            priority: 'urgent',
+            status: 'novo',
+            impactLevel: 'alto',
+            effortLevel: 'baixo',
+            mainMetric: inc.value > 0 ? `R$ ${inc.value.toFixed(2)}` : 'Erro de Registro',
+            text: inc.details,
+            recommendation: inc.recommendation,
+            actionLabel: 'Corrigir Lançamento',
+            actionId: 'open_edit_transaction',
+            hasData: true,
+            detectedAt: inc.date,
+            period: periodFilter.label,
+            rawRecord: inc // Guardar para uso posterior
+          }));
+
+        setDiagnostics([...standardDiagnostics, ...inconsistencyInsights]);
         setInconsistencies(res.data.inconsistencies || []);
         setSummary(res.data.summary);
       } else {
@@ -89,8 +116,7 @@ export function InsightsPage() {
       }
     } catch (err: any) {
       console.error("Erro ao gerar diagnósticos:", err);
-      setError("Não foi possível carregar os diagnósticos. Verifique sua sessão, conexão com o banco e configurações do Supabase.");
-      // Fallback para arrays vazios para não quebrar a UI
+      setError("Não foi possível carregar os diagnósticos. Verifique sua sessão e tente novamente.");
       setDiagnostics([]);
       setInconsistencies([]);
     } finally {
@@ -103,21 +129,6 @@ export function InsightsPage() {
   useEffect(() => {
     loadDiagnostics();
   }, [loadDiagnostics]);
-
-  const handleAction = (actionId: string) => {
-    if (actionId === 'open_inconsistencies_modal') {
-      setShowInconsistenciesModal(true);
-    }
-  };
-
-  const handleEditTransaction = (transaction: any) => {
-    // Garantir que o tipo está presente para o modal de edição
-    if (!transaction.type && transaction.amountBruto !== undefined) transaction.type = 'income';
-    if (!transaction.type && transaction.dueDate !== undefined) transaction.type = 'expense';
-    
-    setShowInconsistenciesModal(false);
-    setEditingTransaction(transaction);
-  };
 
   const onTransactionEdited = () => {
     setEditingTransaction(null);
@@ -135,83 +146,22 @@ export function InsightsPage() {
         onRefresh={() => loadDiagnostics(true)}
         loading={loading}
         generating={generating}
-        error={error}
+        error={null} // Erro agora é tratado pelo Dashboard
       />
 
-      {/* Resumo Inteligente */}
-      {summary && (
-        <MetricsSummaryCards 
-          metrics={summary} 
-          loading={loading && !generating} 
-        />
-      )}
+      {/* Dashboard Premium IA */}
+      <InsightsDashboard 
+        insights={diagnostics}
+        summary={summary}
+        loading={loading}
+        generating={generating}
+        error={error}
+        onRefresh={() => loadDiagnostics(true)}
+        periodFilter={periodFilter}
+        onEditTransaction={(transaction) => setEditingTransaction(transaction)}
+      />
 
-      {/* Resumo Executivo IA */}
-      {summary && (
-        <ExecutiveAIInsights 
-          metrics={{
-            ...summary,
-            period: periodFilter,
-            expenseStatus: summary.netBalance >= 0 ? 'Saudável' : 'Crítico',
-            topCustomer: { name: 'N/A', value: 0, count: 0 }, // Será calculado no servidor ou enviado aqui
-            expenseDetails: { topCategory: 'Outros', topCategoryValue: 0 },
-            monthlyVariation: 0,
-            duplicateGroups: inconsistencies.filter(i => i.type === 'duplicate')
-          }}
-          loading={loading && !generating}
-        />
-      )}
-
-      {/* Painel de Diagnósticos */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            Central de Auditoria & Inteligência
-          </h2>
-          {diagnostics.length > 0 && !loading && !generating && (
-             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5">
-               <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-               Análise Atualizada
-             </span>
-          )}
-        </div>
-        
-        {loading && !generating ? (
-          <DiagnosticPanelSkeleton />
-        ) : (
-          <DiagnosticPanel 
-            diagnostics={diagnostics} 
-            onAction={handleAction}
-          />
-        )}
-      </div>
-
-      {/* Estados Vazios */}
-      {!loading && !generating && diagnostics.length === 0 && (
-        <div className="bg-white p-20 rounded-[3rem] border border-slate-100 text-center shadow-sm">
-          <div className="max-w-sm mx-auto space-y-4">
-            <p className="text-slate-400 text-sm font-medium">
-              Ainda não existem dados suficientes para gerar diagnósticos avançados neste período.
-            </p>
-            <p className="text-xs text-slate-300">
-              Cadastre receitas e despesas para ativar a inteligência financeira.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Modais */}
-      {user && (
-        <InconsistenciesModal 
-          isOpen={showInconsistenciesModal}
-          onClose={() => setShowInconsistenciesModal(false)}
-          records={inconsistencies}
-          userId={user.id}
-          onRefresh={() => loadDiagnostics(true)}
-          onEditTransaction={handleEditTransaction}
-        />
-      )}
-
+      {/* Modais de Suporte */}
       {editingTransaction && (
         <EditTransactionModal 
           isOpen={!!editingTransaction}

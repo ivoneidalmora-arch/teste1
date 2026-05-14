@@ -1,13 +1,38 @@
 export type DiagnosticSeverity = 'positive' | 'info' | 'warning' | 'critical';
 export type DiagnosticPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+export type InsightCategory = 
+  | 'receitas' 
+  | 'despesas' 
+  | 'fluxo' 
+  | 'duplicidades' 
+  | 'tendencias' 
+  | 'auditoria' 
+  | 'geral';
+
+export type InsightStatus = 
+  | 'novo' 
+  | 'em_analise' 
+  | 'aprovado' 
+  | 'ignorado' 
+  | 'resolvido' 
+  | 'corrigido' 
+  | 'erro';
+
+export type ImpactLevel = 'baixo' | 'medio' | 'alto' | 'critico';
+export type EffortLevel = 'baixo' | 'medio' | 'alto';
+
 export interface DiagnosticResult {
   id: string;
-  type: 'health' | 'growth' | 'expense' | 'client' | 'service' | 'risk' | 'inconsistency';
+  type: 'health' | 'growth' | 'expense' | 'client' | 'service' | 'risk' | 'inconsistency' | 'trend' | 'opportunity';
+  category: InsightCategory;
   title: string;
   classification: string;
   severity: DiagnosticSeverity;
   priority: DiagnosticPriority;
+  status: InsightStatus;
+  impactLevel: ImpactLevel;
+  effortLevel: EffortLevel;
   mainMetric: string;
   secondaryMetric?: string;
   variation?: number; // percentual
@@ -17,6 +42,9 @@ export interface DiagnosticResult {
   actionId?: string; // identificador para a ação do botão
   hasData: boolean; // para exibir a mensagem "dados insuficientes"
   factors?: string[]; // Lista de fatores detalhados para o diagnóstico de risco
+  impactValue?: number; // Valor financeiro estimado do impacto
+  period?: string; // Ex: "Maio 2024"
+  detectedAt: string; // ISO date
 }
 
 export type AuditSeverity = 'critical' | 'alert' | 'info';
@@ -59,6 +87,7 @@ export interface InconsistencyRecord {
   groupRecords?: any[]; // Array de records originais caso seja duplicidade
   rawRecord?: any; // Registro original para edição
 }
+
 export interface InconsistencyGroup {
   id: string;
   title: string;
