@@ -120,7 +120,7 @@ export function DashboardPage() {
       id: e.id,
       title: e.title,
       date: new Date(e.date),
-      type: (e.type === 'revenue' ? 'financeiro' : (e.type === 'expense' ? 'operacional' : 'outros')) as any
+      type: (e.type === 'income' ? 'financeiro' : (e.type === 'expense' ? 'operacional' : 'outros')) as any
     })), 
   [dashboardTransactions]);
 
