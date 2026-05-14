@@ -27,7 +27,8 @@ export const expenseDiagnosticService = {
         priority: 'low',
         mainMetric: 'R$ 0,00',
         text: 'Nenhuma despesa registrada neste período.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -88,7 +89,8 @@ export const expenseDiagnosticService = {
       secondaryMetric: `Maior ofensor: ${topCategory}`,
       text,
       recommendation,
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };

@@ -22,7 +22,8 @@ export const clientDiagnosticService = {
         priority: 'low',
         mainMetric: '-',
         text: 'Não há registros de clientes com receitas válidas neste período.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -84,7 +85,8 @@ export const clientDiagnosticService = {
       secondaryMetric: `Fatia: ${topClientPerc.toFixed(1)}%`,
       text,
       recommendation,
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };

@@ -22,7 +22,8 @@ export const serviceDiagnosticService = {
         priority: 'low',
         mainMetric: '-',
         text: 'Não há registros de serviços prestados neste período.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -88,7 +89,8 @@ export const serviceDiagnosticService = {
       secondaryMetric: `Rendimento: ${formatBRL(mostValuableTotal)}`,
       text,
       recommendation,
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };

@@ -71,7 +71,7 @@ export function InsightDetailsModal({ isOpen, onClose, insight, onAction }: Insi
                            <InsightStatusBadge status={insight.status || 'novo'} />
                            <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
                               <Calendar className="w-4 h-4" />
-                              {insight.period || 'Análise Maio 2024'}
+                               {insight.period || 'Análise do Período'}
                            </span>
                         </div>
                         <Dialog.Title as="h3" className="text-3xl font-black text-white tracking-tight">

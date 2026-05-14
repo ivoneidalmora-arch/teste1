@@ -30,7 +30,7 @@ export function standardizeInsight(insight: any): DiagnosticResult {
     impactLevel: insight.impactLevel || impactLevel,
     effortLevel: insight.effortLevel || effortLevel,
     detectedAt: insight.detectedAt || new Date().toISOString(),
-    period: insight.period || 'Maio 2024',
+    period: insight.period || new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase()),
     impactValue: insight.impactValue || 0,
   };
 }

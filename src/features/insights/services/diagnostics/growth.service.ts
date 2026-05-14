@@ -44,7 +44,8 @@ export const growthDiagnosticService = {
         priority: 'low',
         mainMetric: '-',
         text: 'Ainda não há dados de dois períodos distintos para calcular a tendência de crescimento.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -131,7 +132,8 @@ export const growthDiagnosticService = {
       variation: revVar,
       text,
       recommendation,
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };

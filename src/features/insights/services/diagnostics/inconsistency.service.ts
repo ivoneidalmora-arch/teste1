@@ -325,7 +325,8 @@ export const inconsistencyService = {
         recommendation,
         actionLabel: records.length > 0 ? 'Ver Inconsistências' : undefined,
         actionId: 'open_inconsistencies_modal',
-        hasData: true
+        hasData: true,
+        period: period.label
       },
       records
     };

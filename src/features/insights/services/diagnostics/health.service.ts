@@ -32,7 +32,8 @@ export const healthDiagnosticService = {
         priority: 'low',
         mainMetric: 'R$ 0,00',
         text: 'Ainda não há dados suficientes para gerar este diagnóstico com precisão.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -77,7 +78,8 @@ export const healthDiagnosticService = {
       secondaryMetric: `Margem: ${netMargin.toFixed(1)}%`,
       text,
       recommendation,
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };

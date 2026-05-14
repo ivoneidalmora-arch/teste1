@@ -23,7 +23,8 @@ export const riskDiagnosticService = {
         priority: 'low',
         mainMetric: '-',
         text: 'Não é possível mensurar o risco financeiro sem dados suficientes no período.',
-        hasData: false
+        hasData: false,
+        period: period.label
       };
     }
 
@@ -129,7 +130,8 @@ export const riskDiagnosticService = {
       text: impact,
       recommendation: strategicAction,
       factors: factors.length > 0 ? factors : ["Nenhum fator de risco relevante detectado."],
-      hasData: true
+      hasData: true,
+      period: period.label
     };
   }
 };
