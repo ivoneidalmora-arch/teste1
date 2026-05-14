@@ -64,7 +64,8 @@ export function InsightsDashboard({
   const counts = useMemo(() => {
     const c: Record<string, number> = { todos: insights.length };
     insights.forEach(i => {
-      c[i.category] = (c[i.category] || 0) + 1;
+      const cat = i.category || 'geral';
+      c[cat] = (c[cat] || 0) + 1;
     });
     return c;
   }, [insights]);
