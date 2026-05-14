@@ -79,11 +79,11 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Descrição / Cliente</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Valor</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Ações</th>
+              <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
+              <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Descrição / Cliente</th>
+              <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</th>
+              <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Valor</th>
+              <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -93,10 +93,10 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
 
               return (
                 <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group relative">
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2.5">
                     <span className="text-xs font-bold text-slate-500">{formatDisplayDate(t.date)}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
@@ -114,12 +114,12 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2.5">
                     <span className="px-2.5 py-1 bg-slate-100 rounded-md text-[10px] font-bold text-slate-500 uppercase tracking-tight">
                       {t.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-4 py-2.5 text-right">
                     <span className={cn(
                       "text-sm font-black",
                       isIncome ? "text-emerald-600" : "text-rose-600"
@@ -127,7 +127,7 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
                       {isIncome ? '+' : '-'} {formatBRL(t.amount)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2.5">
                     <div className="flex items-center justify-center gap-1">
                       <div className="relative">
                         <button 

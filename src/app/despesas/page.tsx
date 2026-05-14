@@ -36,7 +36,7 @@ export default function DespesasPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-700 pb-24">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-5 animate-in fade-in duration-700 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -45,7 +45,7 @@ export default function DespesasPage() {
             </div>
             <span className="text-sm font-bold text-rose-600 uppercase tracking-wider">Módulo de Despesas</span>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Gestão de Saídas
           </h1>
           <p className="text-slate-500 mt-1">Controle seus custos operacionais, impostos e manutenções.</p>
@@ -97,15 +97,15 @@ export default function DespesasPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Despesas</span>
-          <span className="text-3xl font-black text-slate-900">{formatBRL(metrics?.totalExpense || 0)}</span>
+          <span className="text-2xl font-black text-slate-900">{formatBRL(metrics?.totalExpense || 0)}</span>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Lançamentos</span>
-          <span className="text-3xl font-black text-slate-900">{expenseTransactions.length}</span>
+          <span className="text-2xl font-black text-slate-900">{expenseTransactions.length}</span>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Impacto no Lucro</span>
-          <span className="text-3xl font-black text-rose-600">-{formatBRL(metrics?.totalExpense || 0)}</span>
+          <span className="text-2xl font-black text-rose-600">-{formatBRL(metrics?.totalExpense || 0)}</span>
         </div>
       </div>
 
