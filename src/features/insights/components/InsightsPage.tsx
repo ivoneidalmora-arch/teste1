@@ -36,13 +36,15 @@ export function InsightsPage() {
   
   // Modais
   const [showInconsistenciesModal, setShowInconsistenciesModal] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
+  const financeContext = useFinanceContext();
   
-  const { selectedPeriod, transactions, refresh: refreshFinance } = useFinanceContext();
+  const selectedPeriod = financeContext?.selectedPeriod || 'global';
+  const transactions = financeContext?.transactions || [];
+  const refreshFinance = financeContext?.refresh || (() => {});
   
   // Derivar o objeto de filtro a partir do estado do contexto
   const periodFilter: PeriodFilter = useMemo(() => {
-    if (selectedPeriod === 'global') {
+    if (!selectedPeriod || selectedPeriod === 'global' || !selectedPeriod.includes('-')) {
       return { type: 'global', label: 'Tudo (Global)' };
     }
     try {

@@ -6,6 +6,10 @@ import { useFinanceContext } from '../../contexts/FinanceContext';
 
 export function FinancialPeriodFilter() {
   const context = useFinanceContext();
+
+  if (!context) {
+    return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
+  }
   
   const { selectedPeriod, setPeriod, availableMonths } = context;
 
