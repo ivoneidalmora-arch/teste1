@@ -1,6 +1,5 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
 import { formatBRL } from '@/core/utils/formatters';
-import { getNetAmount, getExpenseAmount } from '../../utils/financial-normalization';
 
 export const growthDiagnosticService = {
   analyze(context: any): DiagnosticResult {
@@ -15,7 +14,7 @@ export const growthDiagnosticService = {
       if (!date) return;
       const monthKey = date.substring(0, 7);
       if (!monthsMap[monthKey]) monthsMap[monthKey] = { rev: 0, exp: 0, net: 0 };
-      monthsMap[monthKey].rev += getNetAmount(r);
+      monthsMap[monthKey].rev += (Number(r.amountLiquido) || Number(r.amount) || 0);
     });
 
     // Processar todas as despesas
@@ -24,7 +23,7 @@ export const growthDiagnosticService = {
       if (!date) return;
       const monthKey = date.substring(0, 7);
       if (!monthsMap[monthKey]) monthsMap[monthKey] = { rev: 0, exp: 0, net: 0 };
-      monthsMap[monthKey].exp += getExpenseAmount(e);
+      monthsMap[monthKey].exp += (Number(e.amount) || 0);
     });
 
     // Calcular saldo de cada mês

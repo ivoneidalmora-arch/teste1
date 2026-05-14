@@ -1,6 +1,5 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
 import { formatBRL } from '@/core/utils/formatters';
-import { getNetAmount, getExpenseAmount } from '../../utils/financial-normalization';
 
 export const expenseDiagnosticService = {
   analyze(context: any): DiagnosticResult {
@@ -14,8 +13,8 @@ export const expenseDiagnosticService = {
       targetExpenses = rawExpenses.filter((e: any) => e.date >= period.startDate && e.date <= period.endDate);
     }
 
-    const totalRevenueLiquido = targetRevenues.reduce((acc: number, curr: any) => acc + getNetAmount(curr), 0);
-    const totalExpense = targetExpenses.reduce((acc: number, curr: any) => acc + getExpenseAmount(curr), 0);
+    const totalRevenueLiquido = targetRevenues.reduce((acc: number, curr: any) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
+    const totalExpense = targetExpenses.reduce((acc: number, curr: any) => acc + (Number(curr.amount) || 0), 0);
 
     if (totalExpense === 0) {
       return {

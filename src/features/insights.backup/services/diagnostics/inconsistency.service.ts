@@ -1,5 +1,4 @@
 import { DiagnosticResult, InconsistencyRecord, AuditStatus } from '../../types/diagnostics.types';
-import { getNetAmount, getExpenseAmount } from '../../utils/financial-normalization';
 
 // REMOVIDO: import { supabaseAdmin } from '@/lib/supabase/server';
 // Este arquivo agora é focado 100% em lógica pura de análise, permitindo uso seguro no bundle de cliente se necessário,

@@ -2,33 +2,13 @@
 
 import { inconsistencyService } from "../services/diagnostics/inconsistency.service";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { getSession } from "@/features/auth/actions/auth.actions";
+
 import { InconsistencyRecord, InconsistencyGroup } from "../types/diagnostics.types";
 
 export async function getInconsistencyGroupsAction() {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return [];
-  }
-
-  const userId = session.user.id;
-
-  const { data: revenues } = await supabaseAdmin
-    .from('Receitas')
-    .select('*')
-    .eq('app_user_id', userId)
-    .is('deleted_at', null);
-
-  const { data: expenses } = await supabaseAdmin
-    .from('Despesas')
-    .select('*')
-    .eq('app_user_id', userId)
-    .is('deleted_at', null);
-
-  const { data: issues } = await supabaseAdmin
-    .from('audit_issues')
-    .select('*')
-    .eq('app_user_id', userId);
+  const { data: revenues } = await supabaseAdmin.from('Receitas').select('*').is('deleted_at', null);
+  const { data: expenses } = await supabaseAdmin.from('Despesas').select('*').is('deleted_at', null);
+  const { data: issues } = await supabaseAdmin.from('audit_issues').select('*');
 
   const result = inconsistencyService.analyze({
     rawRevenues: revenues || [],
@@ -64,11 +44,6 @@ export async function getInconsistencyGroupsAction() {
 }
 
 export async function getAuditIssuesAction(userId: string) {
-  const session = await getSession();
-  if (!session?.user?.id || session.user.id !== userId) {
-    return [];
-  }
-
   const { data } = await supabaseAdmin
     .from('audit_issues')
     .select('*')
@@ -83,11 +58,6 @@ export async function updateAuditIssueAction(
   status: string,
   details: any
 ) {
-  const session = await getSession();
-  if (!session?.user?.id || session.user.id !== userId) {
-    return { error: 'Sessão expirada ou acesso negado.' };
-  }
-
   try {
     const { error } = await supabaseAdmin
       .from('audit_issues')
@@ -97,14 +67,11 @@ export async function updateAuditIssueAction(
         issue_type: issueType,
         status,
         ...details
-      }, { onConflict: 'app_user_id,transaction_id,issue_type' });
+      }, { onConflict: 'app_user_id, transaction_id, issue_type' });
 
-    if (error) {
-      console.error("[updateAuditIssueAction] Supabase Error:", error);
-      throw error;
-    }
+    if (error) throw error;
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Erro ao atualizar status de auditoria.' };
+    return { error: err.message };
   }
 }
