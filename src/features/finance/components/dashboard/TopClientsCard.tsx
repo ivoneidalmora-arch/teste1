@@ -5,7 +5,7 @@ import { cn, formatBRL } from '@/core/utils/formatters';
 
 interface ClientMetric {
   name: string;
-  totalAmount: number;
+  total: number;
 }
 
 interface TopClientsCardProps {
@@ -17,7 +17,7 @@ import { Icon3D } from '@/core/components/ui/Icon3D';
 import { Users } from 'lucide-react';
 
 export function TopClientsCard({ clients }: TopClientsCardProps) {
-  const maxAmount = Math.max(...clients.map(c => c.totalAmount), 1);
+  const maxAmount = Math.max(...clients.map(c => c.total), 1);
 
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-full">
@@ -35,7 +35,7 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
 
       <div className="space-y-6">
         {clients.slice(0, 5).map((client, index) => {
-          const percentage = (client.totalAmount / maxAmount) * 100;
+          const percentage = (client.total / maxAmount) * 100;
           return (
             <div key={index} className="group cursor-default">
               <div className="flex items-center gap-4 mb-2">
@@ -46,7 +46,7 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
                         {client.name}
                       </p>
                       <p className="text-[13px] font-black text-slate-900 shrink-0">
-                        {formatBRL(client.totalAmount)}
+                        {formatBRL(client.total)}
                       </p>
                    </div>
                    

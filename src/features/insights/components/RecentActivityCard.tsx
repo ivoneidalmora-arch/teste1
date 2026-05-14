@@ -32,9 +32,9 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
     .slice(0, 5);
 
   const getEventIcon = (insight: DiagnosticResult) => {
-    if (insight.status === 'revisado') return { icon: CheckCircle2, variant: 'green' as const };
-    if (insight.status === 'pendente') return { icon: AlertTriangle, variant: 'orange' as const };
-    if (insight.status === 'corrigir') return { icon: Sparkles, variant: 'purple' as const };
+    if (insight.status === 'aprovado') return { icon: CheckCircle2, variant: 'green' as const };
+    if (insight.status === 'novo') return { icon: AlertTriangle, variant: 'orange' as const };
+    if (insight.status === 'em_analise') return { icon: Sparkles, variant: 'purple' as const };
     if (insight.severity === 'critical') return { icon: AlertCircle, variant: 'red' as const };
     
     switch (insight.category) {
@@ -47,9 +47,9 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
 
   const getEventStatusText = (insight: DiagnosticResult) => {
     switch (insight.status) {
-      case 'revisado': return 'Análise concluída';
-      case 'pendente': return 'Aguardando revisão';
-      case 'corrigir': return 'Correção sugerida';
+      case 'aprovado': return 'Análise concluída';
+      case 'novo': return 'Aguardando revisão';
+      case 'em_analise': return 'Correção sugerida';
       default: return 'Nova identificação';
     }
   };
@@ -93,8 +93,8 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
                   </div>
                   <div className={cn(
                     "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                    insight.status === 'revisado' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                    insight.status === 'pendente' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                    insight.status === 'aprovado' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                    insight.status === 'novo' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
                   )}>
                     {insight.status}
                   </div>

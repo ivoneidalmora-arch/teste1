@@ -93,8 +93,8 @@ export function DiagnosticsTable({ insights, loading, onAction }: DiagnosticsTab
                   <td className="px-10 py-6 text-center">
                     <div className={cn(
                       "inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                      insight.status === 'revisado' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                      insight.status === 'pendente' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                      insight.status === 'aprovado' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                      insight.status === 'novo' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
                     )}>
                       {insight.status}
                     </div>

@@ -45,7 +45,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
           <tbody className="divide-y divide-slate-50/50">
             {transactions.map((t) => {
               const date = new Date(t.date);
-              const isRevenue = t.type === 'revenue' || t.type === 'income';
+              const isRevenue = t.type === 'income';
               const status = t.status || 'pendente';
               
               return (
