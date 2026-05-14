@@ -6,22 +6,24 @@ import { useFinanceContext } from '../../contexts/FinanceContext';
 
 export function FinancialPeriodFilter() {
   const context = useFinanceContext();
+  
+  const monthOptions = useMemo(() => {
+    if (!context) return [{ value: 'global', label: 'Tudo (Global)' }];
+    
+    return [
+      { value: 'global', label: 'Tudo (Global)' },
+      ...context.availableMonths.map(m => ({
+        value: m.value,
+        label: m.label
+      }))
+    ];
+  }, [context]);
 
   if (!context) {
     return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
   }
   
-  const { selectedPeriod, setPeriod, availableMonths } = context;
-
-  const monthOptions = useMemo(() => {
-    return [
-      { value: 'global', label: 'Tudo (Global)' },
-      ...availableMonths.map(m => ({
-        value: m.value,
-        label: m.label
-      }))
-    ];
-  }, [availableMonths]);
+  const { selectedPeriod, setPeriod } = context;
 
   if (!context) {
     return <div className="text-rose-500 text-[10px]">Erro: Contexto Financeiro não encontrado</div>;
