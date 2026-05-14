@@ -29,7 +29,7 @@ export function InsightImpactMatrix({ insights, onSelectInsight }: InsightImpact
       colors: 'bg-emerald-50/30 border-emerald-100',
       text: 'text-emerald-700',
       icon: Zap,
-      filter: (i: DiagnosticResult) => (i.impactLevel === 'alto' || i.impactLevel === 'critico') && i.effortLevel === 'baixo'
+      filter: (i: DiagnosticResult) => ((i.impactLevel || 'medio') === 'alto' || (i.impactLevel || 'medio') === 'critico') && (i.effortLevel || 'baixo') === 'baixo'
     },
     { 
       id: 'high-impact-high-effort', 
@@ -38,7 +38,7 @@ export function InsightImpactMatrix({ insights, onSelectInsight }: InsightImpact
       colors: 'bg-indigo-50/30 border-indigo-100',
       text: 'text-indigo-700',
       icon: Target,
-      filter: (i: DiagnosticResult) => (i.impactLevel === 'alto' || i.impactLevel === 'critico') && i.effortLevel === 'alto'
+      filter: (i: DiagnosticResult) => ((i.impactLevel || 'medio') === 'alto' || (i.impactLevel || 'medio') === 'critico') && (i.effortLevel || 'baixo') === 'alto'
     },
     { 
       id: 'low-impact-low-effort', 
@@ -47,7 +47,7 @@ export function InsightImpactMatrix({ insights, onSelectInsight }: InsightImpact
       colors: 'bg-blue-50/30 border-blue-100',
       text: 'text-blue-700',
       icon: Clock,
-      filter: (i: DiagnosticResult) => i.impactLevel === 'baixo' && i.effortLevel === 'baixo'
+      filter: (i: DiagnosticResult) => (i.impactLevel || 'medio') === 'baixo' && (i.effortLevel || 'baixo') === 'baixo'
     },
     { 
       id: 'low-impact-high-effort', 
@@ -56,7 +56,7 @@ export function InsightImpactMatrix({ insights, onSelectInsight }: InsightImpact
       colors: 'bg-slate-50/30 border-slate-100',
       text: 'text-slate-500',
       icon: Info,
-      filter: (i: DiagnosticResult) => i.impactLevel === 'baixo' && i.effortLevel === 'alto'
+      filter: (i: DiagnosticResult) => (i.impactLevel || 'medio') === 'baixo' && (i.effortLevel || 'baixo') === 'alto'
     },
   ];
 

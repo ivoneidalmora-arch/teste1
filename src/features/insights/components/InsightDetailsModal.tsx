@@ -68,7 +68,7 @@ export function InsightDetailsModal({ isOpen, onClose, insight, onAction }: Insi
                      <div className="pt-2">
                         <div className="flex items-center gap-3 mb-2">
                            <InsightPriorityBadge priority={insight.priority} />
-                           <InsightStatusBadge status={insight.status} />
+                           <InsightStatusBadge status={insight.status || 'novo'} />
                            <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
                               <Calendar className="w-4 h-4" />
                               {insight.period || 'Análise Maio 2024'}
@@ -162,11 +162,11 @@ export function InsightDetailsModal({ isOpen, onClose, insight, onAction }: Insi
                           <div className="grid grid-cols-2 gap-3">
                              <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
                                 <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Impacto</p>
-                                <p className="text-[10px] font-black text-indigo-600 uppercase">{insight.impactLevel}</p>
+                                <p className="text-[10px] font-black text-indigo-600 uppercase">{insight.impactLevel || 'médio'}</p>
                              </div>
                              <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
                                 <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Esforço</p>
-                                <p className="text-[10px] font-black text-orange-600 uppercase">{insight.effortLevel}</p>
+                                <p className="text-[10px] font-black text-orange-600 uppercase">{insight.effortLevel || 'baixo'}</p>
                              </div>
                           </div>
                        </div>

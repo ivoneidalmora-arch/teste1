@@ -22,7 +22,7 @@ interface InsightTimelineProps {
 export function InsightTimeline({ insights, onSelectInsight }: InsightTimelineProps) {
   // Ordenar insights por data (detectedAt)
   const sortedInsights = [...insights].sort((a, b) => 
-    new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime()
+    new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime()
   );
 
   return (
@@ -55,11 +55,11 @@ export function InsightTimeline({ insights, onSelectInsight }: InsightTimelinePr
               {/* Timeline Indicator */}
               <div className={cn(
                 "absolute left-0 mt-1.5 w-10 h-10 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-6 z-10",
-                insight.status === 'resolvido' || insight.status === 'corrigido' 
+                (insight.status || 'novo') === 'resolvido' || (insight.status || 'novo') === 'corrigido' 
                   ? "bg-indigo-600 text-white" 
-                  : (insight.status === 'novo' ? "bg-emerald-500 text-white" : "bg-white text-slate-400")
+                  : ((insight.status || 'novo') === 'novo' ? "bg-emerald-500 text-white" : "bg-white text-slate-400")
               )}>
-                {insight.status === 'resolvido' || insight.status === 'corrigido' ? (
+                {(insight.status || 'novo') === 'resolvido' || (insight.status || 'novo') === 'corrigido' ? (
                   <ShieldCheck className="w-5 h-5" />
                 ) : (
                   <Search className="w-5 h-5" />
@@ -71,10 +71,10 @@ export function InsightTimeline({ insights, onSelectInsight }: InsightTimelinePr
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-black text-slate-400 uppercase tracking-[0.15em]">
-                      {new Date(insight.detectedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {new Date(insight.detectedAt || 0).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <InsightStatusBadge status={insight.status} />
+                    <InsightStatusBadge status={insight.status || 'novo'} />
                   </div>
                   
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100">

@@ -130,7 +130,7 @@ export function InsightCard({ insight, onAction, className }: InsightCardProps) 
         
         <div className="flex flex-col items-end gap-2">
            <InsightPriorityBadge priority={insight.priority} />
-           <InsightStatusBadge status={insight.status} />
+           <InsightStatusBadge status={insight.status || 'novo'} />
         </div>
       </div>
 
@@ -151,7 +151,7 @@ export function InsightCard({ insight, onAction, className }: InsightCardProps) 
               "text-[10px] font-black uppercase",
               insight.impactLevel === 'critico' ? "text-rose-600" : (insight.impactLevel === 'alto' ? "text-orange-600" : "text-blue-600")
             )}>
-              {insight.impactLevel}
+              {insight.impactLevel || 'médio'}
             </p>
           </div>
         </div>
@@ -163,7 +163,7 @@ export function InsightCard({ insight, onAction, className }: InsightCardProps) 
               "text-[10px] font-black uppercase",
               insight.effortLevel === 'alto' ? "text-rose-600" : (insight.effortLevel === 'medio' ? "text-orange-600" : "text-emerald-600")
             )}>
-              {insight.effortLevel}
+              {insight.effortLevel || 'baixo'}
             </p>
           </div>
         </div>
