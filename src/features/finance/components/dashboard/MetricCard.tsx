@@ -40,11 +40,11 @@ export function MetricCard({
 
   return (
     <div className={cn(
-      "min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:shadow-2xl group relative overflow-hidden",
+      "min-w-0 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-2xl group relative overflow-hidden",
       className
     )}>
       <div className="relative z-10">
-        <div className="flex items-center gap-5 mb-5">
+        <div className="flex items-center gap-4 mb-3">
           <Icon3D icon={Icon} variant={variant} size="md" />
           <div className="flex items-center gap-2">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -57,7 +57,7 @@ export function MetricCard({
         </div>
 
         <div className="space-y-1.5">
-          <h3 className="truncate text-[22px] font-black tracking-tight text-[#0F172A] leading-none">
+          <h3 className="truncate text-xl font-black tracking-tight text-[#0F172A] leading-none">
             {formattedValue}
           </h3>
           

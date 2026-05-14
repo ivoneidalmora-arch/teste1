@@ -27,15 +27,15 @@ export function DashboardHeader({
 }: Props) {
   
   return (
-    <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-10">
+    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
       {/* Título e Subtítulo */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
         <Icon3D icon={LayoutDashboard} variant="blue" size="md" />
         <div className="min-w-0">
           <h1 className="text-2xl font-black tracking-tight text-[#0F172A] lg:text-3xl leading-tight">
             {title}
           </h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-0.5">
             <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
               {subtitle || 'Visão Geral Corporativa'}
@@ -45,7 +45,7 @@ export function DashboardHeader({
       </div>
 
       {/* Busca, Filtros e Ações */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
+      <div className="flex flex-col md:flex-row items-center gap-3">
         {/* Campo de Pesquisa */}
         <div className="relative group w-full md:w-72">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />

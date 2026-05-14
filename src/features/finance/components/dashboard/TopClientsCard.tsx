@@ -20,11 +20,11 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
   const maxAmount = Math.max(...clients.map(c => c.total), 1);
 
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-full">
-      <div className="flex items-center justify-between mb-8">
+    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-full">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Icon3D icon={Users} variant="purple" size="sm" />
-          <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Top Clientes</h3>
+          <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Top Clientes</h3>
         </div>
         
         <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
@@ -33,7 +33,7 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {clients.slice(0, 5).map((client, index) => {
           const percentage = (client.total / maxAmount) * 100;
           return (

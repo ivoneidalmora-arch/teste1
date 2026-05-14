@@ -51,16 +51,16 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
   ];
 
   return (
-    <div className={cn("bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col h-full", className)}>
+    <div className={cn("bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col h-full", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm shadow-blue-100">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Calendário Alfa</h3>
+          <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Calendário Alfa</h3>
         </div>
 
         <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
             <div 
               key={i} 
               className={cn(
-                "bg-white p-2 min-h-[60px] flex flex-col gap-1 transition-all hover:bg-slate-50/50 cursor-pointer",
+                "bg-white p-2 min-h-[45px] flex flex-col gap-1 transition-all hover:bg-slate-50/50 cursor-pointer",
                 !isCurrentMonth && "opacity-20"
               )}
             >
@@ -138,7 +138,7 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
       </div>
 
       {/* Legend */}
-      <div className="mt-8 flex items-center justify-center gap-6 border-t border-slate-50 pt-6">
+      <div className="mt-4 flex items-center justify-center gap-3 border-t border-slate-50 pt-4">
         {categories.map(cat => (
           <div key={cat.label} className="flex items-center gap-2">
             <div className={cn("w-2 h-2 rounded-full", cat.color)} />

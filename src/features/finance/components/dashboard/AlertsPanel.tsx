@@ -42,9 +42,9 @@ export function AlertsPanel({ alerts = [], pendingCount = 0 }: AlertsPanelProps)
   const displayAlerts = alerts.length > 0 ? alerts : defaultAlerts;
 
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Resumo / Alertas</h3>
+    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Resumo / Alertas</h3>
         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
           {pendingCount || 3} pendências
         </span>
@@ -55,7 +55,7 @@ export function AlertsPanel({ alerts = [], pendingCount = 0 }: AlertsPanelProps)
           <button
             key={alert.id}
             onClick={alert.onClick}
-            className="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-50 transition-all hover:bg-slate-50 hover:border-slate-100 group text-left"
+            className="w-full flex items-center gap-3 p-3 rounded-2xl border border-slate-50 transition-all hover:bg-slate-50 hover:border-slate-100 group text-left"
           >
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
