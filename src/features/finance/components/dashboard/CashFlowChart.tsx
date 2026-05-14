@@ -50,12 +50,12 @@ import { BarChart3 } from 'lucide-react';
 
 export function CashFlowChart({ data, title, subtitle, mode }: Props) {
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
+    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-4">
           <Icon3D icon={BarChart3} variant="blue" size="sm" />
           <div>
-            <h3 className="text-lg font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa (Global)"}</h3>
+            <h3 className="text-base font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa (Global)"}</h3>
             <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{subtitle || "Comparativo mensal consolidado de entradas e saídas"}</p>
           </div>
         </div>
@@ -76,7 +76,7 @@ export function CashFlowChart({ data, title, subtitle, mode }: Props) {
         </div>
       </div>
 
-      <div className="w-full h-[280px]">
+      <div className="w-full h-[240px]">
         {data.every(d => d.entradas === 0 && d.saidas === 0) ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50/30 rounded-[2rem] border border-dashed border-slate-100">
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Sem dados para o período</p>

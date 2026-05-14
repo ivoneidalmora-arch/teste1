@@ -51,16 +51,16 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
   ];
 
   return (
-    <div className={cn("bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col h-full", className)}>
+    <div className={cn("bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col h-full", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm shadow-blue-100">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Calendário Alfa</h3>
+          <h3 className="text-base font-black text-[#0F172A] tracking-tight">Calendário Alfa</h3>
         </div>
 
         <div className="flex items-center gap-3">
@@ -106,14 +106,14 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
             <div 
               key={i} 
               className={cn(
-                "bg-white p-2 min-h-[45px] flex flex-col gap-1 transition-all hover:bg-slate-50/50 cursor-pointer",
+                "bg-white p-1.5 min-h-[35px] flex flex-col gap-1 transition-all hover:bg-slate-50/50 cursor-pointer",
                 !isCurrentMonth && "opacity-20"
               )}
             >
               <div className="flex justify-center mb-1">
                 <span className={cn(
-                  "text-[11px] font-black w-6 h-6 flex items-center justify-center transition-all",
-                  isSelected ? "bg-blue-600 text-white rounded-full shadow-lg shadow-blue-200 scale-110" : "text-slate-500"
+                  "text-[10px] font-black w-5 h-5 flex items-center justify-center transition-all",
+                  isSelected ? "bg-blue-600 text-white rounded-full shadow-lg shadow-blue-200" : "text-slate-500"
                 )}>
                   {format(day, 'd')}
                 </span>

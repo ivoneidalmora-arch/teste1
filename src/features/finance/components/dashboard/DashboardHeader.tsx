@@ -27,12 +27,12 @@ export function DashboardHeader({
 }: Props) {
   
   return (
-    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+    <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
       {/* Título e Subtítulo */}
       <div className="flex items-center gap-4">
-        <Icon3D icon={LayoutDashboard} variant="blue" size="md" />
+        <Icon3D icon={LayoutDashboard} variant="blue" size="sm" />
         <div className="min-w-0">
-          <h1 className="text-2xl font-black tracking-tight text-[#0F172A] lg:text-3xl leading-tight">
+          <h1 className="text-xl font-black tracking-tight text-[#0F172A] lg:text-2xl leading-tight">
             {title}
           </h1>
           <div className="flex items-center gap-2 mt-0.5">
@@ -53,7 +53,7 @@ export function DashboardHeader({
             type="text" 
             placeholder="Pesquisar transação..." 
             onChange={(e) => onSearch?.(e.target.value)}
-            className="w-full h-12 pl-12 pr-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 shadow-sm transition-all placeholder:text-slate-400"
+            className="w-full h-10 pl-12 pr-4 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 shadow-sm transition-all placeholder:text-slate-400"
           />
         </div>
 
@@ -67,7 +67,7 @@ export function DashboardHeader({
         <div className="flex items-center gap-3">
           <button 
             onClick={onGenerateReport}
-            className="flex items-center gap-3 px-5 h-12 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
+            className="flex items-center gap-2 px-4 h-10 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
           >
             <Icon3D icon={FileText} variant="purple" size="xs" glow={false} />
             <span>Relatório</span>
@@ -75,7 +75,7 @@ export function DashboardHeader({
           
           <button 
             onClick={onImportFile}
-            className="flex items-center gap-3 px-5 h-12 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
+            className="flex items-center gap-2 px-4 h-10 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm group"
           >
             <Icon3D icon={Upload} variant="cyan" size="xs" glow={false} />
             <span>Importar</span>
@@ -83,7 +83,7 @@ export function DashboardHeader({
 
           <button 
             onClick={onNewExpense}
-            className="flex items-center gap-3 px-6 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-rose-500/30 transition-all active:scale-95 shadow-lg"
+            className="flex items-center gap-3 px-5 h-10 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-rose-500/30 transition-all active:scale-95 shadow-lg"
           >
             <Icon3D icon={Plus} variant="red" size="xs" glow={false} className="bg-white/20 shadow-none" />
             <span>Despesa</span>
@@ -91,7 +91,7 @@ export function DashboardHeader({
 
           <button 
             onClick={onNewTransaction}
-            className="flex items-center gap-3 px-6 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 shadow-lg"
+            className="flex items-center gap-3 px-5 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 shadow-lg"
           >
             <Icon3D icon={Plus} variant="green" size="xs" glow={false} className="bg-white/20 shadow-none" />
             <span>Vistoria</span>

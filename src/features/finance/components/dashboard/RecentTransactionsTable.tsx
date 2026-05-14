@@ -13,12 +13,12 @@ import { History } from 'lucide-react';
 
 export function RecentTransactionsTable({ transactions }: RecentTransactionsTableProps) {
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-4">
           <Icon3D icon={History} variant="slate" size="sm" />
           <div>
-            <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
+            <h3 className="text-base font-black text-[#0F172A] tracking-tight">Transações Recentes</h3>
             <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Últimas movimentações registradas</p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
               
               return (
                 <tr key={t.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3">
+                  <td className="py-2">
                     <div className="flex flex-col">
                       <span className="text-sm font-black text-[#0F172A]">{date.getDate()}</span>
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
@@ -58,13 +58,13 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 pr-4">
+                  <td className="py-2 pr-4">
                     <div className="flex flex-col max-w-[220px]">
                       <span className="text-sm font-black text-[#0F172A] truncate group-hover:text-blue-600 transition-colors">{t.description}</span>
                       <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">NF-e {Math.floor(Math.random() * 90000) + 10000}</span>
                     </div>
                   </td>
-                  <td className="py-3 text-center">
+                  <td className="py-2 text-center">
                     <span className="inline-flex px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">
                       {t.category || 'Outros'}
                     </span>

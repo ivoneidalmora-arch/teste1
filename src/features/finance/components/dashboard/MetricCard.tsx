@@ -40,41 +40,37 @@ export function MetricCard({
 
   return (
     <div className={cn(
-      "min-w-0 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-2xl group relative overflow-hidden",
+      "min-w-0 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl group relative overflow-hidden",
       className
     )}>
-      <div className="relative z-10">
-        <div className="flex items-center gap-4 mb-3">
-          <Icon3D icon={Icon} variant={variant} size="md" />
-          <div className="flex items-center gap-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+      <div className="relative z-10 flex items-center gap-4">
+        <Icon3D icon={Icon} variant={variant} size="sm" />
+        
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate">
               {title}
             </p>
-            <div className="w-4 h-4 rounded-full border border-slate-200 flex items-center justify-center text-[9px] text-slate-400 font-bold">
-              ?
-            </div>
           </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <h3 className="truncate text-xl font-black tracking-tight text-[#0F172A] leading-none">
+          <h3 className="truncate text-lg font-black tracking-tight text-[#0F172A] leading-tight">
             {formattedValue}
           </h3>
           
           {trend !== undefined && (
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1.5 mt-0.5">
               <span className={cn(
-                "text-[11px] font-black flex items-center gap-0.5",
+                "text-[10px] font-black flex items-center gap-0.5",
                 isPositive ? "text-emerald-500" : "text-rose-500"
               )}>
-                {isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(2)}%
+                {isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%
               </span>
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">vs mês anterior</span>
+              <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">vs mês ant.</span>
             </div>
           )}
 
           {!trend && description && (
-            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest truncate mt-2">
+            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest truncate mt-0.5">
               {description}
             </p>
           )}
