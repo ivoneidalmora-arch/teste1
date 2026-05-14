@@ -22,6 +22,8 @@ interface InsightSummaryCardsProps {
   loading?: boolean;
 }
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+
 export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps) {
   const cards = [
     { 
@@ -29,54 +31,42 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
       value: stats.total, 
       desc: 'Análises encontradas',
       icon: Search,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-100'
+      variant: 'blue' as const,
     },
     { 
       label: 'ALERTAS CRÍTICOS', 
       value: stats.critical, 
       desc: 'Riscos que exigem atenção',
       icon: ShieldAlert,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-100'
+      variant: 'red' as const,
     },
     { 
       label: 'OPORTUNIDADES', 
       value: stats.opportunities, 
       desc: 'Sugestões de melhoria',
       icon: Lightbulb,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-100'
+      variant: 'green' as const,
     },
     { 
       label: 'TENDÊNCIAS', 
       value: stats.trends, 
       desc: 'Análise de comportamento',
       icon: TrendingUp,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-100'
+      variant: 'cyan' as const,
     },
     { 
       label: 'DUPLICIDADES', 
       value: stats.duplicates, 
       desc: 'Lançamentos em conflito',
       icon: AlertTriangle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-100'
+      variant: 'orange' as const,
     },
     { 
       label: 'MELHORIAS', 
       value: stats.improvements, 
       desc: 'Otimização financeira',
       icon: Sparkles,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-100'
+      variant: 'purple' as const,
     },
   ];
 
@@ -93,23 +83,19 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {cards.map((card, i) => {
-        const Icon = card.icon;
         return (
           <div 
             key={i} 
-            className={cn(
-              "p-4 rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md",
-              card.borderColor
-            )}
+            className="p-5 rounded-3xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 flex items-center gap-4 group"
           >
-            <div className="flex items-center gap-3 mb-2">
-              <div className={cn("p-2 rounded-xl", card.bgColor)}>
-                <Icon className={cn("w-4 h-4", card.color)} />
+            <Icon3D icon={card.icon} variant={card.variant} size="md" />
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-black text-slate-900">{card.value}</span>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{card.label}</span>
               </div>
-              <span className="text-xs font-bold text-slate-400 tracking-tight uppercase">{card.label}</span>
-              <span className="ml-auto text-xl font-black text-slate-900 leading-none">{card.value}</span>
+              <p className="text-[9px] font-medium text-slate-500 leading-tight truncate">{card.desc}</p>
             </div>
-            <p className="text-[10px] font-medium text-slate-500 leading-tight">{card.desc}</p>
           </div>
         );
       })}

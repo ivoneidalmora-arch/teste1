@@ -14,25 +14,26 @@ interface InsightsHeaderProps {
   error: string | null;
 }
 
+import { Icon3D } from '@/core/components/ui/Icon3D';
+import { Brain } from 'lucide-react';
+
 export function InsightsHeader({ periodFilter, onRefresh, loading, generating, error }: InsightsHeaderProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         
-        <div className="flex items-center gap-5">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
+        <div className="flex items-center gap-6">
+          <Icon3D icon={Brain} variant="ai" size="lg" />
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
+            <p className="text-sm font-semibold text-slate-500 mt-1">
               Visão executiva dos insights financeiros
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
             <FinancialPeriodFilter />
           </div>
 
@@ -40,10 +41,10 @@ export function InsightsHeader({ periodFilter, onRefresh, loading, generating, e
             onClick={onRefresh}
             disabled={generating || loading}
             className={cn(
-              "flex items-center gap-3 px-6 h-12 rounded-2xl text-xs font-bold transition-all active:scale-95 shadow-md disabled:opacity-50",
+              "flex items-center gap-3 px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl disabled:opacity-50",
               generating || loading
                 ? "bg-slate-900 text-white" 
-                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200"
+                : "bg-gradient-to-br from-blue-600 to-indigo-700 text-white hover:shadow-indigo-200"
             )}
           >
             {generating || loading ? (
