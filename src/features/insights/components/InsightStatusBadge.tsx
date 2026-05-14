@@ -1,6 +1,6 @@
 "use client";
 
-import { InsightStatus } from '../../types/diagnostics.types';
+import { InsightStatus } from '../types/diagnostics.types';
 import { cn } from '@/core/utils/formatters';
 import { 
   Clock, 

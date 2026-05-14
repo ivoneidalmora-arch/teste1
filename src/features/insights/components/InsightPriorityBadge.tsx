@@ -1,6 +1,6 @@
 "use client";
 
-import { DiagnosticPriority } from '../../types/diagnostics.types';
+import { DiagnosticPriority } from '../types/diagnostics.types';
 import { cn } from '@/core/utils/formatters';
 import { AlertCircle, AlertTriangle, Info, ShieldAlert } from 'lucide-react';
 
