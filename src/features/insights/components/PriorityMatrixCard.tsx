@@ -65,24 +65,24 @@ export function PriorityMatrixCard({ insights, loading }: PriorityMatrixCardProp
 
   if (loading) {
     return (
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm h-[450px] animate-pulse" />
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm h-[300px] animate-pulse" />
     );
   }
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm h-full group">
-      <div className="flex items-center gap-4 mb-10">
-        <Icon3D icon={LayoutGrid} variant="purple" size="sm" glow={false} />
-        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Matriz de Priorização</h3>
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm h-full group">
+      <div className="flex items-center gap-3 mb-4">
+        <Icon3D icon={LayoutGrid} variant="purple" size="xs" glow={false} />
+        <h3 className="text-base font-black text-slate-900 tracking-tight">Matriz de Priorização</h3>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {Object.values(matrix).map((q, i) => (
           <div 
             key={i}
-            className="p-8 rounded-[2rem] bg-slate-50 border border-slate-100 flex items-start gap-6 transition-all hover:bg-white hover:shadow-2xl hover:-translate-y-1"
+            className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1"
           >
-            <Icon3D icon={q.icon} variant={q.variant} size="lg" />
+            <Icon3D icon={q.icon} variant={q.variant} size="md" />
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -98,7 +98,7 @@ export function PriorityMatrixCard({ insights, loading }: PriorityMatrixCardProp
                   {q.items.length}
                 </span>
               </div>
-              <p className="text-[11px] font-bold text-slate-400 mb-5 leading-tight">{q.desc}</p>
+              <p className="text-[10px] font-bold text-slate-400 mb-3 leading-tight">{q.desc}</p>
               
               <div className="space-y-2">
                 {q.items.length > 0 ? (

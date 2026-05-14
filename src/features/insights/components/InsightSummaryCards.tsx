@@ -86,15 +86,14 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
         return (
           <div 
             key={i} 
-            className="p-5 rounded-3xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 flex items-center gap-4 group"
+            className="p-3 rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 flex items-center gap-3 group"
           >
-            <Icon3D icon={card.icon} variant={card.variant} size="md" />
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-black text-slate-900">{card.value}</span>
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{card.label}</span>
+            <Icon3D icon={card.icon} variant={card.variant} size="sm" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-black text-slate-900">{card.value}</span>
               </div>
-              <p className="text-[9px] font-medium text-slate-500 leading-tight truncate">{card.desc}</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-tight truncate">{card.label}</p>
             </div>
           </div>
         );

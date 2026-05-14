@@ -42,39 +42,39 @@ export function AlertsPanel({ alerts = [], pendingCount = 0 }: AlertsPanelProps)
   const displayAlerts = alerts.length > 0 ? alerts : defaultAlerts;
 
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Resumo / Alertas</h3>
-        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-black text-[#0F172A] tracking-tight">Resumo / Alertas</h3>
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
           {pendingCount || 3} pendências
         </span>
       </div>
 
-      <div className="space-y-4">
-        {displayAlerts.map((alert) => (
+      <div className="grid grid-cols-1 gap-2">
+        {displayAlerts.slice(0, 3).map((alert) => (
           <button
             key={alert.id}
             onClick={alert.onClick}
-            className="w-full flex items-center gap-3 p-3 rounded-2xl border border-slate-50 transition-all hover:bg-slate-50 hover:border-slate-100 group text-left"
+            className="w-full flex items-center gap-3 p-2 rounded-xl border border-slate-50 transition-all hover:bg-slate-50 hover:border-slate-100 group text-left"
           >
             <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
               alert.type === 'error' ? "bg-rose-50 text-rose-500" :
               alert.type === 'warning' ? "bg-amber-50 text-amber-500" :
               alert.type === 'success' ? "bg-emerald-50 text-emerald-500" :
               "bg-blue-50 text-blue-500"
             )}>
-              {alert.type === 'error' && <ShieldAlert className="w-5 h-5" />}
-              {alert.type === 'warning' && <AlertCircle className="w-5 h-5" />}
-              {alert.type === 'success' && <CheckCircle2 className="w-5 h-5" />}
-              {alert.type === 'info' && <Clock className="w-5 h-5" />}
+              {alert.type === 'error' && <ShieldAlert className="w-4 h-4" />}
+              {alert.type === 'warning' && <AlertCircle className="w-4 h-4" />}
+              {alert.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+              {alert.type === 'info' && <Clock className="w-4 h-4" />}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-[#0F172A] group-hover:text-blue-600 transition-colors">
+              <p className="text-xs font-black text-[#0F172A] group-hover:text-blue-600 transition-colors truncate">
                 {alert.title}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight truncate">
                 {alert.subtitle}
               </p>
             </div>

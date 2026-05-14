@@ -56,31 +56,31 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
 
   if (loading) {
     return (
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm h-full animate-pulse" />
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm h-full animate-pulse" />
     );
   }
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm flex flex-col h-full group">
-      <div className="flex items-center gap-4 mb-10">
-        <Icon3D icon={History} variant="blue" size="sm" glow={false} />
-        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Atividade Recente</h3>
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex flex-col h-full group">
+      <div className="flex items-center gap-3 mb-4">
+        <Icon3D icon={History} variant="blue" size="xs" glow={false} />
+        <h3 className="text-base font-black text-slate-900 tracking-tight">Atividade Recente</h3>
       </div>
 
-      <div className="space-y-8 flex-1">
+      <div className="space-y-3 flex-1">
         {sortedInsights.length > 0 ? (
           sortedInsights.map((insight, idx) => {
             const date = insight.detectedAt ? new Date(insight.detectedAt) : new Date();
             const config = getEventIcon(insight);
             return (
-              <div key={insight.id} className="flex items-center gap-6 group/item">
-                <Icon3D icon={config.icon} variant={config.variant} size="md" />
+              <div key={insight.id} className="flex items-center gap-4 group/item">
+                <Icon3D icon={config.icon} variant={config.variant} size="sm" />
                 
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-black text-slate-900 truncate tracking-tight group-hover/item:text-blue-600 transition-colors">
                     {insight.title}
                   </h4>
-                  <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest leading-none">
+                  <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest leading-none">
                     {getEventStatusText(insight)}
                   </p>
                 </div>
@@ -92,7 +92,7 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
                     <span>{format(date, 'HH:mm')}</span>
                   </div>
                   <div className={cn(
-                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                    "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border",
                     insight.status === 'aprovado' ? "bg-blue-50 text-blue-600 border-blue-100" :
                     insight.status === 'novo' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
                   )}>

@@ -138,7 +138,7 @@ export function InsightsPage() {
   };
 
   return (
-    <div className="max-w-[1800px] mx-auto space-y-12 p-8 lg:p-12 animate-in fade-in duration-700 pb-32">
+    <div className="max-w-[1800px] mx-auto space-y-6 p-4 lg:p-6 animate-in fade-in duration-700 pb-10">
       
       {/* Header Unificado */}
       <InsightsHeader 

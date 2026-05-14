@@ -125,7 +125,7 @@ export function DashboardPage() {
   [dashboardTransactions]);
 
   const recentTransactions = useMemo(() => 
-    dashboardTransactions.slice(0, 10).map(t => normalizeTransaction(t)),
+    dashboardTransactions.slice(0, 4).map(t => normalizeTransaction(t)),
   [dashboardTransactions]);
 
   const cashFlowData = useMemo(() => {
@@ -148,7 +148,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-4 pb-4">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -160,7 +160,7 @@ export function DashboardPage() {
       />
 
       {/* Grid de KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         <MetricCard 
           title="Saldo Disponível" 
           value={metrics.current.saldoDisponivel} 
@@ -198,9 +198,9 @@ export function DashboardPage() {
       </div>
 
       {/* Grid Principal 65/35 */}
-      <div className="grid grid-cols-12 gap-5">
+      <div className="grid grid-cols-12 gap-4">
         {/* Coluna Esquerda (Maior) */}
-        <div className="col-span-12 lg:col-span-8 space-y-5">
+        <div className="col-span-12 lg:col-span-8 space-y-4">
           <CashFlowChart 
             data={cashFlowData.data} 
             title={cashFlowData.title}
@@ -212,7 +212,7 @@ export function DashboardPage() {
         </div>
 
         {/* Coluna Direita (Menor) */}
-        <div className="col-span-12 lg:col-span-4 space-y-5">
+        <div className="col-span-12 lg:col-span-4 space-y-4">
           <CalendarAlfa events={financialEvents} />
           <TopClientsCard clients={topClients} />
           <AlertsPanel 

@@ -112,7 +112,7 @@ export function InsightsDashboard({
   }
 
   return (
-    <div className="space-y-12 pb-24 animate-in fade-in duration-700">
+    <div className="space-y-6 pb-10 animate-in fade-in duration-700">
       
       {/* 1. Sumário de Indicadores */}
       <InsightSummaryCards stats={stats} loading={loading && !generating} />
@@ -132,7 +132,7 @@ export function InsightsDashboard({
       />
 
       {/* 4. Rodapé do Dashboard: Matriz e Atividade */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <PriorityMatrixCard 
           insights={insights} 
           loading={loading && !generating} 

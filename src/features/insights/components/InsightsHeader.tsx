@@ -19,21 +19,21 @@ import { Brain } from 'lucide-react';
 
 export function InsightsHeader({ periodFilter, onRefresh, loading, generating, error }: InsightsHeaderProps) {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         
-        <div className="flex items-center gap-6">
-          <Icon3D icon={Brain} variant="ai" size="lg" />
+        <div className="flex items-center gap-4">
+          <Icon3D icon={Brain} variant="ai" size="sm" />
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
-            <p className="text-sm font-semibold text-slate-500 mt-1">
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest leading-none">
               Visão executiva dos insights financeiros
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
             <FinancialPeriodFilter />
           </div>
 
@@ -41,18 +41,18 @@ export function InsightsHeader({ periodFilter, onRefresh, loading, generating, e
             onClick={onRefresh}
             disabled={generating || loading}
             className={cn(
-              "flex items-center gap-3 px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl disabled:opacity-50",
+              "flex items-center gap-2 px-5 h-10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg disabled:opacity-50",
               generating || loading
                 ? "bg-slate-900 text-white" 
                 : "bg-gradient-to-br from-blue-600 to-indigo-700 text-white hover:shadow-indigo-200"
             )}
           >
             {generating || loading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
             )}
-            {generating || loading ? 'Atualizando...' : 'Atualizar Diagnóstico'}
+            {generating || loading ? 'Atualizando...' : 'Atualizar'}
           </button>
         </div>
       </div>
