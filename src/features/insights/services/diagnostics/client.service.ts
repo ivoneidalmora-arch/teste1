@@ -1,5 +1,6 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
 import { formatBRL } from '@/core/utils/formatters';
+import { getNetAmount } from '../../utils/financial-normalization';
 
 export const clientDiagnosticService = {
   analyze(context: any): DiagnosticResult {
@@ -25,13 +26,13 @@ export const clientDiagnosticService = {
       };
     }
 
-    const totalRevenueLiquido = targetRevenues.reduce((acc: number, curr: any) => acc + (Number(curr.amountLiquido) || Number(curr.amount) || 0), 0);
+    const totalRevenueLiquido = targetRevenues.reduce((acc: number, curr: any) => acc + getNetAmount(curr), 0);
 
     // Mapear clientes do período
     const clientsMap: Record<string, { value: number, count: number }> = {};
     targetRevenues.forEach((r: any) => {
       const name = r.cliente && r.cliente.trim() !== '' ? r.cliente : 'Sem Nome';
-      const val = Number(r.amountLiquido) || Number(r.amount) || 0;
+      const val = getNetAmount(r);
       if (!clientsMap[name]) clientsMap[name] = { value: 0, count: 0 };
       clientsMap[name].value += val;
       clientsMap[name].count += 1;

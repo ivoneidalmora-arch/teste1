@@ -43,7 +43,7 @@ export const inconsistencyService = {
 
     // 1. ANALISE DE RECEITAS
     targetRevenues.forEach((r: any) => {
-      const val = Number(r.amountLiquido) || Number(r.amount) || 0;
+      const val = getNetAmount(r);
       
       // Valor inválido
       if (val <= 0 && r.category !== 'Vistoria de Retorno') {
@@ -134,7 +134,7 @@ export const inconsistencyService = {
 
     // 2. ANALISE DE DESPESAS
     targetExpenses.forEach((e: any) => {
-      const val = Number(e.amount) || 0;
+      const val = getExpenseAmount(e);
 
       // Valor inválido
       if (val <= 0) {
@@ -249,8 +249,8 @@ export const inconsistencyService = {
           const diffDays = Math.abs(d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
           
           if (diffDays <= 30) {
-            const v1 = Number(r1.amountLiquido) || Number(r1.amount) || 0;
-            const v2 = Number(r2.amountLiquido) || Number(r2.amount) || 0;
+            const v1 = getNetAmount(r1);
+            const v2 = getNetAmount(r2);
             const sameValue = Math.abs(v1 - v2) < 0.01;
 
             const ids = [r1.id, r2.id].sort();

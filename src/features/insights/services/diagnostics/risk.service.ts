@@ -1,4 +1,5 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
+import { getGrossAmount, getNetAmount, getExpenseAmount } from '../../utils/financial-normalization';
 
 export const riskDiagnosticService = {
   analyze(inputs: { 
@@ -38,7 +39,7 @@ export const riskDiagnosticService = {
       : rawExpenses;
 
     // 2. Análise de Inconsistências Críticas
-    const zeroedRevenues = periodRevenues.filter((r: any) => (Number(r.amountLiquido) || Number(r.amount) || 0) <= 0);
+    const zeroedRevenues = periodRevenues.filter((r: any) => getNetAmount(r) <= 0);
     if (zeroedRevenues.length > 0) {
       factors.push(`${zeroedRevenues.length} ${zeroedRevenues.length === 1 ? 'receita está' : 'receitas estão'} com valor zerado ou negativo.`);
       riskPoints += 2;
@@ -57,9 +58,9 @@ export const riskDiagnosticService = {
     }
 
     // 3. Análise de Rentabilidade e Caixa
-    const totalGrossRevenue = periodRevenues.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
-    const totalNetRevenue = periodRevenues.reduce((acc: number, r: any) => acc + (Number(r.amountLiquido) || Number(r.amount) || 0), 0);
-    const totalExpenses = periodExpenses.reduce((acc: number, e: any) => acc + (Number(e.amount) || 0), 0);
+    const totalGrossRevenue = periodRevenues.reduce((acc: number, r: any) => acc + getGrossAmount(r), 0);
+    const totalNetRevenue = periodRevenues.reduce((acc: number, r: any) => acc + getNetAmount(r), 0);
+    const totalExpenses = periodExpenses.reduce((acc: number, e: any) => acc + getExpenseAmount(e), 0);
     const netBalance = totalNetRevenue - totalExpenses;
     const netMargin = totalNetRevenue > 0 ? (netBalance / totalNetRevenue) * 100 : 0;
 

@@ -1,5 +1,6 @@
 import { DiagnosticResult } from '../../types/diagnostics.types';
 import { formatBRL } from '@/core/utils/formatters';
+import { getNetAmount } from '../../utils/financial-normalization';
 
 export const serviceDiagnosticService = {
   analyze(context: any): DiagnosticResult {
@@ -40,7 +41,7 @@ export const serviceDiagnosticService = {
     
     targetRevenues.forEach((r: any) => {
       const s = normalizeService(r.category);
-      const val = Number(r.amountLiquido) || Number(r.amount) || 0;
+      const val = getNetAmount(r);
       if (!servicesMap[s]) servicesMap[s] = { count: 0, value: 0 };
       servicesMap[s].count += 1;
       servicesMap[s].value += val;
