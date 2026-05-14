@@ -61,7 +61,7 @@ export function InsightsPage() {
         startDate: format(startOfMonth(d), 'yyyy-MM-dd'),
         endDate: format(endOfMonth(d), 'yyyy-MM-dd')
       };
-    } catch (e) {
+    } catch (error) {
       return { type: 'global', label: 'Tudo (Global)' };
     }
   }, [selectedPeriod]);

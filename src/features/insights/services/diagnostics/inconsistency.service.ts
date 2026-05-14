@@ -328,7 +328,5 @@ export const inconsistencyService = {
       },
       records
     };
-  },
-
   }
 };
