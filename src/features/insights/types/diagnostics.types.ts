@@ -45,6 +45,7 @@ export interface DiagnosticResult {
   impactValue?: number; // Valor financeiro estimado do impacto
   period?: string; // Ex: "Maio 2024"
   detectedAt: string; // ISO date
+  rawRecord?: any; // Registro original para auditoria/edição
 }
 
 export type AuditSeverity = 'critical' | 'alert' | 'info';

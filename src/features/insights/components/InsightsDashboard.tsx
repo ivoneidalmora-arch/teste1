@@ -89,9 +89,7 @@ export function InsightsDashboard({
     }
 
     if (actionId === 'open_edit_transaction') {
-      // @ts-ignore
       if (insight.rawRecord) {
-        // @ts-ignore
         onEditTransaction?.(insight.rawRecord);
       }
       return;
@@ -102,7 +100,6 @@ export function InsightsDashboard({
       let result: any;
       
       if (insight.type === 'inconsistency') {
-        // @ts-ignore
         const raw = insight.rawRecord;
         if (raw) {
           result = await updateAuditIssueAction(
