@@ -38,7 +38,7 @@ export function MainInsightSection({ insight, loading, onAction }: MainInsightSe
   return (
     <div className="grid grid-cols-12 gap-4">
       {/* 1. Card Grande: Insight Principal */}
-      <div className="col-span-12 lg:col-span-8">
+      <div className="col-span-12 lg:col-span-8 h-full overflow-hidden">
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col relative group">
           {/* Selo Destaque */}
           <div className="absolute top-4 left-4 flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest z-10 border border-blue-100">

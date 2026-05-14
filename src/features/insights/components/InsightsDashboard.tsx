@@ -112,27 +112,31 @@ export function InsightsDashboard({
   }
 
   return (
-    <div className="space-y-6 pb-10 animate-in fade-in duration-700">
+    <div className="flex-1 flex flex-col gap-4 animate-in fade-in duration-700 overflow-hidden min-h-0">
       
       {/* 1. Sumário de Indicadores */}
       <InsightSummaryCards stats={stats} loading={loading && !generating} />
 
       {/* 2. Insight Principal e Ações Recomendadas */}
-      <MainInsightSection 
-        insight={heroInsight} 
-        loading={loading && !generating} 
-        onAction={handleAction}
-      />
+      <div className="h-[25%] min-h-[180px]">
+        <MainInsightSection 
+          insight={heroInsight} 
+          loading={loading && !generating} 
+          onAction={handleAction}
+        />
+      </div>
 
       {/* 3. Tabela de Diagnósticos */}
-      <DiagnosticsTable 
-        insights={insights} 
-        loading={loading && !generating} 
-        onAction={handleAction}
-      />
+      <div className="flex-1 min-h-0">
+        <DiagnosticsTable 
+          insights={insights} 
+          loading={loading && !generating} 
+          onAction={handleAction}
+        />
+      </div>
 
       {/* 4. Rodapé do Dashboard: Matriz e Atividade */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="h-[25%] grid grid-cols-1 xl:grid-cols-2 gap-4 min-h-[150px]">
         <PriorityMatrixCard 
           insights={insights} 
           loading={loading && !generating} 

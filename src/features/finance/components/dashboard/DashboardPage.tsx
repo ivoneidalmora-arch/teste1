@@ -148,7 +148,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -197,27 +197,37 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Grid Principal 65/35 */}
-      <div className="grid grid-cols-12 gap-4">
+      {/* Grid Principal 65/35 - Agora expansível */}
+      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
         {/* Coluna Esquerda (Maior) */}
-        <div className="col-span-12 lg:col-span-8 space-y-4">
-          <CashFlowChart 
-            data={cashFlowData.data} 
-            title={cashFlowData.title}
-            subtitle={cashFlowData.subtitle}
-          />
-          <RecentTransactionsTable 
-            transactions={recentTransactions.slice(0, 5)} 
-          />
+        <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 min-h-0">
+          <div className="flex-1 min-h-0">
+            <CashFlowChart 
+              data={cashFlowData.data} 
+              title={cashFlowData.title}
+              subtitle={cashFlowData.subtitle}
+            />
+          </div>
+          <div className="h-[30%] min-h-[180px]">
+            <RecentTransactionsTable 
+              transactions={recentTransactions.slice(0, 4)} 
+            />
+          </div>
         </div>
 
         {/* Coluna Direita (Menor) */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-          <CalendarAlfa events={financialEvents} />
-          <TopClientsCard clients={topClients} />
-          <AlertsPanel 
-            pendingCount={metrics.current.despesasPendentes > 0 ? 3 : 0}
-          />
+        <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 min-h-0">
+          <div className="flex-1 min-h-0">
+            <CalendarAlfa events={financialEvents} />
+          </div>
+          <div className="h-[25%] min-h-[150px]">
+            <TopClientsCard clients={topClients} />
+          </div>
+          <div className="h-[20%] min-h-[120px]">
+            <AlertsPanel 
+              pendingCount={metrics.current.despesasPendentes > 0 ? 3 : 0}
+            />
+          </div>
         </div>
       </div>
 

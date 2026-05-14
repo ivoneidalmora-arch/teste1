@@ -20,8 +20,8 @@ export function DashboardLayout({ children }: Props) {
           <MobileNav />
 
           {/* Main Content Area */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-            <div className="mx-auto w-full max-w-[1600px] px-4 py-2.5 lg:px-6">
+          <main className="flex-1 overflow-hidden">
+            <div className="h-full w-full max-w-[1800px] mx-auto px-4 py-2 lg:px-6">
               {children}
             </div>
           </main>

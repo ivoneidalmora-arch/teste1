@@ -39,7 +39,7 @@ export function DiagnosticsTable({ insights, loading, onAction }: DiagnosticsTab
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group h-full flex flex-col">
       <div className="p-5 border-b border-slate-50 flex items-center justify-between">
         <h3 className="text-lg font-black text-slate-900 tracking-tight">Diagnósticos Encontrados</h3>
         <span className="px-5 py-2 rounded-full bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border border-slate-100">
@@ -47,7 +47,7 @@ export function DiagnosticsTable({ insights, loading, onAction }: DiagnosticsTab
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-auto scrollbar-thin">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">

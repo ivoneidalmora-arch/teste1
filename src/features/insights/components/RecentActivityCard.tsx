@@ -67,7 +67,7 @@ export function RecentActivityCard({ insights, loading }: RecentActivityCardProp
         <h3 className="text-base font-black text-slate-900 tracking-tight">Atividade Recente</h3>
       </div>
 
-      <div className="space-y-3 flex-1">
+      <div className="space-y-3 flex-1 overflow-y-auto scrollbar-thin pr-2">
         {sortedInsights.length > 0 ? (
           sortedInsights.map((insight, idx) => {
             const date = insight.detectedAt ? new Date(insight.detectedAt) : new Date();

@@ -74,8 +74,8 @@ export function TransactionTable({ transactions, onEdit, onRefresh }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
   return (
-    <Card className="p-0 border-slate-100">
-      <div className="overflow-x-auto scrollbar-thin">
+    <Card className="p-0 border-slate-100 h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-auto scrollbar-thin">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">

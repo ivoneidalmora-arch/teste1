@@ -50,8 +50,8 @@ import { BarChart3 } from 'lucide-react';
 
 export function CashFlowChart({ data, title, subtitle, mode }: Props) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 shrink-0">
         <div className="flex items-center gap-4">
           <Icon3D icon={BarChart3} variant="blue" size="sm" />
           <div>
@@ -76,7 +76,7 @@ export function CashFlowChart({ data, title, subtitle, mode }: Props) {
         </div>
       </div>
 
-      <div className="w-full h-[240px]">
+      <div className="w-full flex-1 min-h-0">
         {data.every(d => d.entradas === 0 && d.saidas === 0) ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50/30 rounded-[2rem] border border-dashed border-slate-100">
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Sem dados para o período</p>

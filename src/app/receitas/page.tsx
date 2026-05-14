@@ -38,7 +38,7 @@ export default function ReceitasPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-5 animate-in fade-in duration-700 pb-10">
+    <div className="h-full flex flex-col gap-3 animate-in fade-in duration-700 overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -65,7 +65,7 @@ export default function ReceitasPage() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4">
+      <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-3 shrink-0">
         <div className="flex-1 relative">
           <input 
             type="text" 
@@ -96,32 +96,34 @@ export default function ReceitasPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Recebido</span>
-          <span className="text-2xl font-black text-slate-900">{formatBRL(metrics?.totalIncome || 0)}</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Recebido</span>
+          <span className="text-xl font-black text-slate-900">{formatBRL(metrics?.totalIncome || 0)}</span>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Vistorias Realizadas</span>
-          <span className="text-2xl font-black text-slate-900">{incomeTransactions.length}</span>
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Vistorias Realizadas</span>
+          <span className="text-xl font-black text-slate-900">{incomeTransactions.length}</span>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Ticket Médio</span>
-          <span className="text-2xl font-black text-emerald-600">{formatBRL(metrics?.ticketMedio || 0)}</span>
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Ticket Médio</span>
+          <span className="text-xl font-black text-emerald-600">{formatBRL(metrics?.ticketMedio || 0)}</span>
         </div>
       </div>
 
-      {loading ? (
-        <div className="py-20 flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-        </div>
-      ) : (
-        <TransactionTable 
-          transactions={incomeTransactions}
-          onEdit={(t) => setEditingTransaction(t)}
-          onRefresh={refresh}
-        />
-      )}
+      <div className="flex-1 min-h-0">
+        {loading ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+          </div>
+        ) : (
+          <TransactionTable 
+            transactions={incomeTransactions}
+            onEdit={(t) => setEditingTransaction(t)}
+            onRefresh={refresh}
+          />
+        )}
+      </div>
 
       {editingTransaction && (
         <EditTransactionModal 

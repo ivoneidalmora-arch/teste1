@@ -13,7 +13,7 @@ import { History } from 'lucide-react';
 
 export function RecentTransactionsTable({ transactions }: RecentTransactionsTableProps) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col">
+    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-4">
           <Icon3D icon={History} variant="slate" size="sm" />
@@ -30,8 +30,8 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
         </button>
       </div>
 
-      <div className="flex-1 overflow-x-auto scrollbar-thin">
-        <table className="w-full min-w-[700px]">
+      <div className="flex-1 overflow-y-auto overflow-x-auto scrollbar-thin">
+        <table className="w-full min-w-[700px] border-collapse">
           <thead>
             <tr className="border-b border-slate-50">
               <th className="text-left py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</th>
@@ -99,14 +99,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
         </table>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-50 text-center">
-        <button 
-          onClick={() => window.location.href = '/receitas'}
-          className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] hover:text-blue-700 transition-colors"
-        >
-          Ver todas as transações
-        </button>
-      </div>
+
     </div>
   );
 }
