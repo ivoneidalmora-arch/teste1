@@ -25,52 +25,58 @@ interface InsightSummaryCardsProps {
 export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps) {
   const cards = [
     { 
-      label: 'Total de Insights', 
+      label: 'TOTAL DE INSIGHTS', 
       value: stats.total, 
-      desc: 'Análises totais encontradas',
+      desc: 'Análises encontradas',
       icon: Search,
-      colors: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-      glow: 'shadow-indigo-100'
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-100'
     },
     { 
-      label: 'Alertas Críticos', 
+      label: 'ALERTAS CRÍTICOS', 
       value: stats.critical, 
       desc: 'Riscos que exigem atenção',
       icon: ShieldAlert,
-      colors: 'text-rose-600 bg-rose-50 border-rose-100',
-      glow: 'shadow-rose-100'
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-100'
     },
     { 
-      label: 'Oportunidades', 
+      label: 'OPORTUNIDADES', 
       value: stats.opportunities, 
       desc: 'Sugestões de melhoria',
       icon: Lightbulb,
-      colors: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-      glow: 'shadow-emerald-100'
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-100'
     },
     { 
-      label: 'Tendências', 
+      label: 'TENDÊNCIAS', 
       value: stats.trends, 
       desc: 'Análise de comportamento',
       icon: TrendingUp,
-      colors: 'text-blue-600 bg-blue-50 border-blue-100',
-      glow: 'shadow-blue-100'
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-100'
     },
     { 
-      label: 'Duplicidades', 
+      label: 'DUPLICIDADES', 
       value: stats.duplicates, 
       desc: 'Lançamentos em conflito',
       icon: AlertTriangle,
-      colors: 'text-orange-600 bg-orange-50 border-orange-100',
-      glow: 'shadow-orange-100'
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-100'
     },
     { 
-      label: 'Melhorias', 
+      label: 'MELHORIAS', 
       value: stats.improvements, 
       desc: 'Otimização financeira',
       icon: Sparkles,
-      colors: 'text-purple-600 bg-purple-50 border-purple-100',
-      glow: 'shadow-purple-100'
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-100'
     },
   ];
 
@@ -78,7 +84,7 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-32 bg-slate-100 rounded-3xl animate-pulse border border-slate-200" />
+          <div key={i} className="h-24 bg-white rounded-2xl animate-pulse border border-slate-100" />
         ))}
       </div>
     );
@@ -92,21 +98,18 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
           <div 
             key={i} 
             className={cn(
-              "p-5 rounded-[2rem] border transition-all hover:scale-105 shadow-sm group",
-              card.colors,
-              card.glow
+              "p-4 rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md",
+              card.borderColor
             )}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-white/80 rounded-xl">
-                <Icon className="w-5 h-5" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className={cn("p-2 rounded-xl", card.bgColor)}>
+                <Icon className={cn("w-4 h-4", card.color)} />
               </div>
-              <span className="text-2xl font-black tracking-tighter">{card.value}</span>
+              <span className="text-xs font-bold text-slate-400 tracking-tight uppercase">{card.label}</span>
+              <span className="ml-auto text-xl font-black text-slate-900 leading-none">{card.value}</span>
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-0.5">{card.label}</p>
-              <p className="text-[9px] font-medium opacity-60 leading-tight">{card.desc}</p>
-            </div>
+            <p className="text-[10px] font-medium text-slate-500 leading-tight">{card.desc}</p>
           </div>
         );
       })}

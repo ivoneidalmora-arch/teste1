@@ -15,13 +15,20 @@ export function standardizeInsight(insight: any): DiagnosticResult {
   // Mapeamento de Impacto
   let impactLevel: ImpactLevel = 'medio';
   if (insight.severity === 'critical') impactLevel = 'critico';
-  if (insight.severity === 'warning') impactLevel = 'alto';
-  if (insight.severity === 'positive') impactLevel = 'baixo';
+  else if (insight.severity === 'warning') impactLevel = 'alto';
+  else if (insight.severity === 'positive') impactLevel = 'baixo';
+  else if (insight.severity === 'info') impactLevel = 'baixo';
 
-  // Esforço estimado (regra simples baseada no tipo)
-  let effortLevel: EffortLevel = 'baixo';
-  if (insight.type === 'risk' || insight.type === 'expense') effortLevel = 'medio';
-  if (insight.type === 'health') effortLevel = 'alto';
+  // Esforço estimado (regra baseada no tipo)
+  let effortLevel: EffortLevel = 'medio';
+  if (insight.type === 'health') effortLevel = 'baixo';
+  if (insight.type === 'inconsistency') effortLevel = 'baixo';
+  if (insight.type === 'opportunity') effortLevel = 'baixo';
+  if (insight.type === 'growth') effortLevel = 'medio';
+  if (insight.type === 'expense') effortLevel = 'medio';
+  if (insight.type === 'client') effortLevel = 'alto';
+  if (insight.type === 'service') effortLevel = 'alto';
+  if (insight.type === 'risk') effortLevel = 'alto';
 
   return {
     ...insight,
