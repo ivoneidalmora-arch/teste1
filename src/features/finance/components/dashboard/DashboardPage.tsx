@@ -15,7 +15,8 @@ import { MetricCard } from './MetricCard';
 import { CashFlowChart } from './CashFlowChart';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { TopClientsCard } from './TopClientsCard';
-import { GoogleCalendarCard } from '@/features/calendar/components/GoogleCalendarCard';
+import { CalendarAlfa } from '@/features/calendar/components/CalendarAlfa';
+import { AlertsPanel } from './AlertsPanel';
 import { 
   getTopClients, 
   getExpensesByCategory, 
@@ -73,27 +74,8 @@ export function DashboardPage() {
       );
     }
 
-    // Filtros rápidos locais (Today, Week, etc)
-    const now = new Date();
-    if (activePeriod === 'today') {
-      filtered = filtered.filter(t => {
-        const d = new Date(t.date);
-        return d.toDateString() === now.toDateString();
-      });
-    } else if (activePeriod === 'week') {
-      const start = new Date(now.setDate(now.getDate() - now.getDay()));
-      const end = new Date(now.setDate(now.getDate() - now.getDay() + 6));
-      filtered = filtered.filter(t => {
-        const d = new Date(t.date);
-        return d >= start && d <= end;
-      });
-    } else if (activePeriod === 'last30') {
-      const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
-      filtered = filtered.filter(t => new Date(t.date) >= thirtyDaysAgo);
-    }
-
     return filtered;
-  }, [filteredTransactions, searchQuery, activePeriod]);
+  }, [filteredTransactions, searchQuery]);
 
   // Cálculos Financeiros
   const metrics = useMemo(() => {
@@ -107,8 +89,6 @@ export function DashboardPage() {
       const prevDate = subMonths(date, 1);
       prevTransactions = legacyFilterByMonth(transactions || [], prevDate);
     } else {
-      // Se global, pegamos o ano anterior para variação? 
-      // O requisito diz que para global retorna current como prev (variação 0)
       return {
         current,
         prev: current,
@@ -135,31 +115,17 @@ export function DashboardPage() {
     getTopClients(dashboardTransactions), 
   [dashboardTransactions]);
 
-  const expensesByCategory = useMemo(() => 
-    getExpensesByCategory(dashboardTransactions), 
-  [dashboardTransactions]);
-
   const financialEvents = useMemo(() => 
-    getFinancialCalendarEvents(dashboardTransactions), 
+    getFinancialCalendarEvents(dashboardTransactions).map(e => ({
+      id: e.id,
+      title: e.title,
+      date: new Date(e.date),
+      type: (e.type === 'revenue' ? 'financeiro' : (e.type === 'expense' ? 'operacional' : 'outros')) as any
+    })), 
   [dashboardTransactions]);
 
   const recentTransactions = useMemo(() => 
-    dashboardTransactions.slice(0, 10).map(t => {
-      const norm = normalizeTransaction(t);
-      return {
-        id: String(norm.id),
-        date: norm.date,
-        description: norm.description,
-        customer: (('customer' in norm ? norm.customer : '') || 'N/A'),
-        category: norm.category || 'Outros',
-        amount: norm.amount,
-        netAmount: norm.netAmount,
-        grossAmount: norm.grossAmount,
-        status: norm.status,
-        source: (['manual', 'import', 'ocr', 'supabase'].includes(norm.source || '') ? norm.source : 'manual') as any,
-        type: norm.type as any
-      } as any;
-    }),
+    dashboardTransactions.slice(0, 10).map(t => normalizeTransaction(t)),
   [dashboardTransactions]);
 
   const cashFlowData = useMemo(() => {
@@ -174,15 +140,15 @@ export function DashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Sincronizando Dados...</p>
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Sincronizando Dados...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-8">
+    <div className="space-y-8 pb-12">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral Corporativa" 
@@ -193,61 +159,65 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {filteredTransactions.length === 0 && !loading && (
-        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-6 flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
-          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-            <Clock className="w-4 h-4 text-amber-600" />
-          </div>
-          <p className="text-amber-800 text-xs font-bold uppercase tracking-widest">
-            Nenhum lançamento encontrado para este período em {selectedYear}.
-          </p>
-        </div>
-      )}
+      {/* Grid de KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <MetricCard 
+          title="Saldo Disponível" 
+          value={metrics.current.saldoDisponivel} 
+          trend={metrics.variations.balance} 
+          icon={Wallet} 
+          variant="blue" 
+        />
+        <MetricCard 
+          title="Receita Bruta" 
+          value={metrics.current.receitaBruta} 
+          trend={metrics.variations.income} 
+          icon={TrendingUp} 
+          variant="green" 
+        />
+        <MetricCard 
+          title="Receita Líquida" 
+          value={metrics.current.receitaLiquida} 
+          trend={metrics.variations.net} 
+          icon={ShieldCheck} 
+          variant="green" 
+        />
+        <MetricCard 
+          title="Despesa Paga" 
+          value={metrics.current.despesasPagas} 
+          trend={metrics.variations.expense} 
+          icon={TrendingDown} 
+          variant="red" 
+        />
+        <MetricCard 
+          title="Despesas Pendentes" 
+          value={metrics.current.despesasPendentes} 
+          icon={Clock} 
+          variant="red" 
+        />
+      </div>
 
-      {/* Grid Principal Compacto */}
-      <div className="grid grid-cols-12 gap-6">
-        
-        {/* 1. KPIs de Performance (Linha Superior - 5 colunas) */}
-        <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <MetricCard 
-            title="Saldo Disponível" 
-            value={metrics.current.saldoDisponivel} 
-            trend={metrics.variations.balance} 
-            icon={Wallet} 
-            variant="blue" 
-            description={`Atualizado: ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-          />
-          <MetricCard title="Receita Bruta" value={metrics.current.receitaBruta} trend={metrics.variations.income} icon={TrendingUp} variant="blue" />
-          <MetricCard title="Receita Líquida" value={metrics.current.receitaLiquida} trend={metrics.variations.net} icon={ShieldCheck} variant="green" />
-          <MetricCard title="Despesa Paga" value={metrics.current.despesasPagas} trend={metrics.variations.expense} icon={TrendingDown} variant="red" />
-          <MetricCard title="Despesas Pendentes" value={metrics.current.despesasPendentes} icon={Clock} variant="orange" />
-        </div>
-
-        {/* 2. Fluxo de Caixa + Top Clientes (8/4) */}
-        <div className="col-span-12 lg:col-span-8">
+      {/* Grid Principal 65/35 */}
+      <div className="grid grid-cols-12 gap-8">
+        {/* Coluna Esquerda (Maior) */}
+        <div className="col-span-12 lg:col-span-8 space-y-8">
           <CashFlowChart 
             data={cashFlowData.data} 
             title={cashFlowData.title}
             subtitle={cashFlowData.subtitle}
-            mode={cashFlowData.mode}
           />
-        </div>
-        <div className="col-span-12 lg:col-span-4">
-          <TopClientsCard 
-            clients={topClients} 
-            onSeeAll={() => window.location.href = '/relatorios'}
+          <RecentTransactionsTable 
+            transactions={recentTransactions.slice(0, 5)} 
           />
         </div>
 
-        {/* 3. Transações Recentes + Calendário Google (7/5) */}
-        <div className="col-span-12 lg:col-span-7">
-          <RecentTransactionsTable 
-            transactions={recentTransactions.slice(0, 5)} 
-            onAction={(id) => {}} 
+        {/* Coluna Direita (Menor) */}
+        <div className="col-span-12 lg:col-span-4 space-y-8">
+          <CalendarAlfa events={financialEvents} />
+          <TopClientsCard clients={topClients} />
+          <AlertsPanel 
+            pendingCount={metrics.current.despesasPendentes > 0 ? 3 : 0}
           />
-        </div>
-        <div className="col-span-12 lg:col-span-5">
-          <GoogleCalendarCard />
         </div>
       </div>
 
@@ -275,3 +245,4 @@ export function DashboardPage() {
     </div>
   );
 }
+

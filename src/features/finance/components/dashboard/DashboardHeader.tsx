@@ -25,78 +25,75 @@ export function DashboardHeader({
 }: Props) {
   
   return (
-    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+    <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-8">
+      {/* Título e Subtítulo */}
       <div className="min-w-0">
-        <h1 className="text-xl font-black tracking-tight text-[#0F172A] lg:text-2xl">
+        <h1 className="text-2xl font-black tracking-tight text-[#0F172A] lg:text-[28px] leading-tight">
           {title}
         </h1>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+        <div className="flex items-center gap-2 mt-1.5">
+          <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+          <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em]">
             {subtitle || 'Visão Geral Corporativa'}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-        {/* Busca e Período Agrupados */}
-        <div className="flex items-center gap-2 w-full lg:w-auto">
-          <div className="relative group flex-1 lg:w-44">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Pesquisar..." 
-              onChange={(e) => onSearch?.(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all"
-            />
-          </div>
+      {/* Busca, Filtros e Ações */}
+      <div className="flex flex-col md:flex-row items-center gap-3">
+        {/* Campo de Pesquisa */}
+        <div className="relative group w-full md:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Pesquisar..." 
+            onChange={(e) => onSearch?.(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 bg-white border border-slate-100 rounded-2xl text-[12px] font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 shadow-sm transition-all placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Filtros de Período e Ano */}
+        <div className="flex items-center gap-2">
           <FinancialPeriodFilter />
           <FinancialYearFilter />
         </div>
 
-        {/* Ações Principais */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-sm">
-            <button 
-              onClick={onGenerateReport}
-              className="group flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
-              title="Gerar Relatório"
-            >
-              <FileText className="w-4.5 h-4.5" />
-              <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Relatório</span>
-            </button>
-            <div className="w-px h-5 bg-slate-100 mx-1" />
-            <button 
-              onClick={onImportFile}
-              className="group flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-              title="Importar Arquivo"
-            >
-              <Upload className="w-4.5 h-4.5" />
-              <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Importar</span>
-            </button>
-          </div>
+        {/* Botões de Ação */}
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={onGenerateReport}
+            className="flex items-center gap-2 px-4 h-11 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Relatório</span>
+          </button>
           
           <button 
-            onClick={onNewExpense}
-            className="flex items-center gap-2 px-4 h-11 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-rose-600/30 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-rose-600/20"
+            onClick={onImportFile}
+            className="flex items-center gap-2 px-4 h-11 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
           >
-            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-              <Plus className="w-4 h-4" />
-            </div>
-            <span className="hidden sm:inline">Despesa</span>
+            <Upload className="w-4 h-4" />
+            <span>Importar</span>
+          </button>
+
+          <button 
+            onClick={onNewExpense}
+            className="flex items-center gap-2 px-5 h-11 bg-rose-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-600/20 transition-all active:scale-95 shadow-md shadow-rose-600/10"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Despesa</span>
           </button>
 
           <button 
             onClick={onNewTransaction}
-            className="flex items-center gap-2 px-4 h-11 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-emerald-600/30 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+            className="flex items-center gap-2 px-5 h-11 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 transition-all active:scale-95 shadow-md shadow-emerald-600/10"
           >
-            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-              <Plus className="w-4 h-4" />
-            </div>
-            <span className="hidden sm:inline">Vistoria</span>
+            <Plus className="w-4 h-4" />
+            <span>Vistoria</span>
           </button>
         </div>
       </div>
     </header>
   );
 }
+

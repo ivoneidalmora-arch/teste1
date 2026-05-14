@@ -47,78 +47,75 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function CashFlowChart({ data, title, subtitle, mode }: Props) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h3 className="text-sm font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa"}</h3>
-          <p className="text-[10px] font-bold text-slate-400">{subtitle || "Comparativo mensal de entradas e saídas"}</p>
+          <h3 className="text-xl font-black text-[#0F172A] tracking-tight">{title || "Fluxo de Caixa (Global)"}</h3>
+          <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{subtitle || "Comparativo mensal consolidado de entradas e saídas"}</p>
         </div>
         
-        <div className="flex bg-slate-50 p-1 px-3 rounded-full border border-slate-100">
-           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-             {mode === 'monthly' ? 'Visão Mensal' : 'Visão Diária'}
-           </span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entradas</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-rose-500" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saídas</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-600" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo</span>
+          </div>
         </div>
       </div>
 
-      <div className="w-full h-[300px]">
+      <div className="w-full h-[350px]">
         {data.every(d => d.entradas === 0 && d.saidas === 0) ? (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50/30 rounded-xl border border-dashed border-slate-100">
-            <p className="text-slate-400 text-xs font-bold">Sem dados para exibir</p>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50/30 rounded-[2rem] border border-dashed border-slate-100">
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Sem dados para o período</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-              <defs>
-                <linearGradient id="colorEntradas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#059669" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+            <ComposedChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="0" vertical={false} stroke="#F1F5F9" />
               <XAxis 
                 dataKey="label" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}
-                dy={5}
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                dy={15}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
                 tickFormatter={(val) => `R$${val / 1000}k`}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-              <Legend 
-                verticalAlign="top" 
-                align="right" 
-                iconType="circle"
-                wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: 700, color: '#94a3b8' }}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F8FAFC' }} />
+              
               <Bar 
                 name="Entradas" 
                 dataKey="entradas" 
-                fill="url(#colorEntradas)" 
-                stroke="#059669"
-                radius={[4, 4, 0, 0]} 
-                barSize={20}
+                fill="#10B981" 
+                radius={[6, 6, 0, 0]} 
+                barSize={12}
               />
               <Bar 
                 name="Saídas" 
                 dataKey="saidas" 
                 fill="#E11D48" 
-                radius={[4, 4, 0, 0]} 
-                barSize={20}
+                radius={[6, 6, 0, 0]} 
+                barSize={12}
               />
               <Line 
                 name="Saldo" 
                 type="monotone" 
                 dataKey="saldo" 
-                stroke="#2563eb" 
-                strokeWidth={2.5} 
-                dot={{ fill: '#2563eb', strokeWidth: 2, r: 3, stroke: '#fff' }} 
-                activeDot={{ r: 5, strokeWidth: 0 }}
+                stroke="#2563EB" 
+                strokeWidth={3} 
+                dot={{ fill: '#2563EB', strokeWidth: 2, r: 4, stroke: '#fff' }} 
+                activeDot={{ r: 6, strokeWidth: 0 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
@@ -127,3 +124,4 @@ export function CashFlowChart({ data, title, subtitle, mode }: Props) {
     </div>
   );
 }
+
