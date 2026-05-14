@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Sparkles, AlertTriangle, Lightbulb, Info, RefreshCw } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 
