@@ -36,6 +36,7 @@ export function InsightsPage() {
   
   // Modais
   const [showInconsistenciesModal, setShowInconsistenciesModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
   const financeContext = useFinanceContext();
   
   const selectedPeriod = financeContext?.selectedPeriod || 'global';
