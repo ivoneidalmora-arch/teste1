@@ -42,39 +42,39 @@ export function AlertsPanel({ alerts = [], pendingCount = 0 }: AlertsPanelProps)
   const displayAlerts = alerts.length > 0 ? alerts : defaultAlerts;
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-black text-[#0F172A] tracking-tight">Resumo / Alertas</h3>
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-1.5 shrink-0">
+        <h3 className="text-sm font-black text-[#0F172A] tracking-tight">Alertas</h3>
+        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">
           {pendingCount || 3} pendências
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 gap-1.5 overflow-y-auto flex-1 scrollbar-thin">
         {displayAlerts.slice(0, 3).map((alert) => (
           <button
             key={alert.id}
             onClick={alert.onClick}
-            className="w-full flex items-center gap-3 p-2 rounded-xl border border-slate-50 transition-all hover:bg-slate-50 hover:border-slate-100 group text-left"
+            className="w-full flex items-center gap-2 p-1.5 rounded-lg border border-slate-50 transition-all hover:bg-slate-50 text-left"
           >
             <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "w-7 h-7 rounded-md flex items-center justify-center shrink-0",
               alert.type === 'error' ? "bg-rose-50 text-rose-500" :
               alert.type === 'warning' ? "bg-amber-50 text-amber-500" :
               alert.type === 'success' ? "bg-emerald-50 text-emerald-500" :
               "bg-blue-50 text-blue-500"
             )}>
-              {alert.type === 'error' && <ShieldAlert className="w-4 h-4" />}
-              {alert.type === 'warning' && <AlertCircle className="w-4 h-4" />}
-              {alert.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
-              {alert.type === 'info' && <Clock className="w-4 h-4" />}
+              {alert.type === 'error' && <ShieldAlert className="w-3.5 h-3.5" />}
+              {alert.type === 'warning' && <AlertCircle className="w-3.5 h-3.5" />}
+              {alert.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5" />}
+              {alert.type === 'info' && <Clock className="w-3.5 h-3.5" />}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-black text-[#0F172A] group-hover:text-blue-600 transition-colors truncate">
+              <p className="text-[11px] font-black text-[#0F172A] truncate leading-tight">
                 {alert.title}
               </p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight truncate">
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight truncate leading-none">
                 {alert.subtitle}
               </p>
             </div>

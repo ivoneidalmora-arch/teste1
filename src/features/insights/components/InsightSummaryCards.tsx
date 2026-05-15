@@ -72,28 +72,28 @@ export function InsightSummaryCards({ stats, loading }: InsightSummaryCardsProps
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-24 bg-white rounded-2xl animate-pulse border border-slate-100" />
+          <div key={i} className="h-16 bg-white rounded-xl animate-pulse border border-slate-100" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
       {cards.map((card, i) => {
         return (
           <div 
             key={i} 
-            className="p-3 rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 flex items-center gap-3 group"
+            className="p-2 rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md flex items-center gap-2 group h-[60px]"
           >
-            <Icon3D icon={card.icon} variant={card.variant} size="sm" />
+            <Icon3D icon={card.icon} variant={card.variant} size="xs" className="shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-lg font-black text-slate-900">{card.value}</span>
+                <span className="text-base font-black text-slate-900 leading-none">{card.value}</span>
               </div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-tight truncate">{card.label}</p>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter truncate mt-1">{card.label}</p>
             </div>
           </div>
         );

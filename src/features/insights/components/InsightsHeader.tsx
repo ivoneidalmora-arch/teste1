@@ -19,21 +19,21 @@ import { Brain } from 'lucide-react';
 
 export function InsightsHeader({ periodFilter, onRefresh, loading, generating, error }: InsightsHeaderProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="mb-2 shrink-0">
+      <div className="flex flex-row items-center justify-between gap-2">
         
-        <div className="flex items-center gap-4">
-          <Icon3D icon={Brain} variant="ai" size="sm" />
+        <div className="flex items-center gap-3">
+          <Icon3D icon={Brain} variant="ai" size="xs" />
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Diagnósticos Inteligentes</h1>
-            <p className="text-[11px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest leading-none">
-              Visão executiva dos insights financeiros
+            <h1 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Insights IA</h1>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+              Diagnósticos Financeiros
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-slate-100 shadow-sm">
             <FinancialPeriodFilter />
           </div>
 
@@ -41,26 +41,22 @@ export function InsightsHeader({ periodFilter, onRefresh, loading, generating, e
             onClick={onRefresh}
             disabled={generating || loading}
             className={cn(
-              "flex items-center gap-2 px-5 h-10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg disabled:opacity-50",
+              "flex items-center gap-2 px-4 h-8 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md disabled:opacity-50",
               generating || loading
                 ? "bg-slate-900 text-white" 
                 : "bg-gradient-to-br from-blue-600 to-indigo-700 text-white hover:shadow-indigo-200"
             )}
           >
-            {generating || loading ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3.5 h-3.5" />
-            )}
-            {generating || loading ? 'Atualizando...' : 'Atualizar'}
+            <RefreshCw className={cn("w-3 h-3", (generating || loading) && "animate-spin")} />
+            <span>{generating || loading ? '...' : 'Atualizar'}</span>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-4">
-          <AlertTriangle className="w-5 h-5 text-rose-500" />
-          <p className="text-xs font-bold text-rose-700">{error}</p>
+        <div className="mt-2 bg-rose-50 border border-rose-100 p-2 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-4">
+          <AlertTriangle className="w-4 h-4 text-rose-500" />
+          <p className="text-[10px] font-bold text-rose-700">{error}</p>
         </div>
       )}
     </div>

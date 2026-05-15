@@ -138,7 +138,7 @@ export function InsightsPage() {
   };
 
   return (
-    <div className="max-w-[1800px] mx-auto h-[calc(100vh-80px)] flex flex-col gap-4 p-4 lg:p-6 animate-in fade-in duration-700 overflow-hidden">
+    <div className="h-full flex flex-col gap-3 animate-in fade-in duration-700 overflow-hidden">
       
       {/* Header Unificado */}
       <InsightsHeader 
