@@ -148,7 +148,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-3 overflow-hidden">
+    <div className="h-full flex flex-col gap-2 overflow-hidden">
       <DashboardHeader 
         title="Dashboard Financeiro" 
         subtitle="Visão Geral" 
@@ -159,8 +159,8 @@ export function DashboardPage() {
         onSearch={setSearchQuery}
       />
 
-      {/* Grid de KPIs - Linha Única Compacta */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 shrink-0">
+      {/* Grid de KPIs - Linha Única Ultra Compacta */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 shrink-0 h-[80px]">
         <MetricCard 
           title="Saldo Disponível" 
           value={metrics.current.saldoDisponivel} 
@@ -198,17 +198,17 @@ export function DashboardPage() {
       </div>
 
       {/* Área Principal - Otimizada para 100vh */}
-      <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0 overflow-hidden">
         {/* Coluna Esquerda: Gráfico + Transações */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col gap-3 min-h-0">
-          <div className="flex-1 min-h-[200px]">
+        <div className="col-span-12 lg:col-span-8 flex flex-col gap-2 min-h-0">
+          <div className="flex-1 min-h-[150px]">
             <CashFlowChart 
               data={cashFlowData.data} 
               title={cashFlowData.title}
               subtitle={cashFlowData.subtitle}
             />
           </div>
-          <div className="h-[220px] shrink-0">
+          <div className="h-[180px] shrink-0">
             <RecentTransactionsTable 
               transactions={recentTransactions.slice(0, 5)} 
             />
@@ -216,14 +216,14 @@ export function DashboardPage() {
         </div>
 
         {/* Coluna Direita: Calendário + Clientes + Alertas */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-3 min-h-0">
-          <div className="flex-1 min-h-[200px]">
+        <div className="col-span-12 lg:col-span-4 flex flex-col gap-2 min-h-0">
+          <div className="flex-1 min-h-[150px]">
             <CalendarAlfa events={financialEvents} />
           </div>
-          <div className="h-[140px] shrink-0">
+          <div className="h-[120px] shrink-0">
             <TopClientsCard clients={topClients} />
           </div>
-          <div className="h-[100px] shrink-0">
+          <div className="h-[90px] shrink-0">
             <AlertsPanel 
               pendingCount={metrics.current.despesasPendentes > 0 ? 3 : 0}
             />

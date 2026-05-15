@@ -113,19 +113,19 @@ export function InsightsDashboard({
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-3 animate-in fade-in duration-700 overflow-hidden min-h-0">
+    <div className="flex-1 flex flex-col gap-2 animate-in fade-in duration-700 overflow-hidden min-h-0">
       
-      {/* 1. Sumário de Indicadores - Linha Única Compacta */}
-      <div className="shrink-0">
+      {/* 1. Sumário de Indicadores - Linha Única Ultra Compacta */}
+      <div className="shrink-0 h-[60px]">
         <InsightSummaryCards stats={stats} loading={loading && !generating} />
       </div>
 
       {/* 2. Área Principal - 2 Colunas */}
-      <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
         
         {/* Coluna Esquerda: Insight em Destaque + Tabela de Diagnósticos */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col gap-3 min-h-0">
-          <div className="h-[200px] shrink-0">
+        <div className="col-span-12 lg:col-span-8 flex flex-col gap-2 min-h-0">
+          <div className="h-[160px] shrink-0">
             <MainInsightSection 
               insight={heroInsight} 
               loading={loading && !generating} 
@@ -141,9 +141,9 @@ export function InsightsDashboard({
           </div>
         </div>
 
-        {/* Coluna Direita: Ações + Matriz de Prioridade */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-3 min-h-0">
-          <div className="h-[180px] shrink-0">
+        {/* Coluna Direita: Ações + Matriz de Prioridade + Atividade */}
+        <div className="col-span-12 lg:col-span-4 flex flex-col gap-2 min-h-0">
+          <div className="h-[140px] shrink-0">
             <RecommendedActionsCard 
               insight={heroInsight}
               onAction={handleAction}
@@ -156,7 +156,7 @@ export function InsightsDashboard({
               loading={loading && !generating} 
             />
           </div>
-          <div className="h-[140px] shrink-0">
+          <div className="h-[120px] shrink-0">
             <RecentActivityCard 
               insights={insights} 
               loading={loading && !generating} 

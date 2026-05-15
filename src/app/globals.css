@@ -11,7 +11,9 @@ html,
 body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
 }
 
 * {
@@ -21,6 +23,8 @@ body {
 body {
   background-color: #f8fafc;
   color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Utilitários Extras Mencionados no Guia */
