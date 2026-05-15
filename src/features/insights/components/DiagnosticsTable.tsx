@@ -64,48 +64,42 @@ export function DiagnosticsTable({ insights, loading, onAction }: DiagnosticsTab
               const cat = getCategoryIcon(insight.category);
               return (
                 <tr key={insight.id} className="hover:bg-slate-50/50 transition-colors group/row">
-                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
+                   <td className="px-3 py-1">
+                    <div className="flex items-center gap-2">
                       <Icon3D icon={cat.icon} variant={cat.variant} size="xs" glow={false} />
-                      <span className="text-[10px] font-black text-slate-900 uppercase tracking-wider">{insight.category || 'Geral'}</span>
+                      <span className="text-[9px] font-black text-slate-900 uppercase tracking-wider">{insight.category || 'Geral'}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3">
-                    <span className="text-xs font-bold text-slate-700 tracking-tight">{insight.title}</span>
+                  <td className="px-3 py-1">
+                    <span className="text-[10px] font-bold text-slate-700 tracking-tight leading-tight line-clamp-1">{insight.title}</span>
                   </td>
-                  <td className="px-5 py-3">
-                    <span className="text-sm font-black text-slate-900">{insight.mainMetric}</span>
+                  <td className="px-3 py-1">
+                    <span className="text-[10px] font-black text-slate-900">{insight.mainMetric}</span>
                   </td>
-                  <td className="px-5 py-3 text-center">
+                  <td className="px-3 py-1 text-center">
                     <div className={cn(
-                      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider",
                       insight.effortLevel === 'baixo' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
                       insight.effortLevel === 'medio' ? "bg-orange-50 text-orange-600 border border-orange-100" : "bg-rose-50 text-rose-600 border border-rose-100"
                     )}>
-                      <div className={cn(
-                        "w-1 h-1 rounded-full",
-                        insight.effortLevel === 'baixo' ? "bg-emerald-500" :
-                        insight.effortLevel === 'medio' ? "bg-orange-500" : "bg-rose-500"
-                      )} />
                       {insight.effortLevel || 'MÉDIO'}
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-center">
+                  <td className="px-3 py-1 text-center">
                     <div className={cn(
-                      "inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                      "inline-flex px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border",
                       insight.status === 'aprovado' ? "bg-blue-50 text-blue-600 border-blue-100" :
                       insight.status === 'novo' ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-purple-50 text-purple-600 border-purple-100"
                     )}>
                       {insight.status}
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-3 py-1 text-right">
                     <button 
                       onClick={() => onAction && onAction(insight.category === 'duplicidades' ? 'corrigir' : 'analisar', insight)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-100 text-[8px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                     >
-                      {insight.category === 'duplicidades' ? 'Corrigir' : 'Analisar'}
-                      <ChevronRight className="w-3 h-3" />
+                      {insight.category === 'duplicidades' ? 'Fix' : 'View'}
                     </button>
                   </td>
                 </tr>
