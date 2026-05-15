@@ -146,6 +146,5 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
         ))}
       </div>
     </div>
-    </div>
   );
 }

@@ -98,8 +98,5 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
         </table>
       </div>
     </div>
-
-
-    </div>
   );
 }
