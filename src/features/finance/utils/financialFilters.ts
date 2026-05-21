@@ -79,11 +79,6 @@ export function getAvailableMonths(
  */
 export function getAvailableYears(items: any[]): number[] {
   const years = new Set<number>();
-  const currentYear = new Date().getFullYear();
-  
-  // Sempre garante o ano atual e o anterior
-  years.add(currentYear);
-  years.add(currentYear - 1);
 
   items.forEach(item => {
     const date = normalizeDate(item);
@@ -91,6 +86,11 @@ export function getAvailableYears(items: any[]): number[] {
       years.add(date.getUTCFullYear());
     }
   });
+
+  // Se não houver anos com dados, adiciona pelo menos o ano atual como padrão
+  if (years.size === 0) {
+    years.add(new Date().getFullYear());
+  }
 
   return Array.from(years).sort((a, b) => b - a);
 }

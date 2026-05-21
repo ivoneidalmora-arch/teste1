@@ -7,9 +7,7 @@ import {
   Calendar, 
   Table as TableIcon, 
   PieChart as ChartIcon,
-  RefreshCw,
-  Filter,
-  ChevronDown
+  RefreshCw
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
@@ -24,8 +22,6 @@ interface ReportHeaderProps {
   setViewMode: (mode: 'list' | 'analytics') => void;
   onExportPDF: () => void;
   exportLoading?: boolean;
-  selectedType: string;
-  setSelectedType: (type: string) => void;
 }
 
 export function ReportHeader({
@@ -34,9 +30,7 @@ export function ReportHeader({
   viewMode,
   setViewMode,
   onExportPDF,
-  exportLoading = false,
-  selectedType,
-  setSelectedType
+  exportLoading = false
 }: ReportHeaderProps) {
   const { selectedPeriod } = useFinanceContext();
 
@@ -74,27 +68,10 @@ export function ReportHeader({
       
       {/* Área de Filtros e Ações */}
       <div className="flex flex-wrap items-center gap-2 relative z-10 w-full xl:w-auto justify-start xl:justify-end">
-        {/* Filtros do Dashboard (Ano + Período + Tipo) */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+        {/* Filtros do Dashboard (Ano + Período) */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <FinancialYearFilter />
           <FinancialPeriodFilter />
-          
-          {/* Filtro de Tipo */}
-          <div className="relative w-full sm:w-auto min-w-[130px] z-10">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full h-10 pl-9 pr-9 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm outline-none transition hover:border-purple-600 focus:border-purple-600 appearance-none cursor-pointer"
-            >
-              <option value="global">Tudo (Global)</option>
-              <option value="receitas">Receitas</option>
-              <option value="despesas">Despesas</option>
-              <option value="servicos">Serviços</option>
-              <option value="categorias">Categorias</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-          </div>
         </div>
 
         {/* Range de Data Manual Otimizado */}

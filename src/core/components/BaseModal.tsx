@@ -11,9 +11,17 @@ interface BaseModalProps {
   title: string;
   children: React.ReactNode;
   headerColorContext?: 'neutral' | 'success' | 'danger' | 'warning' | 'info';
+  maxWidthClass?: string;
 }
 
-export function BaseModal({ isOpen, onClose, title, children, headerColorContext = 'neutral' }: BaseModalProps) {
+export function BaseModal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  headerColorContext = 'neutral',
+  maxWidthClass = 'md:max-w-2xl'
+}: BaseModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -65,7 +73,8 @@ export function BaseModal({ isOpen, onClose, title, children, headerColorContext
       {/* Modal Container */}
       <div 
         className={cn(
-          "relative bg-slate-950 rounded-2xl shadow-2xl w-full max-w-[1100px] max-h-[90vh] md:max-w-2xl flex flex-col overflow-hidden transition-all duration-300 transform border border-slate-800 animate-in fade-in zoom-in duration-200",
+          "relative bg-slate-950 rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform border border-slate-800 animate-in fade-in zoom-in duration-200",
+          maxWidthClass,
           "max-sm:max-w-[95vw] max-sm:max-h-[92vh]"
         )}
       >
