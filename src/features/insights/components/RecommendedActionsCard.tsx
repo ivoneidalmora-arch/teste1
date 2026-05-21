@@ -30,7 +30,17 @@ export function RecommendedActionsCard({ onAction, insight, loading }: Recommend
         {actions.map((item, i) => (
           <button 
             key={i}
-            onClick={() => insight && onAction && onAction(item.id, insight)}
+            onClick={() => onAction && onAction(item.id, insight || { 
+              id: 'dummy', 
+              type: 'recommendation', 
+              category: 'geral', 
+              severity: 'info', 
+              priority: 'medium', 
+              status: 'novo', 
+              title: '', 
+              mainMetric: '', 
+              text: '' 
+            } as any)}
             className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100 text-left"
           >
             <Icon3D icon={item.icon} variant={item.variant} size="xs" />

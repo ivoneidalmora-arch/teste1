@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 // Hooks e Contextos
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useFinanceContext } from '../../finance/contexts/FinanceContext';
+import { useInsightsFilters } from '../hooks/useInsightsFilters';
 
 // Server Actions
 import { generateDiagnosticsAction } from '../actions/diagnostics.actions';
@@ -26,6 +27,7 @@ import { standardizeInsights } from '../utils/insight-standardizer';
 
 export function InsightsPage() {
   const { user } = useAuth();
+  const { filtro, setFilter, ano, setYear } = useInsightsFilters();
   
   const [diagnostics, setDiagnostics] = useState<DiagnosticResult[]>([]);
   const [inconsistencies, setInconsistencies] = useState<InconsistencyRecord[]>([]);
@@ -42,14 +44,14 @@ export function InsightsPage() {
   const transactions = financeContext?.transactions || [];
   const refreshFinance = financeContext?.refresh || (() => {});
   
-  // Derivar o objeto de filtro a partir do estado do contexto
+  // Derivar o objeto de filtro a partir do estado do contexto e do ano na URL
   const periodFilter: PeriodFilter = useMemo(() => {
     if (!selectedPeriod || selectedPeriod === 'global' || !selectedPeriod.includes('-')) {
-      return { type: 'global', label: 'Tudo (Global)' };
+      return { type: 'global', label: `Tudo Global (${ano})` };
     }
     try {
       const [y, m] = selectedPeriod.split('-').map(Number);
-      if (isNaN(y) || isNaN(m)) return { type: 'global', label: 'Tudo (Global)' };
+      if (isNaN(y) || isNaN(m)) return { type: 'global', label: `Tudo Global (${ano})` };
       
       const d = new Date(y, m - 1, 1);
       return {
@@ -61,15 +63,17 @@ export function InsightsPage() {
         endDate: format(endOfMonth(d), 'yyyy-MM-dd')
       };
     } catch (error) {
-      return { type: 'global', label: 'Tudo (Global)' };
+      return { type: 'global', label: `Tudo Global (${ano})` };
     }
-  }, [selectedPeriod]);
+  }, [selectedPeriod, ano]);
 
   const loadDiagnostics = useCallback(async (isRefresh = false) => {
     if (!user?.id) return;
     
+    let toastId: any = null;
     if (isRefresh) {
       setGenerating(true);
+      toastId = toast.loading('Reprocessando inteligência financeira e diagnósticos...');
     } else {
       setLoading(true);
     }
@@ -83,7 +87,6 @@ export function InsightsPage() {
         const standardDiagnostics = standardizeInsights(res.data.diagnostics || []);
         
         // Converter inconsistências críticas em insights se necessário
-        // (Isso permite que apareçam no grid principal do Dashboard)
         const inconsistencyInsights: DiagnosticResult[] = (res.data.inconsistencies || [])
           .filter((inc: InconsistencyRecord) => inc.severity === 'critical')
           .map((inc: InconsistencyRecord) => ({
@@ -105,12 +108,16 @@ export function InsightsPage() {
             hasData: true,
             detectedAt: inc.date,
             period: periodFilter.label,
-            rawRecord: inc // Guardar para uso posterior
+            rawRecord: inc
           }));
 
         setDiagnostics([...standardDiagnostics, ...inconsistencyInsights]);
         setInconsistencies(res.data.inconsistencies || []);
         setSummary(res.data.summary);
+        
+        if (isRefresh && toastId) {
+          toast.success('Diagnósticos reprocessados com sucesso!', { id: toastId });
+        }
       } else {
         throw new Error(res.error || "Erro ao processar diagnósticos");
       }
@@ -119,6 +126,10 @@ export function InsightsPage() {
       setError("Não foi possível carregar os diagnósticos. Verifique sua sessão e tente novamente.");
       setDiagnostics([]);
       setInconsistencies([]);
+      
+      if (isRefresh && toastId) {
+        toast.error(`Falha ao reprocessar: ${err.message || 'Erro de rede'}`, { id: toastId });
+      }
     } finally {
       setLoading(false);
       setGenerating(false);
@@ -137,6 +148,49 @@ export function InsightsPage() {
     toast.success('Inconsistência resolvida após edição!');
   };
 
+  // Filtrar diagnósticos reativamente com base no parâmetro de URL "filtro"
+  const filteredDiagnostics = useMemo(() => {
+    if (!filtro || filtro === 'all') return diagnostics;
+
+    return diagnostics.filter(insight => {
+      // 1. Filtros por Categoria/Criticidade de Topo
+      if (filtro === 'critical') {
+        return insight.priority === 'urgent' || insight.severity === 'critical';
+      }
+      if (filtro === 'opportunity') {
+        return insight.type === 'opportunity';
+      }
+      if (filtro === 'trend') {
+        return insight.type === 'trend';
+      }
+      if (filtro === 'duplicates') {
+        return insight.category === 'duplicidades';
+      }
+      if (filtro === 'improvements') {
+        return insight.type === 'growth' || insight.type === 'health';
+      }
+
+      // 2. Filtros por Quadrantes da Matriz de Priorização
+      const isHighImpact = insight.impactLevel === 'alto' || insight.impactLevel === 'critico';
+      const isLowEffort = insight.effortLevel === 'baixo';
+
+      if (filtro === 'quadrant_quick_wins') {
+        return isHighImpact && isLowEffort;
+      }
+      if (filtro === 'quadrant_strategic') {
+        return isHighImpact && !isLowEffort;
+      }
+      if (filtro === 'quadrant_incremental') {
+        return !isHighImpact && isLowEffort;
+      }
+      if (filtro === 'quadrant_low_priority') {
+        return !isHighImpact && !isLowEffort;
+      }
+
+      return true;
+    });
+  }, [diagnostics, filtro]);
+
   return (
     <div className="h-full flex flex-col gap-3 animate-in fade-in duration-700 overflow-hidden">
       
@@ -151,7 +205,7 @@ export function InsightsPage() {
 
       {/* Dashboard Premium IA */}
       <InsightsDashboard 
-        insights={diagnostics}
+        insights={filteredDiagnostics}
         summary={summary}
         loading={loading}
         generating={generating}
@@ -159,6 +213,10 @@ export function InsightsPage() {
         onRefresh={() => loadDiagnostics(true)}
         periodFilter={periodFilter}
         onEditTransaction={(transaction) => setEditingTransaction(transaction)}
+        activeFilter={filtro}
+        onFilterChange={setFilter}
+        ano={ano}
+        onYearChange={setYear}
       />
 
       {/* Modais de Suporte */}

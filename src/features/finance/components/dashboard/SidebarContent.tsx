@@ -80,6 +80,13 @@ export function SidebarContent({ onItemClick }: Props) {
   const pathname = usePathname();
   const { logout, user } = useAuth();
 
+  const handleLogoutClick = async () => {
+    const isConfirmed = window.confirm("Tem certeza que deseja sair do sistema Alfa Perícia?");
+    if (isConfirmed) {
+      await logout();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden border-r border-slate-100 shadow-xl">
       {/* 1. Header: Logo Premium */}
@@ -162,7 +169,7 @@ export function SidebarContent({ onItemClick }: Props) {
           </div>
 
           <button 
-            onClick={logout}
+            onClick={handleLogoutClick}
             className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition-all"
           >
             <LogOut className="h-3 w-3" />
