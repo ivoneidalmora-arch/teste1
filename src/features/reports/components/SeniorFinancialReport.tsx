@@ -15,9 +15,22 @@ import { ReportMetrics, formatCurrencyBRL } from '../utils/reportMetrics';
 interface SeniorFinancialReportProps {
   metrics: ReportMetrics;
   transactions: any[];
+  onViewDetailedAnalysis?: () => void;
+  onViewDRE?: () => void;
+  onViewCategories?: () => void;
+  onViewCashFlow?: () => void;
+  onViewComparison?: () => void;
 }
 
-export function SeniorFinancialReport({ metrics, transactions }: SeniorFinancialReportProps) {
+export function SeniorFinancialReport({ 
+  metrics, 
+  transactions,
+  onViewDetailedAnalysis,
+  onViewDRE,
+  onViewCategories,
+  onViewCashFlow,
+  onViewComparison
+}: SeniorFinancialReportProps) {
   const {
     totalGrossRevenue,
     netBalance,
@@ -53,15 +66,20 @@ export function SeniorFinancialReport({ metrics, transactions }: SeniorFinancial
       <ExecutiveSummaryCard 
         summaryText={getExecutiveSummaryText()} 
         isProfit={isProfit} 
+        onViewDetails={onViewDetailedAnalysis}
+        ticketAverage={metrics.ticketAverage}
+        bestMonth={metrics.bestMonth}
+        worstMonth={metrics.worstMonth}
+        ytdVariation={metrics.ytdVariation}
       />
 
       {/* Grid Principal Expandido: 8 Cards Analíticos dispostos em 4 colunas responsivas */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Linha 1 */}
-        <DRECard metrics={metrics} />
-        <RevenueDistributionChart metrics={metrics} />
-        <CashFlowChart transactions={transactions} />
-        <RevenueExpenseComparisonChart transactions={transactions} />
+        <DRECard metrics={metrics} onViewDRE={onViewDRE} />
+        <RevenueDistributionChart metrics={metrics} onViewCategories={onViewCategories} />
+        <CashFlowChart transactions={transactions} onViewCashFlow={onViewCashFlow} />
+        <RevenueExpenseComparisonChart transactions={transactions} onViewComparison={onViewComparison} />
 
         {/* Linha 2 */}
         <TopServicesCard transactions={transactions} />

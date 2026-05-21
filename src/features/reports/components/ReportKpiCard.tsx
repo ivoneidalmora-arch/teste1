@@ -13,6 +13,7 @@ interface ReportKpiCardProps {
     type: 'positive' | 'negative' | 'neutral' | 'alert';
     label?: string;
   };
+  onClick?: () => void;
 }
 
 export function ReportKpiCard({
@@ -20,7 +21,8 @@ export function ReportKpiCard({
   value,
   icon: Icon,
   iconVariant,
-  trend
+  trend,
+  onClick
 }: ReportKpiCardProps) {
   // Mapeamento de variantes de cores para o badge do ícone
   const badgeColors = {
@@ -44,9 +46,18 @@ export function ReportKpiCard({
   };
 
   const trendColor = trend ? valueColors[trend.type] : "text-slate-900";
+  const isClickable = !!onClick;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-xs hover:shadow-md transition-all">
+    <div 
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-xs transition-all",
+        isClickable 
+          ? "cursor-pointer hover:shadow-md hover:border-purple-200 active:scale-[0.98]" 
+          : "hover:shadow-md"
+      )}
+    >
       {/* Container do Ícone */}
       <div className={cn(
         "w-9 h-9 rounded-xl flex items-center justify-center border shrink-0",

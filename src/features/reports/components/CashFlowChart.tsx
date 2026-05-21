@@ -8,9 +8,10 @@ import { ChevronDown, ArrowRight } from 'lucide-react';
 
 interface CashFlowChartProps {
   transactions: any[];
+  onViewCashFlow?: () => void;
 }
 
-export function CashFlowChart({ transactions }: CashFlowChartProps) {
+export function CashFlowChart({ transactions, onViewCashFlow }: CashFlowChartProps) {
   const data = useMemo(() => {
     const monthlyData = groupCashFlowByMonth(transactions);
     
@@ -89,7 +90,10 @@ export function CashFlowChart({ transactions }: CashFlowChartProps) {
 
       {/* Link de Ação */}
       <div className="mt-2 pt-2 border-t border-slate-50 flex justify-end">
-        <button className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group">
+        <button 
+          onClick={onViewCashFlow}
+          className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group"
+        >
           Ver fluxo completo
           <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </button>

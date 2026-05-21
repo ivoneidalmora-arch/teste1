@@ -16,9 +16,16 @@ import { ReportMetrics, formatCurrencyBRL, formatPercentage } from '../utils/rep
 interface ReportKpiGridProps {
   metrics: ReportMetrics;
   inconsistenciesCount: number;
+  onTransactionsClick?: () => void;
+  onInconsistenciesClick?: () => void;
 }
 
-export function ReportKpiGrid({ metrics, inconsistenciesCount }: ReportKpiGridProps) {
+export function ReportKpiGrid({ 
+  metrics, 
+  inconsistenciesCount,
+  onTransactionsClick,
+  onInconsistenciesClick
+}: ReportKpiGridProps) {
   const {
     totalGrossRevenue,
     totalNetRevenue,
@@ -86,6 +93,7 @@ export function ReportKpiGrid({ metrics, inconsistenciesCount }: ReportKpiGridPr
         value={transactionCount}
         icon={ClipboardList}
         iconVariant="slate"
+        onClick={onTransactionsClick}
       />
 
       {/* 7. Alertas/Inconsistências */}
@@ -98,6 +106,7 @@ export function ReportKpiGrid({ metrics, inconsistenciesCount }: ReportKpiGridPr
           type: inconsistenciesCount > 0 ? 'alert' : 'positive',
           label: inconsistenciesCount > 0 ? 'Ajustar' : 'Ok'
         }}
+        onClick={onInconsistenciesClick}
       />
     </div>
   );

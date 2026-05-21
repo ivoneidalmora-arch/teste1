@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { X, Sparkles, AlertTriangle, TrendingUp, DollarSign, Percent, ShieldCheck } from 'lucide-react';
 import { ReportMetrics, formatCurrencyBRL, formatPercentage } from '../../utils/reportMetrics';
 import { BaseModal } from '@/core/components/BaseModal';
+import { cn } from '@/core/utils/formatters';
 
 interface DetailedAnalysisModalProps {
   isOpen: boolean;

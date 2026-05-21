@@ -12,6 +12,7 @@ interface ExecutiveSummaryCardProps {
   bestMonth?: { month: string; value: number };
   worstMonth?: { month: string; value: number };
   ytdVariation?: number;
+  onViewDetails?: () => void;
 }
 
 export function ExecutiveSummaryCard({ 
@@ -20,7 +21,8 @@ export function ExecutiveSummaryCard({
   ticketAverage = 0,
   bestMonth = { month: '---', value: 0 },
   worstMonth = { month: '---', value: 0 },
-  ytdVariation = 0
+  ytdVariation = 0,
+  onViewDetails
 }: ExecutiveSummaryCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -60,7 +62,7 @@ export function ExecutiveSummaryCard({
               {renderFormattedText(summaryText)}
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={onViewDetails || (() => setIsModalOpen(true))}
               className="mt-2 text-[9px] font-black text-purple-400 hover:text-purple-300 uppercase tracking-wider flex items-center gap-1"
             >
               Ver análise detalhada →

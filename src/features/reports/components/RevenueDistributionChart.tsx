@@ -15,12 +15,13 @@ interface RevenueDistributionChartProps {
     incomeChart: { name: string; value: number }[];
     expenseChart: { name: string; value: number }[];
   };
+  onViewCategories?: () => void;
 }
 
 // Cores premium e elegantes para fatias do gráfico de receitas
 const COLORS = ['#8b5cf6', '#ec4899', '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#06b6d4', '#14b8a6'];
 
-export function RevenueDistributionChart({ metrics }: RevenueDistributionChartProps) {
+export function RevenueDistributionChart({ metrics, onViewCategories }: RevenueDistributionChartProps) {
   const {
     totalGrossRevenue,
     incomeChart
@@ -107,7 +108,10 @@ export function RevenueDistributionChart({ metrics }: RevenueDistributionChartPr
           <span className="text-[10px] font-black text-slate-900 mt-0.5 block leading-none">{formatCurrencyBRL(totalGrossRevenue)}</span>
         </div>
         
-        <button className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group">
+        <button 
+          onClick={onViewCategories}
+          className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group"
+        >
           Ver detalhamento
           <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </button>

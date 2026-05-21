@@ -16,9 +16,10 @@ interface DRECardProps {
     incomeChart: { name: string; value: number }[];
     expenseChart: { name: string; value: number }[];
   };
+  onViewDRE?: () => void;
 }
 
-export function DRECard({ metrics }: DRECardProps) {
+export function DRECard({ metrics, onViewDRE }: DRECardProps) {
   const {
     totalGrossRevenue,
     totalNetRevenue,
@@ -126,7 +127,10 @@ export function DRECard({ metrics }: DRECardProps) {
 
       {/* Link de Ação */}
       <div className="mt-2 pt-2 border-t border-slate-50 flex justify-end">
-        <button className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group">
+        <button 
+          onClick={onViewDRE}
+          className="text-[9px] font-black text-purple-600 hover:text-purple-700 uppercase tracking-wider flex items-center gap-1 group"
+        >
           Ver DRE completo
           <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </button>
