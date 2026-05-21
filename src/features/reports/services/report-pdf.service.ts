@@ -13,6 +13,10 @@ interface GenerateReportParams {
     netMargin: number;
     expenseChart: { name: string; value: number }[];
     incomeChart: { name: string; value: number }[];
+    ticketAverage: number;
+    bestMonth: { month: string; value: number };
+    worstMonth: { month: string; value: number };
+    ytdVariation: number;
   };
   summaryText: string;
   periodStr: string;
@@ -163,6 +167,30 @@ export const reportPDFService = {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.fillColor = metrics.netBalance >= 0 ? [209, 250, 229] : [254, 226, 226]; // emerald-100 ou rose-100
         }
+      }
+    });
+
+    // --- 4.2. TABELA DE INDICADORES DE DESEMPENHO EXECUTIVO ---
+    const finalY = (doc as any).lastAutoTable.finalY;
+
+    const performanceTableData = [
+      ['Ticket Médio', formatBRL(metrics.ticketAverage), 'Valor médio de faturamento por transação'],
+      ['Melhor Mês de Caixa', `${metrics.bestMonth.month} (${formatBRL(metrics.bestMonth.value)})`, 'Maior saldo de caixa consolidado no mês'],
+      ['Pior Mês de Caixa', `${metrics.worstMonth.month} (${formatBRL(metrics.worstMonth.value)})`, 'Menor saldo de caixa consolidado no mês'],
+      ['Variação YTD (vs. Ano Anterior)', metrics.ytdVariation !== 0 ? `${metrics.ytdVariation.toFixed(1)}%` : '---', 'Crescimento acumulado comparado ao ano anterior']
+    ];
+
+    autoTable(doc, {
+      startY: finalY + 6,
+      margin: { left: 15, right: 15 },
+      head: [['Métrica de Desempenho Executivo', 'Resultado', 'Descrição Analítica']],
+      body: performanceTableData,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229], fontSize: 8, fontStyle: 'bold', halign: 'left' }, // indigo-600
+      styles: { fontSize: 8, cellPadding: 2.5 },
+      alternateRowStyles: { fillColor: [250, 245, 255] },
+      columnStyles: {
+        1: { fontStyle: 'bold' }
       }
     });
 

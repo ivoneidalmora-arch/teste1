@@ -179,7 +179,10 @@ export function ReportsPage() {
           />
 
           {viewMode === 'analytics' ? (
-            <SeniorFinancialReport metrics={reportMetrics} />
+            <SeniorFinancialReport 
+              metrics={reportMetrics} 
+              transactions={[...revenues, ...expenses]} 
+            />
           ) : (
             <div className="space-y-4 animate-in slide-in-from-bottom-3 duration-300">
               {/* Filtros da Listagem */}

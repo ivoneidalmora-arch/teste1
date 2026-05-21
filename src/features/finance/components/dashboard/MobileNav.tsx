@@ -60,7 +60,7 @@ export function MobileNav() {
           />
 
           {/* Aside Drawer */}
-          <aside className="relative z-[9999] h-full w-[280px] max-w-[85vw] bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
+          <aside className="relative z-[9999] h-full w-[280px] max-w-[85vw] bg-[#0B1528] shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
             <div className="absolute right-4 top-4">
               <button 
                 onClick={() => setIsOpen(false)}

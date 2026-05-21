@@ -3,14 +3,21 @@
 import React from 'react';
 import { DRECard } from './DRECard';
 import { RevenueDistributionChart } from './RevenueDistributionChart';
+import { CashFlowChart } from './CashFlowChart';
+import { RevenueExpenseComparisonChart } from './RevenueExpenseComparisonChart';
+import { TopServicesCard } from './TopServicesCard';
+import { AlertsCard } from './AlertsCard';
+import { UpcomingDueDatesCard } from './UpcomingDueDatesCard';
+import { FinancialForecastCard } from './FinancialForecastCard';
 import { ExecutiveSummaryCard } from './ExecutiveSummaryCard';
 import { ReportMetrics, formatCurrencyBRL } from '../utils/reportMetrics';
 
 interface SeniorFinancialReportProps {
   metrics: ReportMetrics;
+  transactions: any[];
 }
 
-export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
+export function SeniorFinancialReport({ metrics, transactions }: SeniorFinancialReportProps) {
   const {
     totalGrossRevenue,
     netBalance,
@@ -48,10 +55,19 @@ export function SeniorFinancialReport({ metrics }: SeniorFinancialReportProps) {
         isProfit={isProfit} 
       />
 
-      {/* Grid Principal Compacto: DRE (Esquerda) e Gráfico (Direita) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Grid Principal Expandido: 8 Cards Analíticos dispostos em 4 colunas responsivas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Linha 1 */}
         <DRECard metrics={metrics} />
         <RevenueDistributionChart metrics={metrics} />
+        <CashFlowChart transactions={transactions} />
+        <RevenueExpenseComparisonChart transactions={transactions} />
+
+        {/* Linha 2 */}
+        <TopServicesCard transactions={transactions} />
+        <AlertsCard transactions={transactions} />
+        <UpcomingDueDatesCard transactions={transactions} />
+        <FinancialForecastCard transactions={transactions} />
       </div>
     </div>
   );

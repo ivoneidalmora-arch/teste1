@@ -12,6 +12,7 @@ import {
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { FinancialPeriodFilter } from '@/features/finance/components/filters/FinancialPeriodFilter';
 import { FinancialYearFilter } from '@/features/finance/components/filters/FinancialYearFilter';
+import { useFinanceContext } from '@/features/finance/contexts/FinanceContext';
 import { cn } from '@/core/utils/formatters';
 
 interface ReportHeaderProps {
@@ -31,6 +32,16 @@ export function ReportHeader({
   onExportPDF,
   exportLoading = false
 }: ReportHeaderProps) {
+  const { selectedPeriod } = useFinanceContext();
+
+  const formatPeriodStr = () => {
+    if (!manualPeriod.start || !manualPeriod.end) return '---';
+    const partsStart = manualPeriod.start.split('-');
+    const partsEnd = manualPeriod.end.split('-');
+    if (partsStart.length < 3 || partsEnd.length < 3) return '---';
+    return `${partsStart[2]}/${partsStart[1]}/${partsStart[0]} — ${partsEnd[2]}/${partsEnd[1]}/${partsEnd[0]}`;
+  };
+
   return (
     <div className="flex flex-col xl:flex-row xl:items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm gap-4 relative overflow-hidden">
       {/* Background Glow sutil */}
@@ -41,8 +52,18 @@ export function ReportHeader({
         <IconBadge icon={FileText} variant="purple" size="md" gradient />
         <div>
           <h1 className="text-lg font-black text-slate-900 tracking-tight leading-none">Relatórios Financeiros</h1>
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">DRE Consolidado e Análise do Período</p>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Gestão avançada e DRE analítico</p>
         </div>
+      </div>
+
+      {/* Info de Filtro Ativo */}
+      <div className="hidden md:flex items-center gap-2 relative z-10 text-[9px] font-black uppercase tracking-wider">
+        <span className="px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-slate-500 rounded-xl">
+          Modo: {selectedPeriod === 'global' ? 'Global' : 'Mensal'}
+        </span>
+        <span className="px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-slate-500 rounded-xl">
+          Período: {formatPeriodStr()}
+        </span>
       </div>
       
       {/* Área de Filtros e Ações */}
@@ -79,7 +100,9 @@ export function ReportHeader({
             onClick={() => setViewMode('analytics')}
             className={cn(
               "flex items-center gap-1.5 px-3 h-8 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
-              viewMode === 'analytics' ? "bg-white text-purple-600 shadow-xs" : "text-slate-400 hover:text-slate-600"
+              viewMode === 'analytics' 
+                ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm" 
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <ChartIcon className="w-3 h-3" />
@@ -89,7 +112,9 @@ export function ReportHeader({
             onClick={() => setViewMode('list')}
             className={cn(
               "flex items-center gap-1.5 px-3 h-8 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
-              viewMode === 'list' ? "bg-white text-purple-600 shadow-xs" : "text-slate-400 hover:text-slate-600"
+              viewMode === 'list' 
+                ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-sm" 
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <TableIcon className="w-3 h-3" />
@@ -101,7 +126,7 @@ export function ReportHeader({
         <button 
           onClick={onExportPDF}
           disabled={exportLoading}
-          className="flex items-center gap-2 px-4 h-9 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black transition-all active:scale-95 shadow-md shadow-slate-900/5 disabled:opacity-50 shrink-0"
+          className="flex items-center gap-2 px-4 h-9 bg-slate-900 text-white hover:bg-black rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-slate-900/5 disabled:opacity-50 shrink-0"
         >
           {exportLoading ? (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />

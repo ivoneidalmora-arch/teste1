@@ -14,8 +14,8 @@ export function SidebarBrandCard({ collapsed = false, className }: SidebarBrandC
     <div className={cn("px-2 pt-1 pb-1", className)}>
       <div 
         className={cn(
-          "group relative flex flex-col items-center justify-center rounded-xl bg-white transition-all duration-300",
-          "shadow-sm border border-slate-100",
+          "group relative flex flex-col items-center justify-center rounded-xl bg-white/5 transition-all duration-300",
+          "border border-white/5 shadow-none",
           collapsed ? "p-1.5" : "p-2"
         )}
       >

@@ -47,7 +47,6 @@ const MENU_GROUPS: SidebarSection[] = [
       { icon: TrendingUp, label: 'Receitas', href: '/receitas', variant: 'green' },
       { icon: TrendingDown, label: 'Despesas', href: '/despesas', variant: 'red' },
       { icon: FileText, label: 'Relatórios', href: '/relatorios', variant: 'purple' },
-      { icon: Trash2, label: 'Lixeira', href: '/lixeira', variant: 'orange' },
     ]
   },
   {
@@ -62,8 +61,6 @@ const MENU_GROUPS: SidebarSection[] = [
     title: 'Sistema',
     items: [
       { icon: ShieldCheck, label: 'Auditoria', href: '/auditoria', variant: 'green' },
-      { icon: Activity, label: 'Saúde do Sistema', href: '/admin/saude', variant: 'blue' },
-      { icon: Settings, label: 'Configurações', href: '/configuracoes', variant: 'slate' },
     ]
   }
 ];
@@ -84,7 +81,7 @@ export function SidebarContent({ onItemClick }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden border-r border-slate-100 shadow-xl">
+    <div className="flex flex-col h-full bg-[#0B1528] overflow-hidden border-r border-slate-800/80 shadow-xl">
       {/* 1. Header: Logo Premium Compactado */}
       <div className="shrink-0 p-1">
         <SidebarBrandCard />
@@ -97,7 +94,7 @@ export function SidebarContent({ onItemClick }: Props) {
       >
         {MENU_GROUPS.map((group) => (
           <div key={group.title} className="mb-1.5">
-            <p className="mb-0.5 px-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <p className="mb-0.5 px-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">
               {group.title}
             </p>
 
@@ -116,8 +113,8 @@ export function SidebarContent({ onItemClick }: Props) {
                     className={cn(
                       "group flex h-8 items-center gap-2 rounded-lg px-1.5 transition-all duration-200",
                       isActive
-                        ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-xs"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-950/40"
+                        : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-100"
                     )}
                   >
                     <Icon3D 
@@ -132,7 +129,7 @@ export function SidebarContent({ onItemClick }: Props) {
                     />
                     <span className={cn(
                       "min-w-0 flex-1 truncate text-[11px] font-extrabold tracking-tight",
-                      isActive ? "text-white" : "text-slate-600 group-hover:text-slate-900"
+                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
                     )}>
                       {item.label}
                     </span>
@@ -148,15 +145,15 @@ export function SidebarContent({ onItemClick }: Props) {
       </nav>
 
       {/* 3. Footer: Bloco do Usuário Fixado e Ultra-compactado */}
-      <div className="shrink-0 p-1.5 border-t border-slate-50 bg-white">
-        <div className="flex items-center gap-1.5 rounded-lg p-1.5 bg-white border border-slate-100 shadow-xs transition-all hover:shadow-sm group">
+      <div className="shrink-0 p-1.5 border-t border-slate-800/50 bg-[#0B1528]">
+        <div className="flex items-center gap-1.5 rounded-lg p-1.5 bg-[#131E35]/45 border border-slate-800/80 shadow-xs transition-all hover:bg-[#131E35]/65 group">
           <div className="relative">
             <Icon3D icon={Activity} variant="blue" size="xs" className="rounded-lg" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 border border-white rounded-full" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 border border-[#0B1528] rounded-full" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[9px] font-black text-slate-900 leading-none mb-0.5">
+            <p className="truncate text-[9px] font-black text-slate-100 leading-none mb-0.5">
               {user?.username || 'admin'}
             </p>
             <p className="truncate text-[7px] font-bold text-slate-400 uppercase tracking-wider leading-none">
@@ -166,7 +163,7 @@ export function SidebarContent({ onItemClick }: Props) {
 
           <button 
             onClick={handleLogoutClick}
-            className="shrink-0 w-5 h-5 flex items-center justify-center rounded-md text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition-all"
+            className="shrink-0 w-5 h-5 flex items-center justify-center rounded-md text-slate-400 hover:bg-rose-950/40 hover:text-rose-400 transition-all"
             title="Sair"
           >
             <LogOut className="h-3 w-3" />
