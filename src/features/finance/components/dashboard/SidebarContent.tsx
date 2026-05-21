@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -13,7 +12,6 @@ import {
   Sparkles,
   Settings, 
   LogOut,
-  MoreVertical,
   Trash2,
   ShieldCheck,
   Activity,
@@ -21,9 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { IconBadge } from '@/core/components/ui/IconBadge';
 import { SidebarBrandCard } from './SidebarBrandCard';
-
 import { Icon3D } from '@/core/components/ui/Icon3D';
 
 type SidebarItem = {
@@ -89,23 +85,23 @@ export function SidebarContent({ onItemClick }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden border-r border-slate-100 shadow-xl">
-      {/* 1. Header: Logo Premium */}
-      <div className="shrink-0 p-2">
+      {/* 1. Header: Logo Premium Compactado */}
+      <div className="shrink-0 p-1">
         <SidebarBrandCard />
       </div>
 
-      {/* 2. Área Central: Navegação com scroll */}
+      {/* 2. Área Central: Navegação com scroll e espaçamentos otimizados */}
       <nav 
         aria-label="Menu principal"
-        className="sidebar-scroll flex-1 overflow-y-auto px-3 py-1 space-y-1"
+        className="sidebar-scroll flex-1 overflow-y-auto px-2 py-0.5 space-y-0.5"
       >
         {MENU_GROUPS.map((group) => (
-          <div key={group.title} className="mb-2">
-            <p className="mb-1 px-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+          <div key={group.title} className="mb-1.5">
+            <p className="mb-0.5 px-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
               {group.title}
             </p>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {group.items.map((item) => {
                 const isActive = item.href === '/' 
                   ? pathname === '/' 
@@ -118,9 +114,9 @@ export function SidebarContent({ onItemClick }: Props) {
                     onClick={onItemClick}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "group flex h-9 items-center gap-2 rounded-xl px-2 transition-all duration-300",
+                      "group flex h-8 items-center gap-2 rounded-lg px-1.5 transition-all duration-200",
                       isActive
-                        ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-md shadow-purple-200"
+                        ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-xs"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
@@ -130,12 +126,12 @@ export function SidebarContent({ onItemClick }: Props) {
                       size="xs" 
                       glow={false}
                       className={cn(
-                        "group-hover:scale-110",
+                        "group-hover:scale-105 transition-transform duration-200",
                         isActive && "shadow-none bg-white/20"
                       )}
                     />
                     <span className={cn(
-                      "min-w-0 flex-1 truncate text-xs font-bold tracking-tight",
+                      "min-w-0 flex-1 truncate text-[11px] font-extrabold tracking-tight",
                       isActive ? "text-white" : "text-slate-600 group-hover:text-slate-900"
                     )}>
                       {item.label}
@@ -151,26 +147,27 @@ export function SidebarContent({ onItemClick }: Props) {
         ))}
       </nav>
 
-      {/* 3. Footer: Bloco do Usuário */}
-      <div className="shrink-0 p-2 border-t border-slate-50">
-        <div className="flex items-center gap-2 rounded-xl p-2 bg-white border border-slate-100 shadow-sm transition-all hover:shadow-md group">
+      {/* 3. Footer: Bloco do Usuário Fixado e Ultra-compactado */}
+      <div className="shrink-0 p-1.5 border-t border-slate-50 bg-white">
+        <div className="flex items-center gap-1.5 rounded-lg p-1.5 bg-white border border-slate-100 shadow-xs transition-all hover:shadow-sm group">
           <div className="relative">
             <Icon3D icon={Activity} variant="blue" size="xs" className="rounded-lg" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 border border-white rounded-full" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] font-black text-slate-900">
+            <p className="truncate text-[9px] font-black text-slate-900 leading-none mb-0.5">
               {user?.username || 'admin'}
             </p>
-            <p className="truncate text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+            <p className="truncate text-[7px] font-bold text-slate-400 uppercase tracking-wider leading-none">
               Operador Especial
             </p>
           </div>
 
           <button 
             onClick={handleLogoutClick}
-            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition-all"
+            className="shrink-0 w-5 h-5 flex items-center justify-center rounded-md text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition-all"
+            title="Sair"
           >
             <LogOut className="h-3 w-3" />
           </button>
@@ -179,4 +176,3 @@ export function SidebarContent({ onItemClick }: Props) {
     </div>
   );
 }
-
