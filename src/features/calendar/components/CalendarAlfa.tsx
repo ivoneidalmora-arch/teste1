@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   format, 
   addMonths, 
@@ -15,14 +15,17 @@ import {
   isToday 
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface CalendarEvent {
   id: string;
   title: string;
-  date: Date;
-  type: 'financeiro' | 'operacional' | 'manutencao' | 'outros';
+  date: Date | string;
+  type: 'financeiro' | 'operacional' | 'manutencao' | 'outros' | 'google' | string;
+  source?: string;
 }
 
 interface CalendarAlfaProps {
@@ -30,8 +33,90 @@ interface CalendarAlfaProps {
   className?: string;
 }
 
-export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
+export function CalendarAlfa({ events: propEvents = [], className }: CalendarAlfaProps) {
+  const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error' | 'reconnect_required'>('idle');
+  
+  const [status, setStatus] = useState({ 
+    connected: false, 
+    status: 'disconnected',
+    needs_reconnect: false
+  });
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/calendar/status');
+      if (response.ok) {
+        const res = await response.json();
+        setStatus(res);
+        if (res.needs_reconnect) setSyncStatus('reconnect_required');
+      }
+    } catch (error) {}
+  }, []);
+
+  const loadGoogleEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const monthParam = format(currentMonth, 'yyyy-MM');
+      const response = await fetch(`/api/calendar/events?month=${monthParam}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Converte as datas recebidas da API para objetos Date para garantir compatibilidade
+        const formattedEvents = data.map((e: any) => ({
+          ...e,
+          date: new Date(e.date || e.start_at)
+        }));
+        setGoogleEvents(formattedEvents);
+      } else if (response.status === 403) {
+        setStatus(prev => ({ ...prev, status: 'reconnect_required', needs_reconnect: true }));
+        setSyncStatus('reconnect_required');
+      }
+    } catch (error) {} finally {
+      setLoading(false);
+    }
+  }, [currentMonth]);
+
+  useEffect(() => {
+    if (user?.id) loadStatus();
+  }, [user?.id, loadStatus]);
+
+  useEffect(() => {
+    if (user?.id && status.connected) loadGoogleEvents();
+  }, [user?.id, status.connected, loadGoogleEvents]);
+
+  const handleConnect = () => {
+    window.location.href = `/api/auth/google/login?prompt=consent`;
+  };
+
+  const handleSync = async () => {
+    if (syncStatus === 'syncing') return;
+    setSyncStatus('syncing');
+    const tid = toast.loading('Sincronizando com Google...');
+    try {
+      const res = await fetch('/api/calendar/sync', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: currentMonth.getFullYear() })
+      });
+      if (res.ok) {
+        toast.success('Sincronização concluída!', { id: tid });
+        setSyncStatus('success');
+        loadStatus();
+        loadGoogleEvents();
+      } else {
+        throw new Error('Falha');
+      }
+    } catch (err) {
+      toast.error('Erro ao sincronizar.', { id: tid });
+      setSyncStatus('error');
+    }
+  };
+
+  const events = useMemo(() => [...propEvents, ...googleEvents], [propEvents, googleEvents]);
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
@@ -48,6 +133,7 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
     { label: 'Operacional', color: 'bg-blue-600' },
     { label: 'Manutenção', color: 'bg-orange-500' },
     { label: 'Outros', color: 'bg-purple-500' },
+    { label: 'Google', color: 'bg-teal-500' },
   ];
 
   return (
@@ -83,6 +169,28 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
           >
             Hoje
           </button>
+          
+          {!status.connected || status.needs_reconnect ? (
+            <button 
+              onClick={handleConnect}
+              className="px-2 h-7 bg-blue-600 border border-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-blue-700 shadow-sm transition-all"
+              title="Conectar Google Agenda"
+            >
+              Google
+            </button>
+          ) : (
+            <button 
+              onClick={handleSync}
+              disabled={syncStatus === 'syncing' || loading}
+              className={cn(
+                "w-7 h-7 flex items-center justify-center bg-white border border-slate-100 rounded-lg text-slate-500 hover:bg-slate-50 shadow-sm transition-all",
+                (syncStatus === 'syncing' || loading) && "animate-spin text-blue-600"
+              )}
+              title="Sincronizar"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -126,7 +234,10 @@ export function CalendarAlfa({ events = [], className }: CalendarAlfaProps) {
                       "w-1 h-1 rounded-full",
                       event.type === 'financeiro' ? 'bg-rose-500' :
                       event.type === 'operacional' ? 'bg-blue-600' :
-                      event.type === 'manutencao' ? 'bg-orange-500' : 'bg-purple-500'
+                      event.type === 'manutencao' ? 'bg-orange-500' : 
+                      event.type === 'google' || event.source === 'google' ? 'bg-teal-500' :
+                      event.type === 'national' || event.type === 'municipal' || event.type === 'state' ? 'bg-amber-400' :
+                      'bg-purple-500'
                     )}
                   />
                 ))}
