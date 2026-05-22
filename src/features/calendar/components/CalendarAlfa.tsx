@@ -15,10 +15,11 @@ import {
   isToday 
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, X, Info } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
+import { BaseModal } from '@/core/components/BaseModal';
 
 interface CalendarEvent {
   id: string;
@@ -40,6 +41,8 @@ export function CalendarAlfa({ events: propEvents = [], className }: CalendarAlf
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error' | 'reconnect_required'>('idle');
+  
+  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: Date, events: CalendarEvent[] } | null>(null);
   
   const [status, setStatus] = useState({ 
     connected: false, 
@@ -213,9 +216,13 @@ export function CalendarAlfa({ events: propEvents = [], className }: CalendarAlf
           return (
             <div 
               key={i} 
+              onClick={() => {
+                if (dayEvents.length > 0) setSelectedDayEvents({ day, events: dayEvents });
+              }}
               className={cn(
-                "bg-white p-1 min-h-[25px] flex flex-col gap-0.5 transition-all hover:bg-slate-50/50 cursor-pointer",
-                !isCurrentMonth && "opacity-20"
+                "bg-white p-1 min-h-[25px] flex flex-col gap-0.5 transition-all cursor-pointer",
+                !isCurrentMonth && "opacity-20",
+                dayEvents.length > 0 ? "hover:bg-slate-50 hover:shadow-sm" : "hover:bg-slate-50/50"
               )}
             >
               <div className="flex justify-center mb-0.5">
@@ -256,6 +263,36 @@ export function CalendarAlfa({ events: propEvents = [], className }: CalendarAlf
           </div>
         ))}
       </div>
+
+      <BaseModal
+        isOpen={!!selectedDayEvents}
+        onClose={() => setSelectedDayEvents(null)}
+        title={selectedDayEvents ? format(selectedDayEvents.day, "EEEE, d 'de' MMMM", { locale: ptBR }) : ''}
+        headerColorContext="info"
+        maxWidthClass="max-w-md"
+      >
+        <div className="space-y-4">
+          {selectedDayEvents?.events.map(event => (
+            <div key={event.id} className="p-4 bg-slate-900 border border-slate-800 rounded-xl">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  event.type === 'financeiro' ? 'bg-rose-500' :
+                  event.type === 'operacional' ? 'bg-blue-600' :
+                  event.type === 'manutencao' ? 'bg-orange-500' : 
+                  event.type === 'google' || event.source === 'google' ? 'bg-teal-500' :
+                  event.type === 'national' || event.type === 'municipal' || event.type === 'state' ? 'bg-amber-400' :
+                  'bg-purple-500'
+                )} />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  {event.type === 'google' || event.source === 'google' ? 'Google Agenda' : event.type}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-white">{event.title}</p>
+            </div>
+          ))}
+        </div>
+      </BaseModal>
     </div>
   );
 }

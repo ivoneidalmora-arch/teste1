@@ -145,7 +145,6 @@ export class GoogleCalendarServerService {
 
       for (const h of holidays) {
         try {
-          const query = `privateExtendedProperty=app=alfa-vistoria&privateExtendedProperty=holidayKey=${h.holidayKey}`;
           const searchData = await GoogleCalendarClient.listEvents(token, 'primary', { privateExtendedProperty: `app=alfa-vistoria,holidayKey=${h.holidayKey}` });
           const existing = searchData.items?.[0];
 
@@ -168,6 +167,69 @@ export class GoogleCalendarServerService {
           }
         } catch (itemErr: any) {
           response.errors.push({ holidayKey: h.holidayKey, message: itemErr.message });
+        }
+      }
+
+      // Sincronizar Despesas Pendentes
+      const { data: pendingExpenses } = await supabaseAdmin
+        .from('Despesas')
+        .select('*')
+        .eq('app_user_id', userId)
+        .eq('status', 'Pendente')
+        .is('deleted_at', null);
+
+      if (pendingExpenses) {
+        for (const exp of pendingExpenses) {
+          try {
+            const expenseKey = `expense-${exp.id}`;
+            const searchData = await GoogleCalendarClient.listEvents(token, 'primary', { privateExtendedProperty: `app=alfa-vistoria,expenseKey=${expenseKey}` });
+            const existing = searchData.items?.[0];
+
+            const dueDate = exp.vencimento || exp.date;
+            if (!dueDate) continue;
+
+            // Horário específico: 09:00 AM
+            const startDateTime = new Date(`${dueDate}T09:00:00-03:00`).toISOString();
+            const endDateTime = new Date(`${dueDate}T10:00:00-03:00`).toISOString();
+            const summary = `💸 [A Pagar] ${exp.description || exp.category}`;
+            const description = `Valor: R$ ${Number(exp.amount).toFixed(2)}\nStatus: Pendente\nVencimento: ${dueDate}`;
+
+            if (existing) {
+              response.ignored++;
+              // Opcional: Atualizar se o valor/descrição mudou (aqui apenas ignoramos para simplificar e focar em criação)
+            } else {
+              const newEvent = await GoogleCalendarClient.createEvent(token, {
+                summary,
+                description,
+                start: { dateTime: startDateTime, timeZone: 'America/Sao_Paulo' },
+                end: { dateTime: endDateTime, timeZone: 'America/Sao_Paulo' },
+                extendedProperties: {
+                  private: { app: 'alfa-vistoria', type: 'expense', expenseKey }
+                }
+              });
+              
+              // Upsert local event for the expense so it shows in our calendar correctly
+              await supabaseAdmin.from('calendar_events').upsert({
+                app_user_id: userId,
+                title: summary,
+                description,
+                date: undefined,
+                start_at: startDateTime,
+                end_at: endDateTime,
+                all_day: false,
+                source: 'google',
+                category: 'expense_reminder',
+                holiday_key: expenseKey, // Reusing column for unique constraint
+                google_event_id: newEvent.id,
+                sync_status: 'synced',
+                last_synced_at: new Date().toISOString()
+              }, { onConflict: 'app_user_id, holiday_key' });
+
+              response.created++;
+            }
+          } catch (expErr: any) {
+             response.errors.push({ holidayKey: `expense-${exp.id}`, message: expErr.message });
+          }
         }
       }
 
