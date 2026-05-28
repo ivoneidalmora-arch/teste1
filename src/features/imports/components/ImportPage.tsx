@@ -3,59 +3,74 @@
 import { useState, useRef } from 'react';
 import { 
   Upload, 
-  FileText, 
-  CheckCircle2, 
-  AlertTriangle, 
-  X, 
   RefreshCw,
   Search,
   Database,
-  ArrowRight,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { IconBadge } from '@/core/components/ui/IconBadge';
 import { importParserService } from '../services/import-parser.service';
-import { formatBRL } from '@/core/utils/formatters';
 import { cn } from '@/core/utils/formatters';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
-import { ImportItemSchema } from '../schemas/import.schema';
+
+import { useImportValidation } from '../hooks/useImportValidation';
+import { ImportValidationCard } from './ImportValidationCard';
+import { ImportValidationFilters } from './ImportValidationFilters';
+import { ImportPreviewTable } from './ImportPreviewTable';
+import { ImportEditModal } from './ImportEditModal';
+import { ImportConfirmModal } from './ImportConfirmModal';
+import { ImportedTransaction } from '../types/import.types';
 
 export function ImportPage() {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [items, setItems] = useState<any[]>([]);
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
-  const processFile = async (file: File) => {
-    setLoading(true);
-    try {
-      const data = await importParserService.parseFile(file);
-      
-      const validatedData = data.map(item => {
-        const result = ImportItemSchema.safeParse(item);
-        return {
-          ...item,
-          isValid: result.success,
-          errors: result.success ? [] : result.error.errors.map(err => err.message)
-        };
-      });
+  // Modals state
+  const [editItem, setEditItem] = useState<ImportedTransaction | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-      setItems(validatedData);
-      toast.success(`${data.length} registros processados.`);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Use the new hook for state and validation
+  const {
+    items,
+    filteredItems,
+    summary,
+    filter,
+    setFilter,
+    searchQuery,
+    setSearchQuery,
+    processImportedData,
+    clearData,
+    handleEdit,
+    handleDelete,
+    handleApproveManually,
+    handleIgnore,
+    handleRevalidate
+  } = useImportValidation();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) processFile(file);
+    if (file) {
+      setLoading(true);
+      try {
+        const data = await importParserService.parseFile(file);
+        processImportedData(data);
+        toast.success(`Arquivo processado. ${data.length} lançamentos encontrados.`);
+        setShowPreview(true);
+      } catch (error: any) {
+        toast.error(error.message || 'Erro ao processar arquivo.');
+      } finally {
+        setLoading(false);
+      }
+    }
     if (e.target) e.target.value = '';
   };
 
@@ -69,56 +84,62 @@ export function ImportPage() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      setLoading(true);
+      try {
+        const data = await importParserService.parseFile(file);
+        processImportedData(data);
+        toast.success(`Arquivo processado. ${data.length} lançamentos encontrados.`);
+        setShowPreview(true);
+      } catch (error: any) {
+        toast.error(error.message || 'Erro ao processar arquivo.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleSave = async () => {
-    if (!user?.id || items.length === 0) return;
+  const executeSave = async () => {
+    if (!user?.id || summary.readyToSave === 0) return;
     
-    const validItems = items.filter(i => i.isValid);
-    if (validItems.length === 0) {
-      toast.error('Nenhum item válido para importar.');
-      return;
-    }
+    const validItems = items.filter(i => 
+      i.status === 'valid' || i.status === 'corrected' || i.status === 'manual_approved'
+    );
 
     setSaving(true);
     try {
       const transactions = validItems.map(item => ({
         app_user_id: user.id,
-        date: item.data,
+        date: item.date,
         placa: item.placa,
         cliente: item.cliente,
-        category: item.categoria,
-        amountBruto: item.valorBruto,
-        amountLiquido: item.valorLiquido,
-        amount: item.valorBruto,
+        category: item.category,
+        amountBruto: item.grossValue,
+        amountLiquido: item.netValue || item.grossValue,
+        amount: item.grossValue,
         status: 'paid',
-        observacao: item.description || 'IMPORTADO VIA EXCEL'
+        observacao: item.description || (item.status === 'manual_approved' ? 'Aprovado Manualmente' : 'IMPORTADO VIA EXCEL')
       }));
 
       const { error } = await supabase.from('Receitas').insert(transactions);
       if (error) throw error;
 
-      toast.success(`${validItems.length} registros salvos com sucesso!`);
-      setItems([]);
+      toast.success('Importação concluída com sucesso!');
+      toast.info(`${validItems.length} lançamentos foram salvos. ${summary.ignoredItems} ignorados. ${summary.invalidItems + summary.duplicateItems} inconsistências não salvas.`);
+      
+      clearData();
+      setShowConfirmModal(false);
     } catch (error: any) {
       toast.error('Erro ao salvar: ' + error.message);
     } finally {
       setSaving(false);
     }
-  };
-
-  const stats = {
-    total: items.length,
-    valid: items.filter(i => i.isValid).length,
-    invalid: items.filter(i => !i.isValid).length,
-    totalValue: items.reduce((acc, curr) => acc + (curr.isValid ? curr.valorBruto : 0), 0)
   };
 
   return (
@@ -129,14 +150,14 @@ export function ImportPage() {
           <IconBadge icon={FileSpreadsheet} variant="blue" size="lg" gradient />
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Importação de Dados</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Processamento inteligente de CSV, XLSX e PDF</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Pré-visualização e Validação Inteligente</p>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
           {items.length > 0 && (
             <button 
-              onClick={() => setItems([])}
+              onClick={clearData}
               className="px-6 py-3 text-[11px] font-black uppercase text-slate-400 hover:text-rose-600 transition-all"
             >
               Cancelar
@@ -199,122 +220,81 @@ export function ImportPage() {
         </div>
       ) : (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-          {/* Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Total de Itens</p>
-              <h3 className="text-4xl font-black">{stats.total}</h3>
-            </div>
-            
-            <div className="bg-emerald-600 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Prontos para Salvar</p>
-              <h3 className="text-4xl font-black">{stats.valid}</h3>
-            </div>
+          {/* Summary Cards */}
+          <ImportValidationCard summary={summary} />
 
-            <div className="bg-rose-600 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Inconsistentes</p>
-              <h3 className="text-4xl font-black">{stats.invalid}</h3>
-            </div>
-
-            <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-purple-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Valor Bruto Total</p>
-              <h3 className="text-4xl font-black text-slate-900">{formatBRL(stats.totalValue)}</h3>
-            </div>
-          </div>
-
-          {/* Tabela de Prévia */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+          {/* Validation section toggle and save button */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/30 gap-4">
               <div className="flex items-center gap-4">
                 <IconBadge icon={Search} variant="purple" size="sm" />
-                <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Pré-visualização e Validação</h2>
+                <div>
+                  <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Pré-visualização e Validação</h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Revise os lançamentos antes de salvar</p>
+                </div>
               </div>
               
-              <button 
-                onClick={handleSave}
-                disabled={saving || stats.valid === 0}
-                className="flex items-center gap-3 px-8 h-12 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20"
-              >
-                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                Importar {stats.valid} Lançamentos
-              </button>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button 
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 h-12 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.1em] hover:bg-slate-50 hover:text-slate-900 transition-all"
+                >
+                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPreview ? 'Ocultar' : 'Abrir'} Pré-visualização
+                </button>
+
+                <button 
+                  onClick={() => setShowConfirmModal(true)}
+                  disabled={saving || summary.readyToSave === 0}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 h-12 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20"
+                >
+                  <Database className="w-4 h-4" />
+                  Importar {summary.readyToSave} Lançamentos
+                </button>
+              </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Data</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Placa</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Cliente / Serviço</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Valores</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {items.map((item, idx) => (
-                    <tr key={item.id} className={cn("group transition-all hover:bg-slate-50/50", !item.isValid && "bg-rose-50/30")}>
-                      <td className="px-8 py-5">
-                        {item.isValid ? (
-                          <div className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
-                            <CheckCircle2 className="w-5 h-5" />
-                            <span>Válido</span>
-                          </div>
-                        ) : (
-                          <div className="group/error relative flex items-center gap-2 text-rose-600 font-bold text-[10px] uppercase tracking-widest cursor-help">
-                            <AlertTriangle className="w-5 h-5" />
-                            <span>Erro</span>
-                            <div className="absolute left-0 top-full mt-2 hidden group-hover/error:block z-50 w-64 p-4 bg-slate-900 text-[10px] text-white rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
-                              <p className="font-black mb-2 text-rose-400 uppercase tracking-widest">Inconsistências:</p>
-                              {item.errors.map((e: string, i: number) => (
-                                <div key={i} className="flex gap-2 mb-1">
-                                  <span className="text-rose-500">•</span>
-                                  <span className="opacity-80">{e}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-8 py-5 text-[11px] font-bold text-slate-500">{item.data || '---'}</td>
-                      <td className="px-8 py-5">
-                        <span className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-700 uppercase">
-                          {item.placa || 'SEM PLACA'}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-slate-900 uppercase truncate max-w-[200px]">{item.cliente}</span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{item.categoria}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex flex-col items-end">
-                          <span className="text-[11px] font-black text-slate-900">{formatBRL(item.valorBruto)}</span>
-                          <span className="text-[9px] font-bold text-emerald-500">Liq: {formatBRL(item.valorLiquido)}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <button 
-                          onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}
-                          className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {showPreview && (
+              <div className="p-6 md:p-8 pt-6">
+                <ImportValidationFilters 
+                  filter={filter} 
+                  setFilter={setFilter} 
+                  searchQuery={searchQuery} 
+                  setSearchQuery={setSearchQuery} 
+                />
+                
+                <div className="mt-4 border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                  <ImportPreviewTable 
+                    items={filteredItems} 
+                    onEdit={(item) => setEditItem(item)}
+                    onDelete={handleDelete}
+                    onApproveManually={handleApproveManually}
+                    onIgnore={handleIgnore}
+                    onRevalidate={handleRevalidate}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* Edit Modal */}
+      <ImportEditModal 
+        isOpen={!!editItem} 
+        item={editItem} 
+        onClose={() => setEditItem(null)} 
+        onSave={handleEdit} 
+      />
+
+      {/* Confirm Modal */}
+      <ImportConfirmModal 
+        isOpen={showConfirmModal}
+        summary={summary}
+        isSaving={saving}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executeSave}
+      />
     </div>
   );
 }
