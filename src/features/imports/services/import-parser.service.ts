@@ -34,13 +34,35 @@ export const importParserService = {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
 
+      // Step 1: Detect the actual header row by scanning the first 20 rows
+      const rawRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: "" });
+      let headerRowIndex = 0;
+      
+      for (let i = 0; i < Math.min(20, rawRows.length); i++) {
+        const row = rawRows[i];
+        if (Array.isArray(row)) {
+          const matches = row.filter(cell => {
+            if (!cell) return false;
+            const str = String(cell).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            return ['data', 'placa', 'valor', 'cliente', 'servico', 'categoria', 'amount', 'date', 'veiculo'].some(h => str.includes(h));
+          });
+          // If we find at least 2 recognizable columns, we assume this is the header row
+          if (matches.length >= 2) {
+            headerRowIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Step 2: Parse data using the detected header row
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
+        range: headerRowIndex,
         defval: "",
         raw: false,
       });
 
       if (!rows.length) {
-        throw new Error('A planilha não possui dados para importar.');
+        throw new Error('A planilha não possui dados para importar após a linha de cabeçalho.');
       }
 
       return rows.map((row, index) => {
