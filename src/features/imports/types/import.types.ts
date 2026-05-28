@@ -1,15 +1,39 @@
 export type ImportStatus = 'pending' | 'processing' | 'validated' | 'error' | 'completed';
 
-export interface ImportItem {
+export type ValidationStatus = 
+  | "valid"
+  | "invalid"
+  | "duplicate"
+  | "corrected"
+  | "manual_approved"
+  | "ignored"
+  | "deleted";
+
+export interface ImportedTransaction {
   id: string;
-  data: string;
+  date: string;
   placa: string;
   cliente: string;
-  categoria: string;
-  valorBruto: number;
-  valorLiquido: number;
-  status: 'valid' | 'duplicate' | 'error';
-  error_message?: string;
+  service: string; // The user requested "service", we can map "categoria" to "service" or keep both
+  category?: string; // Standardized service/category
+  grossValue: number;
+  netValue?: number;
+  status: ValidationStatus;
+  validationMessages: string[];
+  approvedManually?: boolean;
+  ignored?: boolean;
+  deleted?: boolean;
+  description?: string; // Adding for completeness since parser uses it
+}
+
+export interface ImportSummary {
+  totalItems: number;
+  readyToSave: number;
+  invalidItems: number;
+  duplicateItems: number;
+  ignoredItems: number;
+  grossTotal: number;
+  netTotal: number;
 }
 
 export interface ImportLog {
