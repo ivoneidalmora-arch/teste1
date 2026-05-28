@@ -242,7 +242,7 @@ export function ImportPage() {
           <ImportValidationCard summary={summary} />
 
           {/* Validation section toggle and save button */}
-          <div ref={previewRef} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col scroll-mt-6">
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/30 gap-4">
               <div className="flex items-center gap-4">
                 <IconBadge icon={Search} variant="purple" size="sm" />
@@ -254,11 +254,11 @@ export function ImportPage() {
               
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <button 
-                  onClick={togglePreview}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 h-12 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.1em] hover:bg-slate-50 hover:text-slate-900 transition-all"
+                  onClick={() => setShowPreview(true)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 h-12 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.1em] hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
                 >
-                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  {showPreview ? 'Ocultar' : 'Abrir'} Pré-visualização
+                  <Eye className="w-4 h-4" />
+                  Abrir Pré-visualização
                 </button>
 
                 <button 
@@ -271,28 +271,51 @@ export function ImportPage() {
                 </button>
               </div>
             </div>
-            
-            {showPreview && (
-              <div className="p-6 pt-4">
-                <ImportValidationFilters 
-                  filter={filter} 
-                  setFilter={setFilter} 
-                  searchQuery={searchQuery} 
-                  setSearchQuery={setSearchQuery} 
-                />
-                
-                <div className="mt-4 border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
-                  <ImportPreviewTable 
-                    items={filteredItems} 
-                    onEdit={(item) => setEditItem(item)}
-                    onDelete={handleDelete}
-                    onApproveManually={handleApproveManually}
-                    onIgnore={handleIgnore}
-                    onRevalidate={handleRevalidate}
-                  />
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal Overlay */}
+      {showPreview && items.length > 0 && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4 md:p-8">
+          <div className="flex-1 bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden max-w-7xl w-full mx-auto animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/50 gap-4 shrink-0">
+              <div className="flex items-center gap-4">
+                <IconBadge icon={Search} variant="purple" size="sm" />
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Inspeção Detalhada</h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Revise e corrija os lançamentos importados</p>
                 </div>
               </div>
-            )}
+              <button 
+                onClick={() => setShowPreview(false)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm"
+              >
+                <EyeOff className="w-4 h-4" /> Fechar Visualização
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
+              <ImportValidationFilters 
+                filter={filter} 
+                setFilter={setFilter} 
+                searchQuery={searchQuery} 
+                setSearchQuery={setSearchQuery} 
+              />
+              
+              <div className="mt-6 border border-slate-100 bg-white rounded-3xl overflow-hidden shadow-sm">
+                <ImportPreviewTable 
+                  items={filteredItems} 
+                  onEdit={(item) => setEditItem(item)}
+                  onDelete={handleDelete}
+                  onApproveManually={handleApproveManually}
+                  onIgnore={handleIgnore}
+                  onRevalidate={handleRevalidate}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
