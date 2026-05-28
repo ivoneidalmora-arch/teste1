@@ -1,6 +1,7 @@
 export type ImportStatus = 'pending' | 'processing' | 'validated' | 'error' | 'completed';
 
 export type ValidationStatus = 
+  | "pending"
   | "valid"
   | "invalid"
   | "duplicate"
