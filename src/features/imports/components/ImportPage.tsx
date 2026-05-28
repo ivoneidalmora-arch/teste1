@@ -56,6 +56,8 @@ export function ImportPage() {
     handleRevalidate
   } = useImportValidation();
 
+  const previewRef = useRef<HTMLDivElement>(null);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -65,6 +67,9 @@ export function ImportPage() {
         processImportedData(data);
         toast.success(`Arquivo processado. ${data.length} lançamentos encontrados.`);
         setShowPreview(true);
+        setTimeout(() => {
+          previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
       } catch (error: any) {
         toast.error(error.message || 'Erro ao processar arquivo.');
       } finally {
@@ -97,11 +102,24 @@ export function ImportPage() {
         processImportedData(data);
         toast.success(`Arquivo processado. ${data.length} lançamentos encontrados.`);
         setShowPreview(true);
+        setTimeout(() => {
+          previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
       } catch (error: any) {
         toast.error(error.message || 'Erro ao processar arquivo.');
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const togglePreview = () => {
+    const nextState = !showPreview;
+    setShowPreview(nextState);
+    if (nextState) {
+      setTimeout(() => {
+        previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -143,13 +161,13 @@ export function ImportPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 p-6 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto space-y-4 p-4 md:p-6 animate-in fade-in duration-500">
       {/* Header Premium */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm gap-6">
         <div className="flex items-center gap-5">
           <IconBadge icon={FileSpreadsheet} variant="blue" size="lg" gradient />
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Importação de Dados</h1>
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Importação de Dados</h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Pré-visualização e Validação Inteligente</p>
           </div>
         </div>
@@ -219,13 +237,13 @@ export function ImportPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
           {/* Summary Cards */}
           <ImportValidationCard summary={summary} />
 
           {/* Validation section toggle and save button */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/30 gap-4">
+          <div ref={previewRef} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col scroll-mt-6">
+            <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/30 gap-4">
               <div className="flex items-center gap-4">
                 <IconBadge icon={Search} variant="purple" size="sm" />
                 <div>
@@ -236,7 +254,7 @@ export function ImportPage() {
               
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <button 
-                  onClick={() => setShowPreview(!showPreview)}
+                  onClick={togglePreview}
                   className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 h-12 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.1em] hover:bg-slate-50 hover:text-slate-900 transition-all"
                 >
                   {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -255,7 +273,7 @@ export function ImportPage() {
             </div>
             
             {showPreview && (
-              <div className="p-6 md:p-8 pt-6">
+              <div className="p-6 pt-4">
                 <ImportValidationFilters 
                   filter={filter} 
                   setFilter={setFilter} 
