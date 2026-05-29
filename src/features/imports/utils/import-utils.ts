@@ -49,11 +49,26 @@ export function normalizeCurrency(value: unknown): number | null {
     return Number.isFinite(value) ? value : null;
   }
 
-  const cleaned = String(value)
-    .replace(/\s/g, "")
-    .replace("R$", "")
-    .replace(/\./g, "")
-    .replace(",", ".");
+  // Limpa tudo que não for número, ponto, vírgula ou sinal negativo (resolve r$, espaços inquebráveis, etc)
+  let cleaned = String(value).replace(/[^0-9.,-]/g, "");
+
+  if (!cleaned) return null;
+
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+
+  if (lastComma > -1 && lastDot > -1) {
+    if (lastComma < lastDot) {
+      // Padrão americano: 1,500.00
+      cleaned = cleaned.replace(/,/g, '');
+    } else {
+      // Padrão brasileiro: 1.500,00
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    }
+  } else if (lastComma > -1) {
+    // Apenas vírgula, assume decimal brasileiro
+    cleaned = cleaned.replace(',', '.');
+  }
 
   const number = Number(cleaned);
 
@@ -126,13 +141,25 @@ export function normalizeRowKeys(row: Record<string, unknown>): Record<string, a
   const rowKeys = Object.keys(row);
 
   Object.entries(COLUMN_ALIASES).forEach(([targetKey, aliases]) => {
-    const foundKey = rowKeys.find(rk => {
+    // 1. Tenta correspondência exata primeiro
+    let foundKey = rowKeys.find(rk => {
       const cleanRK = rk.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       return aliases.some(alias => {
         const cleanAlias = alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        return cleanRK === cleanAlias || cleanRK.includes(cleanAlias);
+        return cleanRK === cleanAlias;
       });
     });
+
+    // 2. Se não achar, tenta correspondência parcial
+    if (!foundKey) {
+      foundKey = rowKeys.find(rk => {
+        const cleanRK = rk.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        return aliases.some(alias => {
+          const cleanAlias = alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+          return cleanRK.includes(cleanAlias);
+        });
+      });
+    }
 
     if (foundKey) {
       normalized[targetKey] = row[foundKey];
