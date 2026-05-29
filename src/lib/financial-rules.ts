@@ -71,11 +71,15 @@ export function getNetValueFor2025(
 export function shouldApplyAutoNetValue(currentNetValue: number, grossValue: number): boolean {
   const autoNetValue = NET_VALUE_BY_GROSS_VALUE_2025[grossValue.toFixed(2)];
   
+  // Fórmula antiga de fallback: bruto - 50.72
+  const oldFormulaValue = Math.max(0, grossValue - 50.72);
+  
   return (
     !currentNetValue ||
     currentNetValue === 0 ||
     currentNetValue === grossValue ||
-    (!!autoNetValue && Math.abs(currentNetValue - autoNetValue) < 0.01)
+    (!!autoNetValue && Math.abs(currentNetValue - autoNetValue) < 0.01) ||
+    Math.abs(currentNetValue - oldFormulaValue) < 0.02
   );
 }
 

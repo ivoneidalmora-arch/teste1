@@ -9,6 +9,7 @@ import {
   standardizeService 
 } from '../utils/import-utils';
 import { calculateLiquido } from '@/core/utils/finance';
+import { getNetValueFor2025, shouldApplyAutoNetValue } from '@/lib/financial-rules';
 import { format } from 'date-fns';
 
 export const importParserService = {
@@ -90,8 +91,10 @@ export const importParserService = {
         const rawValorBrutoStr = String(getValueByAliases(row, COLUMN_ALIASES.valorBruto) || '');
         const rawDateStr = String(getValueByAliases(row, COLUMN_ALIASES.data) || '');
         const rawClientStr = String(getValueByAliases(row, COLUMN_ALIASES.cliente) || '');
+        const rawValorLiquidoStr = String(getValueByAliases(row, COLUMN_ALIASES.valorLiquido) || '');
         
         let amount = parseCurrencyBR(rawValorBrutoStr);
+        const parsedRawLiquido = parseCurrencyBR(rawValorLiquidoStr);
         
         if (amount === null || amount === 0) {
           for (const val of Object.values(row)) {
@@ -123,6 +126,21 @@ export const importParserService = {
         
         const rawPlaca = String(getValueByAliases(row, COLUMN_ALIASES.placa) || '');
 
+        let netValue = category === 'Vistoria Cautelar' ? (amount ?? 0) : calculateLiquido(amount ?? 0);
+        
+        if (category !== 'Vistoria Cautelar' && amount !== null) {
+          const autoNetValue = dateObj ? getNetValueFor2025(amount, dateObj) : null;
+          if (autoNetValue !== null) {
+            if (parsedRawLiquido !== null && parsedRawLiquido > 0 && !shouldApplyAutoNetValue(parsedRawLiquido, amount)) {
+              netValue = parsedRawLiquido;
+            } else {
+              netValue = autoNetValue;
+            }
+          } else if (parsedRawLiquido !== null && parsedRawLiquido > 0) {
+            netValue = parsedRawLiquido;
+          }
+        }
+
         return {
           id: `row-${index}-${Math.random().toString(36).substr(2, 5)}`,
           date: dateObj ? format(dateObj, 'yyyy-MM-dd') : '',
@@ -131,7 +149,7 @@ export const importParserService = {
           service: category,
           category: category,
           grossValue: amount ?? 0,
-          netValue: category === 'Vistoria Cautelar' ? (amount ?? 0) : calculateLiquido(amount ?? 0),
+          netValue,
           status: 'pending',
           errors: [],
           warnings: [],
@@ -139,7 +157,7 @@ export const importParserService = {
           description: descriptionStr,
           rawDate: rawDateStr,
           rawValorBruto: rawValorBrutoStr,
-          rawValorLiquido: String(getValueByAliases(row, COLUMN_ALIASES.valorLiquido) || ''),
+          rawValorLiquido: rawValorLiquidoStr,
           rawClient: rawClientStr
         };
       });
@@ -164,20 +182,42 @@ export const importParserService = {
     }
 
     const result = await response.json();
-    return result.data.map((item: any) => ({
-      ...item,
-      id: Math.random().toString(36).substr(2, 9),
-      status: 'pending',
-      errors: [],
-      warnings: [],
-      validationMessages: [],
-      date: item.date || item.data || '',
-      placa: item.placa || '',
-      cliente: item.cliente || '',
-      service: item.service || item.categoria || '',
-      category: item.categoria || item.service || '',
-      grossValue: item.valorBruto || item.amount || 0,
-      netValue: item.valorLiquido || item.netAmount || 0,
-    }));
+    return result.data.map((item: any) => {
+      const gross = item.valorBruto || item.amount || 0;
+      const dateObj = parseBrazilianDate(item.date || item.data || '');
+      const category = standardizeService(item.service || item.categoria || '');
+      
+      let net = item.valorLiquido || item.netAmount || 0;
+      if (category !== 'Vistoria Cautelar' && gross > 0) {
+        const autoNetValue = dateObj ? getNetValueFor2025(gross, dateObj) : null;
+        if (autoNetValue !== null) {
+          if (net > 0 && !shouldApplyAutoNetValue(net, gross)) {
+            // manter valor manual
+          } else {
+            net = autoNetValue;
+          }
+        } else if (!net || net === gross) {
+          net = calculateLiquido(gross);
+        }
+      } else if (category === 'Vistoria Cautelar') {
+        net = gross;
+      }
+
+      return {
+        ...item,
+        id: Math.random().toString(36).substr(2, 9),
+        status: 'pending',
+        errors: [],
+        warnings: [],
+        validationMessages: [],
+        date: item.date || item.data || '',
+        placa: item.placa || '',
+        cliente: item.cliente || '',
+        service: category,
+        category: category,
+        grossValue: gross,
+        netValue: net,
+      };
+    });
   }
 };
