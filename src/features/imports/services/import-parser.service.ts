@@ -105,16 +105,34 @@ export const importParserService = {
       return rows.map((row, index) => {
         const normalized = normalizeRowKeys(row);
         
+        let amount = normalizeCurrency(normalized.amount);
+        
+        // Se a coluna não foi encontrada, varre todas as colunas da linha buscando algo com "R$"
+        if (!amount) {
+          for (const val of Object.values(row)) {
+            if (typeof val === 'string' && (val.includes('R$') || /^\d+[.,]\d{2}$/.test(val.trim()))) {
+              const testAmount = normalizeCurrency(val);
+              if (testAmount) {
+                amount = testAmount;
+                break;
+              }
+            }
+          }
+        }
+        
         const date = normalizeDate(normalized.date);
-        const amount = normalizeCurrency(normalized.amount);
         const description = String(normalized.description || normalized.service || normalized.category || '').trim();
         const category = standardizeService(normalized.category || normalized.service || 'Transferência');
+
+        let clienteStr = String(normalized.client || 'AVULSO').toUpperCase();
+        // Corrige erro crasso de exportação do sistema origem (Windows-1252 com falha dupla ou erro de digitação do perito)
+        clienteStr = clienteStr.replace(/S[Ïï]\s*MATEU[S]?/ig, 'SÃO MATEUS').replace(/S[Ïï]/ig, 'SÃO');
 
         return {
           id: `row-${index}-${Math.random().toString(36).substr(2, 5)}`,
           date: date ? format(date, 'yyyy-MM-dd') : '',
           placa: (normalized.plate || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
-          cliente: String(normalized.client || 'AVULSO').toUpperCase(),
+          cliente: clienteStr,
           service: category,
           category: category,
           grossValue: amount || 0,
