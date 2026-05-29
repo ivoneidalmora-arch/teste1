@@ -2,29 +2,54 @@ export type ImportStatus = 'pending' | 'processing' | 'validated' | 'error' | 'c
 
 export type ValidationStatus = 
   | "pending"
-  | "valid"
-  | "invalid"
-  | "duplicate"
-  | "corrected"
-  | "manual_approved"
-  | "ignored"
+  | "valido"
+  | "erro"
+  | "duplicado"
+  | "corrigido"
+  | "aprovado"
+  | "ignorado"
   | "deleted";
+
+export type ImportValidationError =
+  | 'DATA_INVALIDA'
+  | 'PLACA_AUSENTE'
+  | 'PLACA_INVALIDA'
+  | 'CLIENTE_AUSENTE'
+  | 'SERVICO_AUSENTE'
+  | 'VALOR_BRUTO_AUSENTE'
+  | 'VALOR_BRUTO_INVALIDO'
+  | 'VALOR_LIQUIDO_AUSENTE'
+  | 'VALOR_LIQUIDO_INVALIDO'
+  | 'DUPLICADO'
+  | 'INCONSISTENTE';
 
 export interface ImportedTransaction {
   id: string;
   date: string;
   placa: string;
   cliente: string;
-  service: string; // The user requested "service", we can map "categoria" to "service" or keep both
-  category?: string; // Standardized service/category
+  service: string;
+  category?: string;
   grossValue: number;
   netValue?: number;
   status: ValidationStatus;
+  
+  errors: ImportValidationError[];
+  warnings: string[];
+  
+  // Backwards compatibility for generic string arrays from old versions
   validationMessages: string[];
+  
   approvedManually?: boolean;
   ignored?: boolean;
   deleted?: boolean;
-  description?: string; // Adding for completeness since parser uses it
+  description?: string;
+  
+  // Auditing fields
+  rawDate?: string;
+  rawValorBruto?: string;
+  rawValorLiquido?: string;
+  rawClient?: string;
 }
 
 export interface ImportSummary {

@@ -1,10 +1,11 @@
 import * as XLSX from 'xlsx';
 import { ImportedTransaction } from '../types/import.types';
 import { 
-  normalizeRowKeys, 
-  normalizeDate, 
-  normalizeCurrency, 
-  normalizeTransactionType, 
+  getValueByAliases,
+  COLUMN_ALIASES,
+  parseBrazilianDate, 
+  parseCurrencyBR, 
+  normalizeClientName,
   standardizeService 
 } from '../utils/import-utils';
 import { calculateLiquido } from '@/core/utils/finance';
@@ -28,8 +29,6 @@ export const importParserService = {
       const arrayBuffer = await file.arrayBuffer();
       const uint8 = new Uint8Array(arrayBuffer);
       
-      // Verifica se o arquivo é na verdade um texto (HTML ou CSV) disfarçado de XLS
-      // Arquivos binários reais (XLS/XLSX) têm muitos bytes nulos no início.
       let isText = true;
       for (let i = 0; i < Math.min(1024, uint8.length); i++) {
         if (uint8[i] === 0) {
@@ -59,7 +58,6 @@ export const importParserService = {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
 
-      // Step 1: Detect the actual header row by scanning the first 20 rows
       const rawRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: "" });
       let headerRowIndex = 0;
       
@@ -71,7 +69,6 @@ export const importParserService = {
             const str = String(cell).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
             return ['data', 'placa', 'valor', 'cliente', 'servico', 'categoria', 'amount', 'date', 'veiculo'].some(h => str.includes(h));
           });
-          // If we find at least 2 recognizable columns, we assume this is the header row
           if (matches.length >= 2) {
             headerRowIndex = i;
             break;
@@ -79,7 +76,6 @@ export const importParserService = {
         }
       }
 
-      // Step 2: Parse data using the detected header row
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
         range: headerRowIndex,
         defval: "",
@@ -90,29 +86,18 @@ export const importParserService = {
         throw new Error('A planilha não possui dados para importar após a linha de cabeçalho.');
       }
 
-      // DEBUG: Enviar a primeira linha pro servidor para inspecionar
-      try {
-        fetch('/api/debug', {
-          method: 'POST',
-          body: JSON.stringify({
-            headerRowIndex,
-            firstRow: rows[0],
-            rawRowSample: rawRows[headerRowIndex],
-          })
-        }).catch(() => {});
-      } catch (e) {}
-
       return rows.map((row, index) => {
-        const normalized = normalizeRowKeys(row);
+        const rawValorBrutoStr = String(getValueByAliases(row, COLUMN_ALIASES.amount) || '');
+        const rawDateStr = String(getValueByAliases(row, COLUMN_ALIASES.date) || '');
+        const rawClientStr = String(getValueByAliases(row, COLUMN_ALIASES.cliente) || '');
         
-        let amount = normalizeCurrency(normalized.amount);
+        let amount = parseCurrencyBR(rawValorBrutoStr);
         
-        // Se a coluna não foi encontrada, varre todas as colunas da linha buscando algo com "R$"
-        if (!amount) {
+        if (amount === null) {
           for (const val of Object.values(row)) {
             if (typeof val === 'string' && (val.includes('R$') || /^\d+[.,]\d{2}$/.test(val.trim()))) {
-              const testAmount = normalizeCurrency(val);
-              if (testAmount) {
+              const testAmount = parseCurrencyBR(val);
+              if (testAmount !== null) {
                 amount = testAmount;
                 break;
               }
@@ -120,26 +105,38 @@ export const importParserService = {
           }
         }
         
-        const date = normalizeDate(normalized.date);
-        const description = String(normalized.description || normalized.service || normalized.category || '').trim();
-        const category = standardizeService(normalized.category || normalized.service || 'Transferência');
+        const dateObj = parseBrazilianDate(rawDateStr);
+        const descriptionStr = String(getValueByAliases(row, COLUMN_ALIASES.description) || 
+                                      getValueByAliases(row, COLUMN_ALIASES.servico) || 
+                                      getValueByAliases(row, COLUMN_ALIASES.category) || '').trim();
+                                      
+        const rawCategory = String(getValueByAliases(row, COLUMN_ALIASES.category) || 
+                                   getValueByAliases(row, COLUMN_ALIASES.servico) || 'Transferência');
+                                   
+        const category = standardizeService(rawCategory);
 
-        let clienteStr = String(normalized.client || 'AVULSO').toUpperCase();
-        // Corrige erro crasso de exportação do sistema origem (Windows-1252 com falha dupla ou erro de digitação do perito)
-        clienteStr = clienteStr.replace(/S[Ïï]\s*MATEU[S]?/ig, 'SÃO MATEUS').replace(/S[Ïï]/ig, 'SÃO');
+        let clienteStr = normalizeClientName(rawClientStr || 'AVULSO');
+        
+        const rawPlaca = String(getValueByAliases(row, COLUMN_ALIASES.placa) || '');
 
         return {
           id: `row-${index}-${Math.random().toString(36).substr(2, 5)}`,
-          date: date ? format(date, 'yyyy-MM-dd') : '',
-          placa: (normalized.plate || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+          date: dateObj ? format(dateObj, 'yyyy-MM-dd') : '',
+          placa: rawPlaca.toUpperCase().replace(/[^A-Z0-9]/g, ''),
           cliente: clienteStr,
           service: category,
           category: category,
-          grossValue: amount || 0,
-          netValue: category === 'Vistoria Cautelar' ? (amount || 0) : calculateLiquido(amount || 0),
+          grossValue: amount ?? 0,
+          netValue: category === 'Vistoria Cautelar' ? (amount ?? 0) : calculateLiquido(amount ?? 0),
           status: 'pending',
+          errors: [],
+          warnings: [],
           validationMessages: [],
-          description: description
+          description: descriptionStr,
+          rawDate: rawDateStr,
+          rawValorBruto: rawValorBrutoStr,
+          rawValorLiquido: String(getValueByAliases(row, COLUMN_ALIASES.valorLiquido) || ''),
+          rawClient: rawClientStr
         };
       });
     } catch (error: any) {
@@ -149,7 +146,6 @@ export const importParserService = {
   },
 
   async parsePDF(file: File): Promise<ImportedTransaction[]> {
-    // Reuse existing AI-OCR logic for PDF
     const formData = new FormData();
     formData.append('file', file);
 
@@ -168,6 +164,8 @@ export const importParserService = {
       ...item,
       id: Math.random().toString(36).substr(2, 9),
       status: 'pending',
+      errors: [],
+      warnings: [],
       validationMessages: [],
       date: item.date || item.data || '',
       placa: item.placa || '',
