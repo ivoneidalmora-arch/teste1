@@ -90,6 +90,18 @@ export const importParserService = {
         throw new Error('A planilha não possui dados para importar após a linha de cabeçalho.');
       }
 
+      // DEBUG: Enviar a primeira linha pro servidor para inspecionar
+      try {
+        fetch('/api/debug', {
+          method: 'POST',
+          body: JSON.stringify({
+            headerRowIndex,
+            firstRow: rows[0],
+            rawRowSample: rawRows[headerRowIndex],
+          })
+        }).catch(() => {});
+      } catch (e) {}
+
       return rows.map((row, index) => {
         const normalized = normalizeRowKeys(row);
         
