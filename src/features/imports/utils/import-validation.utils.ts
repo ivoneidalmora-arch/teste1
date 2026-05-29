@@ -11,7 +11,7 @@ export function validateImportedTransaction(
   const warnings: string[] = item.warnings || [];
   let status: ValidationStatus = item.status || "pending";
 
-  const preserveStatus = ["manual_approved", "ignorado", "deleted"].includes(status);
+  const preserveStatus = ["manual_approved", "ignored", "ignorado", "deleted"].includes(status);
 
   // Field: Date
   if (!item.date) {
@@ -60,20 +60,20 @@ export function validateImportedTransaction(
   // Determine final status if not preserving
   if (!preserveStatus) {
     if (errors.length > 0) {
-      status = "erro";
+      status = "invalid";
     } else {
-      status = item.status === "corrigido" ? "corrigido" : "valido";
+      status = (item.status === "corrigido" || item.status === "corrected") ? "corrected" : "valid";
     }
   }
 
   // Build legacy validation messages for backward compatibility
   const messages: string[] = [];
-  if (status === "valido") messages.push("Lançamento válido para importação");
-  else if (status === "corrigido") messages.push("Lançamento corrigido e revalidado");
-  else if (status === "manual_approved") messages.push("Aprovado manualmente");
-  else if (status === "ignorado") messages.push("Ignorado");
+  if (status === "valid" || status === "valido") messages.push("Lançamento válido para importação");
+  else if (status === "corrected" || status === "corrigido") messages.push("Lançamento corrigido e revalidado");
+  else if (status === "manual_approved" || status === "aprovado") messages.push("Aprovado manualmente");
+  else if (status === "ignored" || status === "ignorado") messages.push("Ignorado");
   else if (status === "deleted") messages.push("Excluído");
-  else if (status === "erro") messages.push("Erro na validação da linha");
+  else if (status === "invalid" || status === "erro") messages.push("Erro na validação da linha");
 
   return {
     ...item,
@@ -108,7 +108,7 @@ export function detectDuplicateTransactions(
   });
 
   const processed = sorted.map((t, i) => {
-    if (["manual_approved", "ignorado", "deleted"].includes(t.status)) return t;
+    if (["manual_approved", "ignored", "ignorado", "deleted"].includes(t.status)) return t;
 
     const isDuplicate = sorted.some((other, j) => {
       if (i === j) return false;
@@ -138,7 +138,7 @@ export function detectDuplicateTransactions(
       }
       return {
         ...t,
-        status: "duplicado" as ValidationStatus,
+        status: "duplicate",
         validationMessages: ["Possível duplicidade detectada"]
       };
     }
@@ -165,15 +165,15 @@ export function calculateImportSummary(
   let netTotal = 0;
 
   activeItems.forEach(t => {
-    if (t.status === "valido" || t.status === "corrigido" || t.status === "manual_approved") {
+    if (t.status === "valid" || t.status === "valido" || t.status === "corrected" || t.status === "corrigido" || t.status === "manual_approved" || t.status === "aprovado") {
       readyToSave++;
       grossTotal += t.grossValue || 0;
       netTotal += t.netValue || 0;
-    } else if (t.status === "erro" || t.status === "invalid" as any) {
+    } else if (t.status === "invalid" || t.status === "erro") {
       invalidItems++;
-    } else if (t.status === "duplicado" || t.status === "duplicate" as any) {
+    } else if (t.status === "duplicate" || t.status === "duplicado") {
       duplicateItems++;
-    } else if (t.status === "ignorado" || t.status === "ignored" as any) {
+    } else if (t.status === "ignored" || t.status === "ignorado") {
       ignoredItems++;
     }
   });

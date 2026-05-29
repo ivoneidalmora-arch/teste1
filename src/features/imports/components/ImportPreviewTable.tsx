@@ -28,21 +28,21 @@ export function ImportPreviewTable({
   const getStatusConfig = (status: ImportedTransaction['status']) => {
     switch(status) {
       case 'valido': 
-      case 'valid' as any: 
+      case 'valid': 
         return { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Válido' };
       case 'erro': 
-      case 'invalid' as any: 
+      case 'invalid': 
         return { icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50', label: 'Erro' };
       case 'duplicado': 
-      case 'duplicate' as any: 
+      case 'duplicate': 
         return { icon: AlertCircle, color: 'text-orange-500', bg: 'bg-orange-50', label: 'Duplicado' };
       case 'corrigido': 
-      case 'corrected' as any: 
+      case 'corrected': 
         return { icon: CheckCircle2, color: 'text-blue-500', bg: 'bg-blue-50', label: 'Corrigido' };
       case 'manual_approved': 
         return { icon: ThumbsUp, color: 'text-purple-600', bg: 'bg-purple-50', label: 'Aprovado' };
       case 'ignorado': 
-      case 'ignored' as any: 
+      case 'ignored': 
         return { icon: XCircle, color: 'text-slate-400', bg: 'bg-slate-100', label: 'Ignorado' };
       case 'deleted': 
         return { icon: Trash2, color: 'text-slate-800', bg: 'bg-slate-200', label: 'Excluído' };
@@ -94,7 +94,7 @@ export function ImportPreviewTable({
           {items.map(item => {
             const statusConfig = getStatusConfig(item.status);
             const StatusIcon = statusConfig.icon;
-            const isInvalid = item.status === 'erro' || item.status === 'invalid' as any || item.status === 'duplicado' || item.status === 'duplicate' as any;
+            const isInvalid = item.status === 'erro' || item.status === 'invalid' || item.status === 'duplicado' || item.status === 'duplicate';
             const isExpanded = expandedRows[item.id];
             
             const hasRawDifferences = 

@@ -3,11 +3,17 @@ export type ImportStatus = 'pending' | 'processing' | 'validated' | 'error' | 'c
 export type ValidationStatus = 
   | "pending"
   | "valido"
+  | "valid"
   | "erro"
+  | "invalid"
   | "duplicado"
+  | "duplicate"
   | "corrigido"
+  | "corrected"
   | "aprovado"
+  | "manual_approved"
   | "ignorado"
+  | "ignored"
   | "deleted";
 
 export type ImportValidationError =
