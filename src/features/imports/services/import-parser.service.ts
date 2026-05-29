@@ -115,7 +115,7 @@ export const importParserService = {
                                    
         const category = standardizeService(rawCategory);
 
-        let clienteStr = normalizeClientName(rawClientStr || 'AVULSO');
+        const clienteStr = normalizeClientName(rawClientStr || 'AVULSO');
         
         const rawPlaca = String(getValueByAliases(row, COLUMN_ALIASES.placa) || '');
 

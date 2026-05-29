@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertTriangle, AlertCircle, Edit2, Trash2, 
   ThumbsUp, XCircle, RefreshCw, MoreVertical, ChevronDown, ChevronUp, FileCode2
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface ImportPreviewTableProps {
   items: ImportedTransaction[];

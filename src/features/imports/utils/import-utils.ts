@@ -167,7 +167,7 @@ export function formatDateBR(date: Date | null): string {
 export function normalizeClientName(value: unknown): string {
   if (!value) return '';
 
-  let name = String(value)
+  const name = String(value)
     .normalize('NFC')
     .replace(/\u00A0/g, ' ')
     .replace(/\s+/g, ' ')
