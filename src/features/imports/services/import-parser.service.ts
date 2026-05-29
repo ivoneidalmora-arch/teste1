@@ -93,12 +93,18 @@ export const importParserService = {
         
         let amount = parseCurrencyBR(rawValorBrutoStr);
         
-        if (amount === null) {
+        if (amount === null || amount === 0) {
           for (const val of Object.values(row)) {
             if (typeof val === 'string' && (val.includes('R$') || /^\d+[.,]\d{2}$/.test(val.trim()))) {
               const testAmount = parseCurrencyBR(val);
-              if (testAmount !== null) {
+              if (testAmount !== null && testAmount !== 0) {
                 amount = testAmount;
+                break;
+              }
+            } else if (typeof val === 'number') {
+              // Nível hard: Se o excel ler o valor como número nativo e não for uma data serial (40k-50k = anos 2009 a 2036)
+              if (val > 0 && (val < 40000 || val > 50000)) {
+                amount = val;
                 break;
               }
             }
