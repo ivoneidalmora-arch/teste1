@@ -138,7 +138,7 @@ export function detectDuplicateTransactions(
       }
       return {
         ...t,
-        status: "duplicate",
+        status: "duplicate" as ValidationStatus,
         validationMessages: ["Possível duplicidade detectada"]
       };
     }

@@ -87,8 +87,8 @@ export const importParserService = {
       }
 
       return rows.map((row, index) => {
-        const rawValorBrutoStr = String(getValueByAliases(row, COLUMN_ALIASES.amount) || '');
-        const rawDateStr = String(getValueByAliases(row, COLUMN_ALIASES.date) || '');
+        const rawValorBrutoStr = String(getValueByAliases(row, COLUMN_ALIASES.valorBruto) || '');
+        const rawDateStr = String(getValueByAliases(row, COLUMN_ALIASES.data) || '');
         const rawClientStr = String(getValueByAliases(row, COLUMN_ALIASES.cliente) || '');
         
         let amount = parseCurrencyBR(rawValorBrutoStr);
@@ -113,11 +113,9 @@ export const importParserService = {
         
         const dateObj = parseBrazilianDate(rawDateStr);
         const descriptionStr = String(getValueByAliases(row, COLUMN_ALIASES.description) || 
-                                      getValueByAliases(row, COLUMN_ALIASES.servico) || 
-                                      getValueByAliases(row, COLUMN_ALIASES.category) || '').trim();
+                                      getValueByAliases(row, COLUMN_ALIASES.servico) || '').trim();
                                       
-        const rawCategory = String(getValueByAliases(row, COLUMN_ALIASES.category) || 
-                                   getValueByAliases(row, COLUMN_ALIASES.servico) || 'Transferência');
+        const rawCategory = String(getValueByAliases(row, COLUMN_ALIASES.servico) || 'Transferência');
                                    
         const category = standardizeService(rawCategory);
 
