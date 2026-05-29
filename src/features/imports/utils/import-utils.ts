@@ -17,7 +17,9 @@ export const COLUMN_ALIASES = {
   ],
   amount: [
     "valor", "Valor", "VALOR", "amount", "total", "preco", "preço", "valor_total", 
-    "valor total", "valor_bruto", "valor bruto", "bruto", "receita", "despesa"
+    "valor total", "valor_bruto", "valor bruto", "bruto", "receita", "despesa",
+    "credito", "crédito", "debito", "débito", "liquido", "líquido", "entrada", "saida",
+    "importancia", "importância", "lancamento", "lançamento", "r$", "valor (r$)"
   ],
   plate: [
     "placa", "Placa", "PLACA", "veiculo", "veículo", "carro", "identificacao"
@@ -141,8 +143,8 @@ export function normalizeRowKeys(row: Record<string, unknown>): Record<string, a
   const rowKeys = Object.keys(row);
 
   Object.entries(COLUMN_ALIASES).forEach(([targetKey, aliases]) => {
-    // 1. Tenta correspondência exata primeiro
-    let foundKey = rowKeys.find(rk => {
+    // 1. Encontra todas as chaves exatas
+    let exactMatches = rowKeys.filter(rk => {
       const cleanRK = rk.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       return aliases.some(alias => {
         const cleanAlias = alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -150,19 +152,26 @@ export function normalizeRowKeys(row: Record<string, unknown>): Record<string, a
       });
     });
 
-    // 2. Se não achar, tenta correspondência parcial
-    if (!foundKey) {
-      foundKey = rowKeys.find(rk => {
-        const cleanRK = rk.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        return aliases.some(alias => {
-          const cleanAlias = alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-          return cleanRK.includes(cleanAlias);
-        });
+    // 2. Encontra todas as chaves parciais
+    let partialMatches = rowKeys.filter(rk => {
+      const cleanRK = rk.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      return aliases.some(alias => {
+        const cleanAlias = alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        return cleanRK.includes(cleanAlias);
       });
-    }
+    });
 
-    if (foundKey) {
-      normalized[targetKey] = row[foundKey];
+    // 3. Prioriza a chave que não tem valor vazio
+    const isNotEmpty = (val: unknown) => val !== undefined && val !== null && String(val).trim() !== "";
+    
+    const bestKey = 
+      exactMatches.find(k => isNotEmpty(row[k])) ||
+      exactMatches[0] ||
+      partialMatches.find(k => isNotEmpty(row[k])) ||
+      partialMatches[0];
+
+    if (bestKey) {
+      normalized[targetKey] = row[bestKey];
     }
   });
 

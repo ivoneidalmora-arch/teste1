@@ -26,10 +26,35 @@ export const importParserService = {
   async parseSpreadsheet(file: File): Promise<ImportedTransaction[]> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, {
-        type: 'array',
-        cellDates: true,
-      });
+      const uint8 = new Uint8Array(arrayBuffer);
+      
+      // Verifica se o arquivo é na verdade um texto (HTML ou CSV) disfarçado de XLS
+      // Arquivos binários reais (XLS/XLSX) têm muitos bytes nulos no início.
+      let isText = true;
+      for (let i = 0; i < Math.min(1024, uint8.length); i++) {
+        if (uint8[i] === 0) {
+          isText = false;
+          break;
+        }
+      }
+
+      let workbook: XLSX.WorkBook;
+      
+      if (isText) {
+        let text = '';
+        try {
+          text = new TextDecoder('utf-8', { fatal: true }).decode(arrayBuffer);
+        } catch (e) {
+          text = new TextDecoder('windows-1252').decode(arrayBuffer);
+        }
+        workbook = XLSX.read(text, { type: 'string', cellDates: true, raw: true });
+      } else {
+        workbook = XLSX.read(arrayBuffer, {
+          type: 'array',
+          cellDates: true,
+          codepage: 1252
+        });
+      }
 
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
