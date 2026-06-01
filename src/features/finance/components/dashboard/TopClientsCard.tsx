@@ -60,18 +60,18 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
           <h3 className="text-sm font-black text-[#0F172A] tracking-tight">Top Clientes</h3>
         </div>
         
-        <div className="relative flex items-center bg-slate-50 hover:bg-slate-100 transition-colors rounded-lg border border-slate-100 cursor-pointer">
+        <div className="relative w-auto min-w-[110px] h-7">
           <select 
             value={filterPeriod} 
             onChange={(e) => setFilterPeriod(e.target.value as any)}
-            className="pl-2.5 pr-6 py-1 bg-transparent text-[8px] font-black text-slate-500 uppercase tracking-widest appearance-none outline-none cursor-pointer w-full h-full"
+            className="w-full h-full pl-3 pr-8 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 shadow-sm outline-none transition hover:border-blue-600 focus:border-blue-600 appearance-none cursor-pointer"
           >
             <option value="month">Este mês</option>
             <option value="last30">Últimos 30 dias</option>
             <option value="year">Este ano</option>
             <option value="global">Tudo</option>
           </select>
-          <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
         </div>
       </div>
 
