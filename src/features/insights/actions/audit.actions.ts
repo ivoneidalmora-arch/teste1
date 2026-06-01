@@ -4,6 +4,7 @@ import { inconsistencyService } from "../services/diagnostics/inconsistency.serv
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { getSession } from "@/features/auth/actions/auth.actions";
 import { InconsistencyRecord, InconsistencyGroup } from "../types/diagnostics.types";
+import { toUuid, fromUuid } from "../utils/uuid";
 
 export async function getInconsistencyGroupsAction() {
   const session = await getSession();
@@ -30,10 +31,15 @@ export async function getInconsistencyGroupsAction() {
     .select('*')
     .eq('app_user_id', userId);
 
+  const mappedIssues = (issues || []).map(issue => ({
+    ...issue,
+    transaction_id: fromUuid(issue.transaction_id)
+  }));
+
   const result = inconsistencyService.analyze({
     rawRevenues: revenues || [],
     rawExpenses: expenses || [],
-    auditIssues: issues || [],
+    auditIssues: mappedIssues,
     period: { type: 'all' }
   });
 
@@ -73,7 +79,11 @@ export async function getAuditIssuesAction(userId: string) {
     .from('audit_issues')
     .select('*')
     .eq('app_user_id', userId);
-  return data || [];
+  
+  return (data || []).map(issue => ({
+    ...issue,
+    transaction_id: fromUuid(issue.transaction_id)
+  }));
 }
 
 export async function updateAuditIssueAction(
@@ -93,7 +103,7 @@ export async function updateAuditIssueAction(
       .from('audit_issues')
       .upsert({
         app_user_id: userId,
-        transaction_id: transactionId,
+        transaction_id: toUuid(transactionId),
         issue_type: issueType,
         status,
         ...details

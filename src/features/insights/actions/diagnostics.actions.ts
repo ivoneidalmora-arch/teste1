@@ -3,6 +3,7 @@
 import { diagnosticGeneratorService } from "../services/diagnostics/diagnostic-generator.service";
 import { getSession } from "@/features/auth/actions/auth.actions";
 import { PeriodFilter } from "../types/insights.types";
+import { toUuid } from "../utils/uuid";
 
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -49,7 +50,7 @@ export async function updateInsightStatusAction(insightId: string, status: strin
       .from('audit_issues')
       .upsert({
         app_user_id: userId,
-        transaction_id: `insight-${insightId}`, // ID virtual
+        transaction_id: toUuid(`insight-${insightId}`), // ID virtual
         issue_type: 'ai_insight',
         status,
         approval_reason: feedback,
