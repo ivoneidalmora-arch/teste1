@@ -1,23 +1,56 @@
 "use client";
 
-import { ChevronDown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ChevronDown, Users } from 'lucide-react';
 import { cn, formatBRL } from '@/core/utils/formatters';
-
-interface ClientMetric {
-  name: string;
-  total: number;
-}
+import { getTopClients } from '@/lib/dashboard-metrics';
+import { Transaction } from '@/core/types/finance';
+import { parseISO, isAfter, subDays } from 'date-fns';
+import { Icon3D } from '@/core/components/ui/Icon3D';
 
 interface TopClientsCardProps {
-  clients: ClientMetric[];
-  onSeeAll?: () => void;
+  transactions: Transaction[];
+  selectedPeriod: string;
+  selectedYear: number;
 }
 
-import { Icon3D } from '@/core/components/ui/Icon3D';
-import { Users } from 'lucide-react';
+export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: TopClientsCardProps) {
+  const [filterPeriod, setFilterPeriod] = useState<'month' | 'last30' | 'year' | 'global'>('month');
 
-export function TopClientsCard({ clients }: TopClientsCardProps) {
-  const maxAmount = Math.max(...clients.map(c => c.total), 1);
+  const filteredClients = useMemo(() => {
+    let list = [...transactions];
+    const now = new Date();
+
+    if (filterPeriod === 'month') {
+      if (selectedPeriod !== 'global') {
+        const monthNum = parseInt(selectedPeriod) - 1;
+        list = transactions.filter(t => {
+          const d = parseISO(t.date);
+          return d.getFullYear() === selectedYear && d.getMonth() === monthNum;
+        });
+      } else {
+        list = transactions.filter(t => {
+          const d = parseISO(t.date);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        });
+      }
+    } else if (filterPeriod === 'last30') {
+      const thirtyDaysAgo = subDays(now, 30);
+      list = transactions.filter(t => {
+        const d = parseISO(t.date);
+        return isAfter(d, thirtyDaysAgo);
+      });
+    } else if (filterPeriod === 'year') {
+      list = transactions.filter(t => {
+        const d = parseISO(t.date);
+        return d.getFullYear() === selectedYear;
+      });
+    }
+
+    return getTopClients(list);
+  }, [transactions, filterPeriod, selectedPeriod, selectedYear]);
+
+  const maxAmount = Math.max(...filteredClients.map(c => c.total), 1);
 
   return (
     <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm h-full overflow-hidden flex flex-col">
@@ -27,14 +60,29 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
           <h3 className="text-sm font-black text-[#0F172A] tracking-tight">Top Clientes</h3>
         </div>
         
-        <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-           <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Este mês</span>
-           <ChevronDown className="w-3 h-3 text-slate-400" />
+        <div className="relative flex items-center gap-1 bg-slate-50 hover:bg-slate-100 transition-colors px-2.5 py-1 rounded-lg border border-slate-100 cursor-pointer">
+          <select 
+            value={filterPeriod} 
+            onChange={(e) => setFilterPeriod(e.target.value as any)}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          >
+            <option value="month">Este mês</option>
+            <option value="last30">Últimos 30 dias</option>
+            <option value="year">Este ano</option>
+            <option value="global">Tudo (Global)</option>
+          </select>
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+            {filterPeriod === 'month' && 'Este mês'}
+            {filterPeriod === 'last30' && 'Últimos 30 dias'}
+            {filterPeriod === 'year' && 'Este ano'}
+            {filterPeriod === 'global' && 'Tudo'}
+          </span>
+          <ChevronDown className="w-3 h-3 text-slate-400" />
         </div>
       </div>
 
       <div className="space-y-1 overflow-y-auto flex-1 scrollbar-thin">
-        {clients.slice(0, 4).map((client, index) => {
+        {filteredClients.slice(0, 4).map((client, index) => {
           const percentage = (client.total / maxAmount) * 100;
           return (
             <div key={index} className="group cursor-default py-0.5">
@@ -67,7 +115,7 @@ export function TopClientsCard({ clients }: TopClientsCardProps) {
           );
         })}
 
-        {clients.length === 0 && (
+        {filteredClients.length === 0 && (
           <div className="py-4 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-100">
             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sem dados</p>
           </div>
