@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ImportedTransaction, ImportSummary, ValidationStatus } from '../types/import.types';
+import { ImportedTransaction, ImportSummary, ValidationStatus, ImportAuditLog } from '../types/import.types';
 import { 
   validateImportedTransaction, 
   detectDuplicateTransactions, 
@@ -27,16 +27,55 @@ export function useImportValidation() {
     setSearchQuery("");
   };
 
-  const handleEdit = (id: string, updatedItem: Partial<ImportedTransaction>) => {
+  const handleEdit = (
+    id: string, 
+    updatedItem: Partial<ImportedTransaction>,
+    reason: string = 'Correção manual de inconsistência',
+    previousStatus?: string
+  ) => {
     setItems(prev => {
       const newItems = prev.map(item => {
         if (item.id === id) {
-          // Merge updates, reset status so it's revalidated properly
-          // If the user fixes fields, we want to revalidate.
-          const merged = { ...item, ...updatedItem };
+          const auditLog: ImportAuditLog[] = [...(item.auditLog || [])];
+          const fieldsToLog: (keyof ImportedTransaction)[] = [
+            'date', 'placa', 'cliente', 'service', 'category', 'grossValue', 'netValue', 'description', 'formaPagamento'
+          ];
+
+          fieldsToLog.forEach(field => {
+            const oldValue = String(item[field] ?? '');
+            const newValue = String(updatedItem[field] ?? '');
+
+            if (updatedItem[field] !== undefined && oldValue !== newValue) {
+              // Localizar o valor mais cru na planilha se possível
+              let originalVal = oldValue;
+              if (item.rawData) {
+                if (field === 'cliente') originalVal = String(item.rawData.cliente || item.rawData.Cliente || item.rawData.rawClient || oldValue);
+                else if (field === 'date') originalVal = String(item.rawData.data || item.rawData.Data || item.rawData.rawDate || oldValue);
+                else if (field === 'grossValue') originalVal = String(item.rawData.valor || item.rawData.Valor || item.rawData.rawValorBruto || oldValue);
+                else if (field === 'netValue') originalVal = String(item.rawData.liquido || item.rawData.rawValorLiquido || oldValue);
+              }
+
+              auditLog.push({
+                id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                timestamp: new Date().toISOString(),
+                field,
+                originalValue: originalVal,
+                previousValue: oldValue,
+                newValue,
+                user: 'Operador',
+                reason,
+                previousStatus: previousStatus || item.status,
+                newStatus: 'corrected'
+              });
+            }
+          });
+
+          const merged = { 
+            ...item, 
+            ...updatedItem,
+            auditLog
+          };
           
-          // Re-validate. Temporarily set status to corrected to force new check, 
-          // wait, validateImportedTransaction handles 'corrected' as an input.
           if (merged.status !== "manual_approved" && merged.status !== "ignored") {
              merged.status = "corrected";
           }
@@ -46,7 +85,6 @@ export function useImportValidation() {
         return item;
       });
 
-      // Re-detect duplicates because the edited item might now be a duplicate or might no longer be one
       return detectDuplicateTransactions(newItems);
     });
   };
@@ -55,28 +93,61 @@ export function useImportValidation() {
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
-  const handleApproveManually = (id: string) => {
+  const handleApproveManually = (id: string, reason: string = 'Aprovado manualmente pelo usuário') => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
+        const auditLog: ImportAuditLog[] = [...(item.auditLog || [])];
+
+        auditLog.push({
+          id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          timestamp: new Date().toISOString(),
+          field: 'status',
+          originalValue: item.status,
+          previousValue: item.status,
+          newValue: 'manual_approved',
+          user: 'Operador',
+          reason,
+          previousStatus: item.status,
+          newStatus: 'manual_approved'
+        });
+
         return {
           ...item,
-          status: "manual_approved",
+          status: "manual_approved" as ValidationStatus,
           approvedManually: true,
-          validationMessages: [...item.validationMessages.filter(m => !m.includes("Aprovado manualmente")), "Aprovado manualmente pelo usuário"]
+          motivoCorrecao: reason,
+          auditLog,
+          validationMessages: [...item.validationMessages.filter(m => !m.includes("Aprovado manualmente")), `Aprovado manualmente: ${reason}`]
         };
       }
       return item;
     }));
   };
 
-  const handleIgnore = (id: string) => {
+  const handleIgnore = (id: string, reason: string = 'Ignorado pelo usuário') => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
+        const auditLog: ImportAuditLog[] = [...(item.auditLog || [])];
+
+        auditLog.push({
+          id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          timestamp: new Date().toISOString(),
+          field: 'status',
+          originalValue: item.status,
+          previousValue: item.status,
+          newValue: 'ignored',
+          user: 'Operador',
+          reason,
+          previousStatus: item.status,
+          newStatus: 'ignored'
+        });
+
         return {
           ...item,
-          status: "ignored",
+          status: "ignored" as ValidationStatus,
           ignored: true,
-          validationMessages: [...item.validationMessages.filter(m => !m.includes("Ignorado pelo usuário")), "Ignorado pelo usuário"]
+          auditLog,
+          validationMessages: [...item.validationMessages.filter(m => !m.includes("Ignorado")), reason]
         };
       }
       return item;

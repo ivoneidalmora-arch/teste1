@@ -254,7 +254,7 @@ export function ImportPreviewTable({
                        </>
                      )}
                    </td>
-                 </tr>               </tr>
+                 </tr>
                 
                 {/* Expandable Details Row */}
                 {isExpanded && (
