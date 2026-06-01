@@ -108,7 +108,7 @@ describe('Fluxo de Validação de Importação e Auditoria', () => {
   });
 
   it('deve detectar duplicidades na base importada no intervalo de 30 dias', () => {
-    const items: Partial<ImportedTransaction>[] = [
+    const rawItems: Partial<ImportedTransaction>[] = [
       {
         id: '1',
         date: '2025-05-01',
@@ -116,7 +116,7 @@ describe('Fluxo de Validação de Importação e Auditoria', () => {
         cliente: 'João',
         service: 'Transferência',
         grossValue: 150,
-        status: 'valid',
+        status: 'valid' as const,
         errors: [],
         warnings: [],
         validationMessages: []
@@ -128,12 +128,13 @@ describe('Fluxo de Validação de Importação e Auditoria', () => {
         cliente: 'João',
         service: 'Transferência',
         grossValue: 150,
-        status: 'valid',
+        status: 'valid' as const,
         errors: [],
         warnings: [],
         validationMessages: []
       }
-    ].map(validateImportedTransaction);
+    ];
+    const items = rawItems.map(validateImportedTransaction);
 
     const withDuplicates = detectDuplicateTransactions(items);
     
