@@ -24,12 +24,11 @@ export function validateImportedTransaction(
   }
 
   // Field: Gross Value
-  // We consider "0" as a valid zero (not missing). null/undefined is missing.
   if (item.grossValue === undefined || item.grossValue === null) {
     errors.push('VALOR_BRUTO_AUSENTE');
   } else if (typeof item.grossValue !== 'number' || isNaN(item.grossValue)) {
     errors.push('VALOR_BRUTO_INVALIDO');
-  } else if (item.grossValue < 0) {
+  } else if (item.grossValue <= 0) {
     errors.push('VALOR_BRUTO_INVALIDO');
   }
 
@@ -93,7 +92,13 @@ export function validateImportedTransaction(
     rawDate: item.rawDate,
     rawValorBruto: item.rawValorBruto,
     rawValorLiquido: item.rawValorLiquido,
-    rawClient: item.rawClient
+    rawClient: item.rawClient,
+    sourceFileName: item.sourceFileName,
+    sourceSheetName: item.sourceSheetName,
+    sourceRowNumber: item.sourceRowNumber,
+    rawData: item.rawData,
+    auditLog: item.auditLog || [],
+    formaPagamento: item.formaPagamento || 'Pix'
   };
 }
 
@@ -187,4 +192,56 @@ export function calculateImportSummary(
     grossTotal,
     netTotal
   };
+}
+
+export interface CorrectionSuggestion {
+  field: string;
+  original: string;
+  suggested: string;
+  confidence: number;
+}
+
+export function getImportIssueSuggestions(item: ImportedTransaction): CorrectionSuggestion[] {
+  const suggestions: CorrectionSuggestion[] = [];
+
+  // Sugestão de cliente
+  if (item.rawClient && item.rawClient.trim() !== "" && item.rawClient.toUpperCase().trim() !== item.cliente.toUpperCase().trim()) {
+    suggestions.push({
+      field: 'cliente',
+      original: item.rawClient,
+      suggested: item.cliente,
+      confidence: 95
+    });
+  }
+
+  // Sugestão de placa
+  if (item.placa) {
+    const rawPlaca = item.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (rawPlaca.length === 7) {
+      const formatted = rawPlaca.substring(0, 3) + '-' + rawPlaca.substring(3);
+      if (formatted !== item.placa) {
+        suggestions.push({
+          field: 'placa',
+          original: item.placa,
+          suggested: formatted,
+          confidence: 90
+        });
+      }
+    }
+  }
+
+  // Sugestão de serviço
+  if (item.rawData) {
+    const rawServ = String(item.rawData.servico || item.rawData.Serviço || item.rawData.categoria || '');
+    if (rawServ && rawServ.trim() !== "" && rawServ !== item.service) {
+      suggestions.push({
+        field: 'service',
+        original: rawServ,
+        suggested: item.service,
+        confidence: 85
+      });
+    }
+  }
+
+  return suggestions;
 }
