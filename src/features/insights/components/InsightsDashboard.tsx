@@ -216,7 +216,8 @@ export function InsightsDashboard({
             raw.transactionId, 
             raw.type, 
             actionId === 'approve' ? 'approved' : 'ignored',
-            { approval_reason: 'Ação via Dashboard Insights' }
+            { approval_reason: 'Ação via Dashboard Insights' },
+            raw.transactionType || 'income'
           );
         }
       } else {

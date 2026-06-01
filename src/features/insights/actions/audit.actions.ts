@@ -91,7 +91,8 @@ export async function updateAuditIssueAction(
   transactionId: string,
   issueType: string,
   status: string,
-  details: any
+  details: any,
+  transactionType: string = 'income'
 ) {
   const session = await getSession();
   if (!session?.user?.id || session.user.id !== userId) {
@@ -105,6 +106,7 @@ export async function updateAuditIssueAction(
         app_user_id: userId,
         transaction_id: toUuid(transactionId),
         issue_type: issueType,
+        transaction_type: transactionType,
         status,
         ...details
       }, { onConflict: 'app_user_id,transaction_id,issue_type' });

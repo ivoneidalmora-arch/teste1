@@ -52,6 +52,7 @@ export async function updateInsightStatusAction(insightId: string, status: strin
         app_user_id: userId,
         transaction_id: toUuid(`insight-${insightId}`), // ID virtual
         issue_type: 'ai_insight',
+        transaction_type: 'income',
         status,
         approval_reason: feedback,
         payload: { insightId, updatedAt: new Date().toISOString() }

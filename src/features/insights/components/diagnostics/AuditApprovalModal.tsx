@@ -43,7 +43,8 @@ export function AuditApprovalModal({ isOpen, onClose, record, userId, onSuccess 
           approval_reason: justification.toUpperCase(),
           approved_at: new Date().toISOString(),
           approved_by: userId
-        }
+        },
+        record.transactionType
       );
 
       if (res.error) throw new Error(res.error);
