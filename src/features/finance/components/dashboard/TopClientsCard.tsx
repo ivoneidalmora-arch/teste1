@@ -64,20 +64,20 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
           <select 
             value={filterPeriod} 
             onChange={(e) => setFilterPeriod(e.target.value as any)}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
           >
             <option value="month">Este mês</option>
             <option value="last30">Últimos 30 dias</option>
             <option value="year">Este ano</option>
             <option value="global">Tudo (Global)</option>
           </select>
-          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest pointer-events-none">
             {filterPeriod === 'month' && 'Este mês'}
             {filterPeriod === 'last30' && 'Últimos 30 dias'}
             {filterPeriod === 'year' && 'Este ano'}
             {filterPeriod === 'global' && 'Tudo'}
           </span>
-          <ChevronDown className="w-3 h-3 text-slate-400" />
+          <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none" />
         </div>
       </div>
 
