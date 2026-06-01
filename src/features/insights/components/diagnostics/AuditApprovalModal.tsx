@@ -22,6 +22,7 @@ export function AuditApprovalModal({ isOpen, onClose, record, userId, onSuccess 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double clicks
     if (!justification.trim()) {
       return toast.error('A justificativa é obrigatória para aprovar uma inconsistência.');
     }
@@ -53,7 +54,13 @@ export function AuditApprovalModal({ isOpen, onClose, record, userId, onSuccess 
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao aprovar inconsistência');
+      console.error("[AuditApprovalModal] Erro ao aprovar inconsistência:", err);
+      const msg = err.message || '';
+      if (msg.includes('invalid input syntax for type uuid') || msg.includes('UUID') || msg.includes('uuid')) {
+        toast.error('Não foi possível aprovar esta inconsistência porque o identificador interno está inválido. Verifique a importação ou tente atualizar a página.');
+      } else {
+        toast.error(msg || 'Erro ao aprovar inconsistência');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,16 +76,22 @@ export function AuditApprovalModal({ isOpen, onClose, record, userId, onSuccess 
             </div>
             <h3 className="text-lg font-black text-slate-900">Aprovar com Justificativa</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+          <button 
+            onClick={onClose} 
+            disabled={loading}
+            className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-
+ 
         <div className="p-6 space-y-6">
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Problema Detectado</p>
             <h4 className="text-sm font-bold text-slate-900">{record.description}</h4>
             <p className="text-xs text-slate-500 mt-1">{record.details}</p>
           </div>
-
+ 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Justificativa do Especialista</label>
@@ -87,23 +100,25 @@ export function AuditApprovalModal({ isOpen, onClose, record, userId, onSuccess 
                 rows={4}
                 value={justification}
                 onChange={(e) => setJustification(e.target.value)}
+                disabled={loading}
                 placeholder="Explique por que este lançamento está correto mesmo com este alerta..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none disabled:opacity-50"
               />
             </div>
-
+ 
             <div className="flex gap-3">
               <button 
                 type="button" 
                 onClick={onClose}
-                className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all"
+                disabled={loading}
+                className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
               <button 
                 type="submit"
                 disabled={loading}
-                className="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2"
+                className="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
               >
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Confirmar Aprovação

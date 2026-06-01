@@ -4,7 +4,7 @@ import { inconsistencyService } from "../services/diagnostics/inconsistency.serv
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { getSession } from "@/features/auth/actions/auth.actions";
 import { InconsistencyRecord, InconsistencyGroup } from "../types/diagnostics.types";
-import { toUuid, fromUuid } from "../utils/uuid";
+import { toUuid, fromUuid, isValidUUID } from "../utils/uuid";
 
 export async function getInconsistencyGroupsAction() {
   const session = await getSession();
@@ -99,17 +99,30 @@ export async function updateAuditIssueAction(
     return { error: 'Sessão expirada ou acesso negado.' };
   }
 
+  const uuidId = toUuid(transactionId);
+
+  // Adicionando logs temporários antes da chamada ao Supabase
+  const payload = {
+    app_user_id: userId,
+    transaction_id: uuidId,
+    issue_type: issueType,
+    transaction_type: transactionType,
+    status,
+    ...details
+  };
+  console.log("Dados enviados para aprovação:", payload);
+  console.log("ID da inconsistência:", transactionId);
+  console.log("Tipo do ID:", typeof transactionId);
+
+  // Validação de UUID
+  if (!isValidUUID(uuidId)) {
+    throw new Error(`ID da inconsistência inválido. Esperado UUID, recebido: ${uuidId}`);
+  }
+
   try {
     const { error } = await supabaseAdmin
       .from('audit_issues')
-      .upsert({
-        app_user_id: userId,
-        transaction_id: toUuid(transactionId),
-        issue_type: issueType,
-        transaction_type: transactionType,
-        status,
-        ...details
-      }, { onConflict: 'app_user_id,transaction_id,issue_type' });
+      .upsert(payload, { onConflict: 'app_user_id,transaction_id,issue_type' });
 
     if (error) {
       console.error("[updateAuditIssueAction] Supabase Error:", error);
