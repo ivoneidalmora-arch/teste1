@@ -103,7 +103,6 @@ export function ImportPreviewTable({
               (item.rawValorBruto && item.rawValorBruto !== String(item.grossValue));
 
             return (
-              <React.Fragment              return (
                <React.Fragment key={item.id}>
                  <tr 
                    onClick={() => { if (isInvalid) onEdit(item); }}
