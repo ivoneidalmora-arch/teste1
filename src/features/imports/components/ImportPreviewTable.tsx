@@ -103,135 +103,159 @@ export function ImportPreviewTable({
               (item.rawValorBruto && item.rawValorBruto !== String(item.grossValue));
 
             return (
-              <React.Fragment key={item.id}>
-                <tr className={cn(
-                  "group transition-all hover:bg-slate-50/50",
-                  isInvalid && "bg-rose-50/20",
-                  (item.status === 'ignorado' || item.status === 'deleted') && "opacity-50 grayscale hover:grayscale-0",
-                  isExpanded && "bg-slate-50"
-                )}>
-                  <td className="px-4 py-4 align-top text-center w-10">
-                    <button 
-                      onClick={() => toggleExpand(item.id)}
-                      className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-                      title="Ver detalhes de auditoria"
-                    >
-                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                  </td>
+              <React.Fragment              return (
+               <React.Fragment key={item.id}>
+                 <tr 
+                   onClick={() => { if (isInvalid) onEdit(item); }}
+                   className={cn(
+                     "group transition-all hover:bg-slate-50/50",
+                     isInvalid && "bg-rose-50/20 cursor-pointer border-l-4 border-l-rose-500",
+                     (item.status === 'ignorado' || item.status === 'deleted') && "opacity-50 grayscale hover:grayscale-0",
+                     isExpanded && "bg-slate-50"
+                   )}
+                 >
+                   <td className="px-4 py-4 align-top text-center w-10">
+                     <button 
+                       onClick={(e) => { 
+                         e.stopPropagation(); 
+                         if (isInvalid) {
+                           onEdit(item);
+                         } else {
+                           toggleExpand(item.id); 
+                         }
+                       }}
+                       className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                       title={isInvalid ? "Corrigir Inconsistência" : "Ver detalhes de auditoria"}
+                     >
+                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                     </button>
+                   </td>
 
-                  <td className="px-4 py-4 align-top w-[140px]">
-                    <div className="flex flex-col gap-1">
-                      <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full self-start", statusConfig.bg, statusConfig.color)}>
-                        <StatusIcon className="w-4 h-4" />
-                        <span className="font-bold text-[10px] uppercase tracking-widest">{statusConfig.label}</span>
-                      </div>
-                      {isInvalid && item.errors && item.errors.length > 0 && (
-                        <div className="text-[9px] font-bold text-rose-500 uppercase mt-1 leading-tight">
-                          {getErrorTranslation(item.errors[0])}
-                          {item.errors.length > 1 && ` (+${item.errors.length - 1})`}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-4 text-[11px] font-bold text-slate-500 whitespace-nowrap align-top pt-5">
-                    {item.date ? item.date.split('-').reverse().join('/') : '---'}
-                  </td>
-                  
-                  <td className="px-4 py-4 align-top pt-5">
-                    <span className={cn(
-                      "px-3 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap",
-                      !item.placa ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-700"
-                    )}>
-                      {item.placa || 'SEM PLACA'}
-                    </span>
-                  </td>
-                  
-                  <td className="px-4 py-4 align-top">
-                    <div className="flex flex-col min-w-[150px] pt-1">
-                      <span className="text-[11px] font-black text-slate-900 uppercase truncate" title={item.cliente}>
-                        {item.cliente || <span className="text-rose-500">CLIENTE NÃO INFORMADO</span>}
-                      </span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase truncate" title={item.service}>
-                        {item.service || <span className="text-rose-500">SERVIÇO NÃO INFORMADO</span>}
-                      </span>
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-4 text-right align-top whitespace-nowrap">
-                    <div className="flex flex-col items-end pt-1">
-                      <span className={cn(
-                        "text-[12px] font-black",
-                        (item.grossValue <= 0 || !item.grossValue) ? "text-rose-600" : "text-slate-900"
-                      )}>
-                        {formatBRL(item.grossValue || 0)}
-                      </span>
-                      {item.netValue !== undefined && (
-                        <span className="text-[9px] font-bold text-emerald-500">
-                          Liq: {formatBRL(item.netValue)}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-4 text-center align-top relative pt-3">
-                    <button 
-                      onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all outline-none"
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-
-                    {openDropdown === item.id && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setOpenDropdown(null)} />
-                        <div className="absolute right-8 top-10 w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 z-50 animate-in zoom-in-95 duration-200">
-                          <button 
-                            onClick={() => { onEdit(item); setOpenDropdown(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors text-left"
-                          >
-                            <Edit2 className="w-4 h-4" /> Editar
-                          </button>
-                          
-                          {isInvalid && (
-                            <button 
-                              onClick={() => { onApproveManually(item.id); setOpenDropdown(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-purple-600 hover:bg-purple-50 transition-colors text-left"
-                            >
-                              <ThumbsUp className="w-4 h-4" /> Aprovar Manualmente
-                            </button>
-                          )}
-                          
-                          {item.status !== 'ignorado' && item.status !== 'deleted' && (
-                            <button 
-                              onClick={() => { onIgnore(item.id); setOpenDropdown(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-500 hover:bg-slate-50 transition-colors text-left"
-                            >
-                              <XCircle className="w-4 h-4" /> Ignorar Linha
-                            </button>
-                          )}
-                          
-                          <button 
-                            onClick={() => { onRevalidate(item.id); setOpenDropdown(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-emerald-600 hover:bg-emerald-50 transition-colors text-left"
-                          >
-                            <RefreshCw className="w-4 h-4" /> Revalidar
-                          </button>
-                          
-                          <div className="h-px bg-slate-100 my-1 mx-2" />
-                          
-                          <button 
-                            onClick={() => { onDelete(item.id); setOpenDropdown(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
-                          >
-                            <Trash2 className="w-4 h-4" /> Excluir Definitivo
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </td>
-                </tr>
+                   <td className="px-4 py-4 align-top w-[140px]">
+                     <div className="flex flex-col gap-1">
+                       <div 
+                         onClick={(e) => { if (isInvalid) { e.stopPropagation(); onEdit(item); } }}
+                         className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full self-start", statusConfig.bg, statusConfig.color)}
+                       >
+                         <StatusIcon className="w-4 h-4" />
+                         <span className="font-bold text-[10px] uppercase tracking-widest">{statusConfig.label}</span>
+                       </div>
+                       {isInvalid && item.errors && item.errors.length > 0 && (
+                         <div className="text-[9px] font-bold text-rose-500 uppercase mt-1 leading-tight">
+                           {getErrorTranslation(item.errors[0])}
+                           {item.errors.length > 1 && ` (+${item.errors.length - 1})`}
+                         </div>
+                       )}
+                     </div>
+                   </td>
+                   
+                   <td className="px-4 py-4 text-[11px] font-bold text-slate-500 whitespace-nowrap align-top pt-5">
+                     {item.date ? item.date.split('-').reverse().join('/') : '---'}
+                   </td>
+                   
+                   <td className="px-4 py-4 align-top pt-5">
+                     <span className={cn(
+                       "px-3 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap",
+                       !item.placa ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-700"
+                     )}>
+                       {item.placa || 'SEM PLACA'}
+                     </span>
+                   </td>
+                   
+                   <td className="px-4 py-4 align-top">
+                     <div className="flex flex-col min-w-[150px] pt-1">
+                       <span className="text-[11px] font-black text-slate-900 uppercase truncate" title={item.cliente}>
+                         {item.cliente || <span className="text-rose-500">CLIENTE NÃO INFORMADO</span>}
+                       </span>
+                       <span className="text-[9px] font-bold text-slate-400 uppercase truncate" title={item.service}>
+                         {item.service || <span className="text-rose-500">SERVIÇO NÃO INFORMADO</span>}
+                       </span>
+                     </div>
+                   </td>
+                   
+                   <td className="px-4 py-4 text-right align-top whitespace-nowrap">
+                     <div className="flex flex-col items-end pt-1">
+                       <span className={cn(
+                         "text-[12px] font-black",
+                         (item.grossValue <= 0 || !item.grossValue) ? "text-rose-600" : "text-slate-900"
+                       )}>
+                         {formatBRL(item.grossValue || 0)}
+                       </span>
+                       {item.netValue !== undefined && (
+                         <span className="text-[9px] font-bold text-emerald-500">
+                           Liq: {formatBRL(item.netValue)}
+                         </span>
+                       )}
+                     </div>
+                   </td>
+                   
+                   <td className="px-4 py-4 text-center align-top relative pt-3">
+                     <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                       <button 
+                         onClick={() => onEdit(item)}
+                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all outline-none"
+                         title="Corrigir Lançamento"
+                       >
+                         <Edit2 className="w-4 h-4" />
+                       </button>
+                       
+                       <button 
+                         onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all outline-none"
+                       >
+                         <MoreVertical className="w-5 h-5" />
+                       </button>
+                     </div>
+ 
+                     {openDropdown === item.id && (
+                       <>
+                         <div className="fixed inset-0 z-40" onClick={() => setOpenDropdown(null)} />
+                         <div className="absolute right-8 top-10 w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 z-50 animate-in zoom-in-95 duration-200">
+                           <button 
+                             onClick={() => { onEdit(item); setOpenDropdown(null); }}
+                             className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors text-left"
+                           >
+                             <Edit2 className="w-4 h-4" /> Corrigir Lançamento
+                           </button>
+                           
+                           {isInvalid && (
+                             <button 
+                               onClick={() => { onApproveManually(item.id); setOpenDropdown(null); }}
+                               className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-purple-600 hover:bg-purple-50 transition-colors text-left"
+                             >
+                               <ThumbsUp className="w-4 h-4" /> Aprovar Manualmente
+                             </button>
+                           )}
+                           
+                           {item.status !== 'ignorado' && item.status !== 'deleted' && (
+                             <button 
+                               onClick={() => { onIgnore(item.id); setOpenDropdown(null); }}
+                               className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-500 hover:bg-slate-50 transition-colors text-left"
+                             >
+                               <XCircle className="w-4 h-4" /> Ignorar Linha
+                             </button>
+                           )}
+                           
+                           <button 
+                             onClick={() => { onRevalidate(item.id); setOpenDropdown(null); }}
+                             className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-emerald-600 hover:bg-emerald-50 transition-colors text-left"
+                           >
+                             <RefreshCw className="w-4 h-4" /> Revalidar
+                           </button>
+                           
+                           <div className="h-px bg-slate-100 my-1 mx-2" />
+                           
+                           <button 
+                             onClick={() => { onDelete(item.id); setOpenDropdown(null); }}
+                             className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                           >
+                             <Trash2 className="w-4 h-4" /> Excluir Definitivo
+                           </button>
+                         </div>
+                       </>
+                     )}
+                   </td>
+                 </tr>               </tr>
                 
                 {/* Expandable Details Row */}
                 {isExpanded && (
