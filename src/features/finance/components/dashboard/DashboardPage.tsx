@@ -116,12 +116,21 @@ export function DashboardPage() {
   [dashboardTransactions]);
 
   const financialEvents = useMemo(() => 
-    getFinancialCalendarEvents(dashboardTransactions).map(e => ({
-      id: e.id,
-      title: e.title,
-      date: new Date(e.date),
-      type: (e.type === 'income' ? 'financeiro' : (e.type === 'expense' ? 'operacional' : 'outros')) as any
-    })), 
+    getFinancialCalendarEvents(dashboardTransactions).map(e => {
+      let eventDate: Date;
+      if (typeof e.date === 'string' && e.date.includes('-')) {
+        const [y, m, d] = e.date.split('-').map(Number);
+        eventDate = new Date(y, m - 1, d, 12, 0, 0);
+      } else {
+        eventDate = new Date(e.date);
+      }
+      return {
+        id: e.id,
+        title: e.title,
+        date: eventDate,
+        type: (e.type === 'income' ? 'financeiro' : (e.type === 'expense' ? 'operacional' : 'outros')) as any
+      };
+    }), 
   [dashboardTransactions]);
 
   const recentTransactions = useMemo(() => 

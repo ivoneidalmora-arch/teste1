@@ -68,11 +68,19 @@ export function CalendarAlfa({ events: propEvents = [], className }: CalendarAlf
       const response = await fetch(`/api/calendar/events?month=${monthParam}`);
       if (response.ok) {
         const data = await response.json();
-        // Converte as datas recebidas da API para objetos Date para garantir compatibilidade
-        const formattedEvents = data.map((e: any) => ({
-          ...e,
-          date: new Date(e.date || e.start_at)
-        }));
+        const formattedEvents = data.map((e: any) => {
+          let eventDate: Date;
+          if (e.date) {
+            const [y, m, d] = e.date.split('-').map(Number);
+            eventDate = new Date(y, m - 1, d, 12, 0, 0);
+          } else {
+            eventDate = new Date(e.start_at);
+          }
+          return {
+            ...e,
+            date: eventDate
+          };
+        });
         setGoogleEvents(formattedEvents);
       } else if (response.status === 403) {
         setStatus(prev => ({ ...prev, status: 'reconnect_required', needs_reconnect: true }));
