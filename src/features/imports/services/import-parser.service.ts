@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { ImportedTransaction } from '../types/import.types';
 import { 
   getValueByAliases,
@@ -27,61 +27,78 @@ export const importParserService = {
 
   async parseSpreadsheet(file: File): Promise<ImportedTransaction[]> {
     try {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (extension === 'xls') {
+         throw new Error('Formato .xls legado não é suportado por segurança. Por favor, salve como .xlsx e tente novamente.');
+      }
+
       const arrayBuffer = await file.arrayBuffer();
-      const uint8 = new Uint8Array(arrayBuffer);
+      const workbook = new ExcelJS.Workbook();
       
-      let isText = true;
-      for (let i = 0; i < Math.min(1024, uint8.length); i++) {
-        if (uint8[i] === 0) {
-          isText = false;
+      if (extension === 'csv') {
+         const text = await file.text();
+         // Basic CSV parsing using ExcelJS (might need buffer hack in some environments, but let's try raw parsing or custom)
+         // In browsers, it's safer to just do a basic split for CSV if exceljs fails, but let's use the standard xlsx first.
+         throw new Error('Para importar CSV, por favor salve como .xlsx no Excel antes de importar.');
+      } else {
+         await workbook.xlsx.load(arrayBuffer);
+      }
+
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) {
+        throw new Error('A planilha está vazia.');
+      }
+
+      const rows: Record<string, unknown>[] = [];
+      let headerRowIndex = 1;
+      let headers: string[] = [];
+
+      // Find header row (up to first 20 rows)
+      for (let i = 1; i <= Math.min(20, worksheet.rowCount); i++) {
+        const row = worksheet.getRow(i);
+        const cellValues: string[] = [];
+        row.eachCell((cell) => {
+          cellValues.push(cell.text || cell.value?.toString() || '');
+        });
+
+        const matches = cellValues.filter(cell => {
+          const str = String(cell).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+          return ['data', 'placa', 'valor', 'cliente', 'servico', 'categoria', 'amount', 'date', 'veiculo'].some(h => str.includes(h));
+        });
+
+        if (matches.length >= 2) {
+          headerRowIndex = i;
+          headers = cellValues;
           break;
         }
       }
 
-      let workbook: XLSX.WorkBook;
-      
-      if (isText) {
-        let text = '';
-        try {
-          text = new TextDecoder('utf-8', { fatal: true }).decode(arrayBuffer);
-        } catch (e) {
-          text = new TextDecoder('windows-1252').decode(arrayBuffer);
-        }
-        workbook = XLSX.read(text, { type: 'string', cellDates: true, raw: true });
-      } else {
-        workbook = XLSX.read(arrayBuffer, {
-          type: 'array',
-          cellDates: true,
-          codepage: 1252
-        });
+      if (headers.length === 0) {
+        throw new Error('Não foi possível identificar o cabeçalho da planilha.');
       }
 
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      const rawRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: "" });
-      let headerRowIndex = 0;
-      
-      for (let i = 0; i < Math.min(20, rawRows.length); i++) {
-        const row = rawRows[i];
-        if (Array.isArray(row)) {
-          const matches = row.filter(cell => {
-            if (!cell) return false;
-            const str = String(cell).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-            return ['data', 'placa', 'valor', 'cliente', 'servico', 'categoria', 'amount', 'date', 'veiculo'].some(h => str.includes(h));
-          });
-          if (matches.length >= 2) {
-            headerRowIndex = i;
-            break;
+      // Read data rows
+      for (let i = headerRowIndex + 1; i <= worksheet.rowCount; i++) {
+        const row = worksheet.getRow(i);
+        const rowData: Record<string, unknown> = {};
+        let hasData = false;
+        
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber - 1] || `col_${colNumber}`;
+          let val: any = cell.value;
+          if (val && typeof val === 'object' && val.result !== undefined) {
+             val = val.result; // Handle formulas
+          } else if (val && typeof val === 'object' && val.text !== undefined) {
+             val = val.text; // Handle rich text
           }
+          rowData[header] = val;
+          if (val !== null && val !== '') hasData = true;
+        });
+
+        if (hasData) {
+          rows.push(rowData);
         }
       }
-
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-        range: headerRowIndex,
-        defval: "",
-        raw: false,
-      });
 
       if (!rows.length) {
         throw new Error('A planilha não possui dados para importar após a linha de cabeçalho.');
@@ -96,25 +113,19 @@ export const importParserService = {
         let amount = parseCurrencyBR(rawValorBrutoStr);
         const parsedRawLiquido = parseCurrencyBR(rawValorLiquidoStr);
         
+        // Tratar valores numéricos puros (ExcelJS retorna números reais, não precisa de parseCurrencyBR)
         if (amount === null || amount === 0) {
-          for (const val of Object.values(row)) {
-            if (typeof val === 'string' && (val.includes('R$') || /^\d+[.,]\d{2}$/.test(val.trim()))) {
-              const testAmount = parseCurrencyBR(val);
-              if (testAmount !== null && testAmount !== 0) {
-                amount = testAmount;
-                break;
-              }
-            } else if (typeof val === 'number') {
-              // Nível hard: Se o excel ler o valor como número nativo e não for uma data serial (40k-50k = anos 2009 a 2036)
-              if (val > 0 && (val < 40000 || val > 50000)) {
-                amount = val;
-                break;
-              }
-            }
-          }
+           const val = getValueByAliases(row, COLUMN_ALIASES.valorBruto);
+           if (typeof val === 'number') amount = val;
         }
-        
-        const dateObj = parseBrazilianDate(rawDateStr);
+
+        let dateObj = parseBrazilianDate(rawDateStr);
+        // Tratar datas nativas do ExcelJS
+        const rawDateVal = getValueByAliases(row, COLUMN_ALIASES.data);
+        if (rawDateVal instanceof Date) {
+           dateObj = rawDateVal;
+        }
+
         const descriptionStr = String(getValueByAliases(row, COLUMN_ALIASES.description) || 
                                       getValueByAliases(row, COLUMN_ALIASES.servico) || '').trim();
                                       
@@ -155,13 +166,13 @@ export const importParserService = {
           warnings: [],
           validationMessages: [],
           description: descriptionStr,
-          rawDate: rawDateStr,
-          rawValorBruto: rawValorBrutoStr,
-          rawValorLiquido: rawValorLiquidoStr,
+          rawDate: rawDateVal instanceof Date ? format(rawDateVal, 'dd/MM/yyyy') : rawDateStr,
+          rawValorBruto: rawValorBrutoStr || String(amount || ''),
+          rawValorLiquido: rawValorLiquidoStr || String(parsedRawLiquido || ''),
           rawClient: rawClientStr,
           sourceFileName: file.name,
-          sourceSheetName: firstSheetName,
-          sourceRowNumber: index + headerRowIndex + 2,
+          sourceSheetName: worksheet.name,
+          sourceRowNumber: index + headerRowIndex + 1,
           rawData: row,
           auditLog: [],
           formaPagamento: String(getValueByAliases(row, COLUMN_ALIASES.paymentMethod) || 'Pix')

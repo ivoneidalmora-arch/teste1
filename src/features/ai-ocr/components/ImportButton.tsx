@@ -138,7 +138,7 @@ export function ImportButton({ onSuccess, className, label, accept, variant = 'p
         <input 
           type="file" 
           className="hidden" 
-          accept={accept || ".pdf,.xlsx,.xls,.csv,image/*"} 
+          accept={accept || ".pdf,.xlsx,.csv,image/*"} 
           onChange={handleImportPDF} 
           disabled={importing} 
         />

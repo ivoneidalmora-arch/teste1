@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { normalizePlaca, normalizeDate, capitalizeName } from '../utils/normalization';
 import { calculateLiquido } from '@/core/utils/finance';
 import { IngestionResult, Transaction } from '@/core/schemas/transaction.schema';
@@ -31,22 +31,32 @@ export const ingestionService = {
     
     try {
       const buffer = await file.arrayBuffer();
-      // Usamos SheetJS (xlsx) que é mais robusto para leitura de múltiplos formatos (.xls incluso)
-      const workbook = XLSX.read(buffer, { 
-        type: 'array',
-        cellDates: false, // Mantém como string para evitar distorções de timezone
-        raw: true 
-      });
+      const workbook = new ExcelJS.Workbook();
       
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (extension === 'xls') throw new Error('Formato .xls legado não suportado. Salve como .xlsx');
+      if (extension === 'csv') throw new Error('Para CSV, salve como .xlsx primeiro.');
+      
+      await workbook.xlsx.load(buffer);
+      
+      const worksheet = workbook.worksheets[0];
       
       if (!worksheet) throw new Error('Planilha vazia ou inválida.');
 
-      addLog(`Planilha lida: ${sheetName}`);
+      addLog(`Planilha lida: ${worksheet.name}`);
 
       // Converte para Array de Arrays (formato esperado pelo resto da lógica)
-      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+      const rows: any[][] = [];
+      worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+         const rowValues: any[] = [];
+         row.eachCell({ includeEmpty: true }, (cell) => {
+            let val = cell.value;
+            if (val && typeof val === 'object' && 'result' in val) val = val.result;
+            if (val && typeof val === 'object' && 'text' in val) val = val.text;
+            rowValues.push(val);
+         });
+         rows.push(rowValues);
+      });
 
       addLog(`Total de linhas encontradas: ${rows.length}`);
       

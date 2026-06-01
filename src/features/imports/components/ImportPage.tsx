@@ -187,7 +187,7 @@ export function ImportPage() {
             type="file" 
             className="hidden" 
             onChange={handleFileUpload} 
-            accept=".xlsx,.xls,.csv,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/pdf"
+            accept=".xlsx,.csv,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/pdf"
           />
           
           <button 
@@ -229,7 +229,7 @@ export function ImportPage() {
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">ou clique para selecionar do seu computador</p>
           </div>
           <div className="mt-8 flex gap-3">
-             {['.XLSX', '.XLS', '.CSV', '.PDF'].map(ext => (
+             {['.XLSX', '.CSV', '.PDF'].map(ext => (
                <span key={ext} className="px-4 py-2 bg-white border border-slate-100 rounded-xl text-[10px] font-black text-slate-400">
                  {ext}
                </span>

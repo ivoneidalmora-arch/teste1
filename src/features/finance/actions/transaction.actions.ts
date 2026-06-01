@@ -17,21 +17,21 @@ export async function getTransactionsAction() {
 
   const userId = session.user.id;
 
-  const [resRec, resDes] = await Promise.all([
-    supabaseAdmin.from('Receitas').select('*').eq('app_user_id', userId).is('deleted_at', null),
-    supabaseAdmin.from('Despesas').select('*').eq('app_user_id', userId).is('deleted_at', null)
-  ]);
+  const { data, error } = await supabaseAdmin
+    .from('transactions')
+    .select('*')
+    .eq('app_user_id', userId)
+    .is('deleted_at', null)
+    .order('date', { ascending: false });
 
-  if (resRec.error) throw resRec.error;
-  if (resDes.error) throw resDes.error;
+  if (error) throw error;
 
-  const income = (resRec.data || []).map(raw => TransactionMapper.toIncome(raw));
-  const expense = (resDes.data || []).map(raw => TransactionMapper.toExpense(raw));
+  const transactions = (data || []).map(raw => raw.type === 'income' 
+    ? TransactionMapper.toIncome(raw) 
+    : TransactionMapper.toExpense(raw)
+  );
 
-  return [...income, ...expense].sort((a, b) => {
-    if (b.date !== a.date) return b.date.localeCompare(a.date);
-    return String(b.id).localeCompare(String(a.id));
-  });
+  return transactions;
 }
 
 /**
@@ -42,31 +42,31 @@ export async function saveTransactionAction(transaction: NewTransaction) {
   if (!session) throw new Error("Não autorizado");
 
   const userId = session.user.id;
-  const table = transaction.type === 'income' ? 'Receitas' : 'Despesas';
-  
   const payload: Record<string, any> = {
     app_user_id: userId,
-    amount: transaction.amount,
+    type: transaction.type,
     date: transaction.date,
     category: transaction.type === 'income' ? normalizeRevenueName(transaction.category || '') : (transaction.category || ''),
+    status: transaction.status || 'paid',
+    source: 'system'
   };
 
   if (transaction.type === 'income') {
-    payload.amountBruto = transaction.grossAmount || transaction.amount;
-    payload.amountLiquido = transaction.netAmount || transaction.amount;
-    payload.cliente = transaction.customer;
-    payload.placa = normalizePlaca((transaction as any).placa ?? transaction.metadata?.placa) || '';
-    payload.nf = transaction.metadata?.nf;
-    payload.pagamento = transaction.metadata?.pagamento;
-    payload.observacao = transaction.metadata?.observacao;
+    payload.gross_amount = transaction.grossAmount || transaction.amount;
+    payload.net_amount = transaction.netAmount || transaction.amount;
+    payload.expense_amount = 0;
+    payload.customer_name = transaction.customer;
+    payload.plate = normalizePlaca((transaction as any).placa ?? transaction.metadata?.placa) || '';
+    payload.service_name = payload.category;
+    payload.payment_method = transaction.metadata?.pagamento || 'Pix';
   } else {
-    payload.description = (transaction as any).description;
-    payload.vencimento = (transaction as any).dueDate || transaction.date;
-    payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
-    payload.observacao = transaction.metadata?.observacao;
+    payload.gross_amount = 0;
+    payload.net_amount = 0;
+    payload.expense_amount = transaction.amount;
+    payload.payment_method = transaction.metadata?.pagamento || 'Pix';
   }
   
-  const { data, error } = await supabaseAdmin.from(table).insert([payload]).select().single();
+  const { data, error } = await supabaseAdmin.from('transactions').insert([payload]).select().single();
   
   if (error) {
     console.error("[saveTransactionAction] DB Error:", error);
@@ -96,30 +96,26 @@ export async function updateTransactionAction(id: string | number, type: 'income
   if (!session) throw new Error("Não autorizado");
 
   const userId = session.user.id;
-  const table = type === 'income' ? 'Receitas' : 'Despesas';
-  
   const payload: Record<string, any> = {};
-  if (transaction.amount !== undefined) payload.amount = transaction.amount;
   if (transaction.date !== undefined) payload.date = transaction.date;
   if (transaction.category !== undefined) {
     payload.category = type === 'income' ? normalizeRevenueName(transaction.category) : transaction.category;
   }
   
   if (type === 'income') {
-    if (transaction.grossAmount !== undefined) payload.amountBruto = transaction.grossAmount;
-    if (transaction.netAmount !== undefined) payload.amountLiquido = transaction.netAmount;
-    if ((transaction as any).customer !== undefined) payload.cliente = (transaction as any).customer;
-    if (transaction.metadata?.placa !== undefined) payload.placa = transaction.metadata.placa;
+    if (transaction.grossAmount !== undefined) payload.gross_amount = transaction.grossAmount;
+    if (transaction.netAmount !== undefined) payload.net_amount = transaction.netAmount;
+    if ((transaction as any).customer !== undefined) payload.customer_name = (transaction as any).customer;
+    if (transaction.metadata?.placa !== undefined) payload.plate = transaction.metadata.placa;
   } else {
-    if ((transaction as any).description !== undefined) payload.description = (transaction as any).description;
-    if (transaction.status !== undefined) payload.status = transaction.status === 'paid' ? 'Pago' : 'Pendente';
-    if ((transaction as any).dueDate !== undefined) payload.vencimento = (transaction as any).dueDate;
+    if (transaction.amount !== undefined) payload.expense_amount = transaction.amount;
+    if (transaction.status !== undefined) payload.status = transaction.status;
   }
   
   // Buscar valor antigo para o log
-  const { data: oldRecord } = await supabaseAdmin.from(table).select('*').eq('id', id).single();
+  const { data: oldRecord } = await supabaseAdmin.from('transactions').select('*').eq('id', id).single();
 
-  const { error } = await supabaseAdmin.from(table).update(payload).eq('id', id).eq('app_user_id', userId);
+  const { error } = await supabaseAdmin.from('transactions').update(payload).eq('id', id).eq('app_user_id', userId);
   if (error) throw error;
 
   await auditLogService.log({
@@ -142,13 +138,10 @@ export async function deleteTransactionAction(id: string | number, type: 'income
   if (!session) throw new Error("Não autorizado");
 
   const userId = session.user.id;
-  const table = type === 'income' ? 'Receitas' : 'Despesas';
-  
-  // Buscar valor antigo para o log
-  const { data: oldRecord } = await supabaseAdmin.from(table).select('*').eq('id', id).single();
+  const { data: oldRecord } = await supabaseAdmin.from('transactions').select('*').eq('id', id).single();
 
   const { error } = await supabaseAdmin
-    .from(table)
+    .from('transactions')
     .update({ 
       deleted_at: new Date().toISOString(),
       deleted_by: userId 

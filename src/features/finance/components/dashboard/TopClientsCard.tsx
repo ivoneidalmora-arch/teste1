@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, Users } from 'lucide-react';
 import { cn, formatBRL } from '@/core/utils/formatters';
 import { getTopClients } from '@/lib/dashboard-metrics';
@@ -16,6 +16,14 @@ interface TopClientsCardProps {
 
 export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: TopClientsCardProps) {
   const [filterPeriod, setFilterPeriod] = useState<'month' | 'last30' | 'year' | 'global'>('month');
+
+  useEffect(() => {
+    if (selectedPeriod === 'global') {
+      setFilterPeriod('global');
+    } else {
+      setFilterPeriod('month');
+    }
+  }, [selectedPeriod]);
 
   const filteredClients = useMemo(() => {
     let list = [...transactions];

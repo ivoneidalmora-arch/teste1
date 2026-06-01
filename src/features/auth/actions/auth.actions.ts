@@ -3,29 +3,8 @@
 import { cookies, headers } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
-import { SignJWT, jwtVerify } from "jose";
 import { auditLogService } from "@/features/audit/services/audit-log.service";
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("Variável de ambiente JWT_SECRET não configurada.");
-}
-const key = new TextEncoder().encode(JWT_SECRET);
-
-export async function encrypt(payload: any) {
-  return await new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(key);
-}
-
-export async function decrypt(input: string): Promise<any> {
-  const { payload } = await jwtVerify(input, key, {
-    algorithms: ["HS256"],
-  });
-  return payload;
-}
+import { createSession, destroySession, getSession as getCoreSession } from "@/core/auth/session";
 
 export async function registerUser(formData: FormData) {
   try {
@@ -82,17 +61,7 @@ export async function registerUser(formData: FormData) {
     }
 
     // Criar sessão após cadastro
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const session = await encrypt({ user: { id: data.id, username: data.username }, expires });
-
-    const cookieStore = await cookies();
-    cookieStore.set("alfa_session", session, { 
-      expires, 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: "lax",
-      path: "/"
-    });
+    await createSession(data.id, data.username);
 
     await auditLogService.log({
       userId: data.id,
@@ -166,17 +135,7 @@ export async function loginUser(formData: FormData) {
     // Sucesso: Limpar tentativas anteriores (opcional ou marcar como sucesso)
     await supabaseAdmin.from("auth_attempts").insert([{ username, ip_address: ip, success: true }]);
 
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const session = await encrypt({ user: { id: user.id, username: user.username }, expires });
-
-    const cookieStore = await cookies();
-    cookieStore.set("alfa_session", session, { 
-      expires, 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/"
-    });
+    await createSession(user.id, user.username);
 
     // Log de Sucesso
     await auditLogService.log({
@@ -195,23 +154,10 @@ export async function loginUser(formData: FormData) {
 }
 
 export async function logoutUser() {
-  const cookieStore = await cookies();
-  cookieStore.set("alfa_session", "", { 
-    expires: new Date(0),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/"
-  });
+  await destroySession();
   return { success: true };
 }
 
 export async function getSession() {
-  const session = (await cookies()).get("alfa_session")?.value;
-  if (!session) return null;
-  try {
-    return await decrypt(session);
-  } catch (err) {
-    return null;
-  }
+  return await getCoreSession();
 }
