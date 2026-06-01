@@ -68,6 +68,19 @@ export async function registerUser(formData: FormData) {
       return { error: "Erro ao criar conta no banco de dados." };
     }
 
+    // Sincronizar com auth.users para satisfazer restrições de chave estrangeira
+    try {
+      await supabaseAdmin.auth.admin.createUser({
+        id: data.id,
+        email: `${username.toLowerCase()}@alfa.com`,
+        password: password,
+        email_confirm: true
+      });
+    } catch (authError) {
+      console.error("[Register] Warning - falha ao sincronizar com auth.users:", authError);
+      // Não bloqueia o cadastro principal se falhar, mas loga o erro
+    }
+
     // Criar sessão após cadastro
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const session = await encrypt({ user: { id: data.id, username: data.username }, expires });
