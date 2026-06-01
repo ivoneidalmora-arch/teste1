@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ImportedTransaction, ImportAuditLog, ValidationStatus } from '../types/import.types';
+import { ImportedTransaction, ImportAuditLog, ValidationStatus, ImportValidationError } from '../types/import.types';
 import { getImportIssueSuggestions, validateImportedTransaction } from '../utils/import-validation.utils';
 import { VISTORIA_CATEGORIES, VistoriaCategory } from '@/core/utils/finance';
 import { 
@@ -65,7 +65,7 @@ export function ImportIssueCorrectionModal({
 
   // Real-time validation based on local states
   const localValidation = useMemo(() => {
-    if (!item) return { errors: [] };
+    if (!item) return { errors: [] as ImportValidationError[] };
     const tempItem: Partial<ImportedTransaction> = {
       ...item,
       date,
