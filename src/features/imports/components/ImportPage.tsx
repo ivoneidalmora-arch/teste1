@@ -141,7 +141,6 @@ export function ImportPage() {
         amountBruto: item.grossValue,
         amountLiquido: item.netValue || item.grossValue,
         amount: item.grossValue,
-        status: 'paid',
         observacao: item.description || (item.status === 'manual_approved' ? 'Aprovado Manualmente' : 'IMPORTADO VIA EXCEL')
       }));
 
