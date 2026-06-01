@@ -108,7 +108,7 @@ describe('Fluxo de Validação de Importação e Auditoria', () => {
   });
 
   it('deve detectar duplicidades na base importada no intervalo de 30 dias', () => {
-    const items: ImportedTransaction[] = [
+    const items: Partial<ImportedTransaction>[] = [
       {
         id: '1',
         date: '2025-05-01',
