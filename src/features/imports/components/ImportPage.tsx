@@ -21,7 +21,7 @@ import { useImportValidation } from '../hooks/useImportValidation';
 import { ImportValidationCard } from './ImportValidationCard';
 import { ImportValidationFilters } from './ImportValidationFilters';
 import { ImportPreviewTable } from './ImportPreviewTable';
-import { ImportEditModal } from './ImportEditModal';
+import { ImportIssueCorrectionModal } from './ImportIssueCorrectionModal';
 import { ImportConfirmModal } from './ImportConfirmModal';
 import { ImportedTransaction } from '../types/import.types';
 
@@ -141,6 +141,7 @@ export function ImportPage() {
         amountBruto: item.grossValue,
         amountLiquido: item.netValue || item.grossValue,
         amount: item.grossValue,
+        pagamento: item.formaPagamento || 'Pix',
         observacao: item.description || (item.status === 'manual_approved' ? 'Aprovado Manualmente' : 'IMPORTADO VIA EXCEL')
       }));
 
@@ -319,12 +320,14 @@ export function ImportPage() {
         </div>
       )}
 
-      {/* Edit Modal */}
-      <ImportEditModal 
+      {/* Correction Modal */}
+      <ImportIssueCorrectionModal 
         isOpen={!!editItem} 
         item={editItem} 
         onClose={() => setEditItem(null)} 
         onSave={handleEdit} 
+        onIgnore={handleIgnore}
+        onApproveManually={handleApproveManually}
       />
 
       {/* Confirm Modal */}
