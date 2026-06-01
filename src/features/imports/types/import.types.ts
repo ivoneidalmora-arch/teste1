@@ -29,6 +29,19 @@ export type ImportValidationError =
   | 'DUPLICADO'
   | 'INCONSISTENTE';
 
+export interface ImportAuditLog {
+  id: string;
+  timestamp: string;
+  field: string;
+  originalValue: string;
+  previousValue: string;
+  newValue: string;
+  user: string;
+  reason?: string;
+  previousStatus: string;
+  newStatus: string;
+}
+
 export interface ImportedTransaction {
   id: string;
   date: string;
@@ -56,6 +69,15 @@ export interface ImportedTransaction {
   rawValorBruto?: string;
   rawValorLiquido?: string;
   rawClient?: string;
+
+  // Novos campos de controle e metadados
+  sourceFileName?: string;
+  sourceSheetName?: string;
+  sourceRowNumber?: number;
+  rawData?: Record<string, any>;
+  auditLog?: ImportAuditLog[];
+  motivoCorrecao?: string;
+  formaPagamento?: string;
 }
 
 export interface ImportSummary {

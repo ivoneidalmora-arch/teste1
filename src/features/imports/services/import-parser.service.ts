@@ -158,7 +158,13 @@ export const importParserService = {
           rawDate: rawDateStr,
           rawValorBruto: rawValorBrutoStr,
           rawValorLiquido: rawValorLiquidoStr,
-          rawClient: rawClientStr
+          rawClient: rawClientStr,
+          sourceFileName: file.name,
+          sourceSheetName: firstSheetName,
+          sourceRowNumber: index + headerRowIndex + 2,
+          rawData: row,
+          auditLog: [],
+          formaPagamento: String(getValueByAliases(row, COLUMN_ALIASES.paymentMethod) || 'Pix')
         };
       });
     } catch (error: any) {
@@ -182,7 +188,7 @@ export const importParserService = {
     }
 
     const result = await response.json();
-    return result.data.map((item: any) => {
+    return result.data.map((item: any, index: number) => {
       const gross = item.valorBruto || item.amount || 0;
       const dateObj = parseBrazilianDate(item.date || item.data || '');
       const category = standardizeService(item.service || item.categoria || '');
@@ -217,6 +223,11 @@ export const importParserService = {
         category: category,
         grossValue: gross,
         netValue: net,
+        sourceFileName: file.name,
+        sourceRowNumber: index + 1,
+        rawData: item,
+        auditLog: [],
+        formaPagamento: item.formaPagamento || item.pagamento || 'Pix'
       };
     });
   }

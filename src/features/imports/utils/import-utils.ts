@@ -130,10 +130,15 @@ export function parseBrazilianDate(value: unknown): Date | null {
     return new Date(value.getFullYear(), value.getMonth(), value.getDate());
   }
 
-  if (typeof value === 'number') {
+  // Detecta número serial do Excel passado como string ou número
+  const numVal = Number(value);
+  const isString = typeof value === 'string';
+  const hasDateSeparators = isString && (value.includes('/') || value.includes('-'));
+
+  if (!isNaN(numVal) && !hasDateSeparators && numVal >= 30000 && numVal <= 60000) {
     const excelEpoch = new Date(1899, 11, 30);
-    const result = new Date(excelEpoch.getTime() + value * 86400000);
-    // Avoid timezone offset bugs
+    const result = new Date(excelEpoch.getTime() + numVal * 86400000);
+    // Evita timezone offset bugs
     return new Date(result.getUTCFullYear(), result.getUTCMonth(), result.getUTCDate());
   }
 
