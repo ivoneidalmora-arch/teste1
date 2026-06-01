@@ -63,10 +63,9 @@ export function ImportIssueCorrectionModal({
     return getImportIssueSuggestions(item);
   }, [item]);
 
-  if (!isOpen || !item) return null;
-
   // Real-time validation based on local states
   const localValidation = useMemo(() => {
+    if (!item) return { errors: [] };
     const tempItem: Partial<ImportedTransaction> = {
       ...item,
       date,
@@ -80,6 +79,8 @@ export function ImportIssueCorrectionModal({
     };
     return validateImportedTransaction(tempItem);
   }, [item, date, placa, cliente, service, grossValue, netValue]);
+
+  if (!isOpen || !item) return null;
 
   const hasErrors = localValidation.errors.length > 0;
 
