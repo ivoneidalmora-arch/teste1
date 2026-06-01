@@ -6,8 +6,10 @@ import { getInconsistencyGroupsAction } from '@/features/insights/actions/audit.
 import { InconsistencyGroup } from '@/features/insights/types/diagnostics.types';
 import { InconsistenciesModal } from '@/features/insights/components/diagnostics/InconsistenciesModal';
 import { toast } from 'sonner';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export default function AuditoriaPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<InconsistencyGroup[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<InconsistencyGroup | null>(null);
@@ -161,6 +163,7 @@ export default function AuditoriaPage() {
           <InconsistenciesModal 
             isOpen={!!selectedGroup}
             group={selectedGroup}
+            userId={user?.id}
             onClose={() => setSelectedGroup(null)}
             onResolve={loadAudit}
           />
