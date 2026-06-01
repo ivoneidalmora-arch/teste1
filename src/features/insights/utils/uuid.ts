@@ -13,16 +13,17 @@ export function toUuid(id: string | number): string {
     return strId;
   }
   
+  const cleanId = String(strId);
   // Se for numérico (ID autoincremental de Receitas/Despesas)
-  if (/^\d+$/.test(strId)) {
-    const padded = strId.padStart(12, '0');
+  if (/^\d+$/.test(cleanId)) {
+    const padded = cleanId.padStart(12, '0');
     return `00000000-0000-4000-8000-${padded}`;
   }
 
   // Caso seja uma string como "insight-123" ou similar
   let hex = '';
-  for (let i = 0; i < strId.length; i++) {
-    hex += strId.charCodeAt(i).toString(16);
+  for (let i = 0; i < cleanId.length; i++) {
+    hex += cleanId.charCodeAt(i).toString(16);
   }
   hex = hex.padEnd(32, '0').slice(0, 32);
   // Formata com versão 4 (dígito 13 como '4') e variante (dígito 17 como '8')
