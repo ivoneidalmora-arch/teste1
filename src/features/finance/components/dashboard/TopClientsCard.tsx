@@ -93,7 +93,7 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
       </div>
 
       <div className="space-y-1 overflow-y-auto flex-1 scrollbar-thin">
-        {filteredClients.slice(0, 4).map((client, index) => {
+        {filteredClients.map((client, index) => {
           const percentage = client.percentage; // Use the percentage calculated globally in getTopClients
           const barWidth = maxAmount > 0 ? (client.total / maxAmount) * 100 : 0; // Keep visual bar relative to max to look good
           return (

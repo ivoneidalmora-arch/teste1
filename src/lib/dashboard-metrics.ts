@@ -63,13 +63,27 @@ export function getTopClients(transactions: Transaction[]) {
 
   const totalRevenue = Array.from(clientsMap.values()).reduce((sum, c) => sum + c.total, 0);
 
-  return Array.from(clientsMap.values())
-    .map(c => ({
-        ...c,
-        percentage: totalRevenue > 0 ? (c.total / totalRevenue) * 100 : 0
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
+  const sortedClients = Array.from(clientsMap.values()).sort((a, b) => b.total - a.total);
+  
+  // Pegar os top 4
+  const topClients = sortedClients.slice(0, 4);
+  
+  // Somar o resto em 'Outros'
+  const others = sortedClients.slice(4);
+  if (others.length > 0) {
+    const othersTotal = others.reduce((sum, c) => sum + c.total, 0);
+    const othersCount = others.reduce((sum, c) => sum + c.count, 0);
+    topClients.push({
+      name: 'Outros Clientes',
+      total: othersTotal,
+      count: othersCount
+    });
+  }
+
+  return topClients.map(c => ({
+      ...c,
+      percentage: totalRevenue > 0 ? (c.total / totalRevenue) * 100 : 0
+  }));
 }
 
 /**
