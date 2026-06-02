@@ -35,15 +35,15 @@ export function getTopClients(transactions: Transaction[]) {
       ).toString().toUpperCase().trim();
 
       const value = normalizeCurrencyValue(
+        transaction.valor_bruto ??
+        transaction.grossAmount ??
+        transaction.gross_value ??
+        transaction.amountBruto ??
         transaction.valor_liquido ??
         transaction.netAmount ??
         transaction.net_value ??
         transaction.liquid_value ??
         transaction.amountLiquido ??
-        transaction.valor_bruto ??
-        transaction.grossAmount ??
-        transaction.gross_value ??
-        transaction.amountBruto ??
         transaction.valor ??
         transaction.amount ??
         0

@@ -229,7 +229,7 @@ export function DashboardPage() {
           <div className="flex-1 min-h-[150px]">
             <CalendarAlfa events={financialEvents} />
           </div>
-          <div className="h-[120px] shrink-0">
+          <div className="flex-1 min-h-[160px] shrink-0">
             <TopClientsCard transactions={transactions || []} selectedPeriod={selectedPeriod} selectedYear={selectedYear} />
           </div>
           <div className="h-[90px] shrink-0">
