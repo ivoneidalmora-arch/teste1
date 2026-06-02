@@ -53,6 +53,15 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
         const d = parseISO(t.date);
         return d.getFullYear() === selectedYear;
       });
+    } else if (filterPeriod === 'global') {
+      // Quando 'Tudo' está selecionado no card, e há um ano selecionado no dashboard global,
+      // devemos respeitar o ano selecionado no dashboard global para bater com os KPIs globais,
+      // a menos que o painel global estivesse em 'global' e sem ano, mas o FinanceContext
+      // sempre tem um selectedYear. Vamos filtrar por selectedYear.
+      list = transactions.filter(t => {
+        const d = parseISO(t.date);
+        return d.getFullYear() === selectedYear;
+      });
     }
 
     return getTopClients(list);
@@ -85,7 +94,8 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
 
       <div className="space-y-1 overflow-y-auto flex-1 scrollbar-thin">
         {filteredClients.slice(0, 4).map((client, index) => {
-          const percentage = (client.total / maxAmount) * 100;
+          const percentage = client.percentage; // Use the percentage calculated globally in getTopClients
+          const barWidth = maxAmount > 0 ? (client.total / maxAmount) * 100 : 0; // Keep visual bar relative to max to look good
           return (
             <div key={index} className="group cursor-default py-0.5">
               <div className="flex items-center gap-2 mb-1">
@@ -104,7 +114,7 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
                       <div className="flex-1 h-0.5 bg-slate-50 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-emerald-500 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                          style={{ width: `${percentage}%` }}
+                          style={{ width: `${barWidth}%` }}
                         />
                       </div>
                       <span className="text-[8px] font-black text-slate-400 w-8 text-right shrink-0">
