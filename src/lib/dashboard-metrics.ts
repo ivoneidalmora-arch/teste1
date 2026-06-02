@@ -20,7 +20,7 @@ export const isExpense = (t: any): boolean => {
 /**
  * Agrupa transações por cliente e retorna os TOP 5
  */
-export function getTopClients(transactions: Transaction[]) {
+export function getAllClients(transactions: Transaction[]) {
   const clientsMap = new Map<string, { name: string; total: number; count: number }>();
 
   transactions
@@ -63,27 +63,39 @@ export function getTopClients(transactions: Transaction[]) {
 
   const totalRevenue = Array.from(clientsMap.values()).reduce((sum, c) => sum + c.total, 0);
 
-  const sortedClients = Array.from(clientsMap.values()).sort((a, b) => b.total - a.total);
+  return Array.from(clientsMap.values())
+    .map(c => ({
+        ...c,
+        percentage: totalRevenue > 0 ? (c.total / totalRevenue) * 100 : 0
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Agrupa transações por cliente e retorna os TOP 4 + Outros
+ */
+export function getTopClients(transactions: Transaction[]) {
+  const allClients = getAllClients(transactions);
   
-  // Pegar os top 4
-  const topClients = sortedClients.slice(0, 4);
+  if (allClients.length <= 4) {
+    return allClients;
+  }
   
-  // Somar o resto em 'Outros'
-  const others = sortedClients.slice(4);
+  const topClients = allClients.slice(0, 4);
+  const others = allClients.slice(4);
+  
   if (others.length > 0) {
     const othersTotal = others.reduce((sum, c) => sum + c.total, 0);
     const othersCount = others.reduce((sum, c) => sum + c.count, 0);
     topClients.push({
       name: 'Outros Clientes',
       total: othersTotal,
-      count: othersCount
+      count: othersCount,
+      percentage: allClients.length > 0 ? others.reduce((sum, c) => sum + c.percentage, 0) : 0
     });
   }
 
-  return topClients.map(c => ({
-      ...c,
-      percentage: totalRevenue > 0 ? (c.total / totalRevenue) * 100 : 0
-  }));
+  return topClients;
 }
 
 /**
