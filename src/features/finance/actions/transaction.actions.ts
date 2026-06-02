@@ -17,12 +17,24 @@ export async function getTransactionsAction() {
 
   const userId = session.user.id;
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('transactions')
     .select('*')
     .eq('app_user_id', userId)
     .is('deleted_at', null)
     .order('date', { ascending: false });
+
+  // Fallback caso a coluna deleted_at não exista ainda na tabela transactions (erro 42703)
+  if (error && error.code === '42703') {
+    const fallbackResult = await supabaseAdmin
+      .from('transactions')
+      .select('*')
+      .eq('app_user_id', userId)
+      .order('date', { ascending: false });
+    
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) throw error;
 
