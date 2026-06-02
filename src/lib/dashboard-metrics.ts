@@ -26,12 +26,13 @@ export function getTopClients(transactions: Transaction[]) {
   transactions
     .filter(isIncome)
     .forEach((transaction: any) => {
-      const clientName =
+      const clientName = (
         transaction.cliente ??
         transaction.client ??
         transaction.customer ??
         transaction.nome_cliente ??
-        "Cliente não informado";
+        "Cliente não informado"
+      ).toString().toUpperCase().trim();
 
       const value = normalizeCurrencyValue(
         transaction.valor_liquido ??
@@ -65,7 +66,7 @@ export function getTopClients(transactions: Transaction[]) {
   return Array.from(clientsMap.values())
     .map(c => ({
         ...c,
-        percentage: totalRevenue > 0 ? Math.round((c.total / totalRevenue) * 100) : 0
+        percentage: totalRevenue > 0 ? (c.total / totalRevenue) * 100 : 0
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
