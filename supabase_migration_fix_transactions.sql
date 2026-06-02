@@ -73,7 +73,7 @@ BEGIN
       -- Evitar duplicados caso já tenha rodado
       WHERE NOT EXISTS (
           SELECT 1 FROM public.transactions t 
-          WHERE t.type = 'income' AND t.app_user_id = public."Receitas".app_user_id AND t.date = public."Receitas".date AND t.gross_amount = COALESCE(public."Receitas"."amountBruto", public."Receitas".amount, 0)
+          WHERE t.type = 'income' AND t.app_user_id = public."Receitas".app_user_id AND t.date = COALESCE((public."Receitas".date::TEXT)::DATE, CURRENT_DATE) AND t.gross_amount = COALESCE(public."Receitas"."amountBruto", public."Receitas".amount, 0)
       );
    END IF;
 END $$;
@@ -107,7 +107,7 @@ BEGIN
       -- Evitar duplicados caso já tenha rodado
       WHERE NOT EXISTS (
           SELECT 1 FROM public.transactions t 
-          WHERE t.type = 'expense' AND t.app_user_id = public."Despesas".app_user_id AND t.date = public."Despesas".date AND t.expense_amount = COALESCE(public."Despesas".amount, 0)
+          WHERE t.type = 'expense' AND t.app_user_id = public."Despesas".app_user_id AND t.date = COALESCE((public."Despesas".date::TEXT)::DATE, CURRENT_DATE) AND t.expense_amount = COALESCE(public."Despesas".amount, 0)
       );
    END IF;
 END $$;
