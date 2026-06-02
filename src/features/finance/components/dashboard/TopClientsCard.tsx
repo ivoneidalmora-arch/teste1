@@ -7,6 +7,7 @@ import { getTopClients } from '@/lib/dashboard-metrics';
 import { Transaction } from '@/core/types/finance';
 import { parseISO, isAfter, subDays } from 'date-fns';
 import { Icon3D } from '@/core/components/ui/Icon3D';
+import { ClientDetailsModal } from '../modals/ClientDetailsModal';
 
 interface TopClientsCardProps {
   transactions: Transaction[];
@@ -16,6 +17,7 @@ interface TopClientsCardProps {
 
 export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: TopClientsCardProps) {
   const [filterPeriod, setFilterPeriod] = useState<'month' | 'last30' | 'year' | 'global'>('month');
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedPeriod === 'global') {
@@ -69,7 +71,42 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
 
   const maxAmount = Math.max(...filteredClients.map(c => c.total), 1);
 
+  // Filter list again to pass to modal (so modal doesn't have to re-filter by date, only by client)
+  const modalTransactions = useMemo(() => {
+    let list = [...transactions];
+    const now = new Date();
+    
+    // Reproduz o mesmo filtro de data para passar as transações corretas para o modal
+    if (filterPeriod === 'month') {
+      if (selectedPeriod !== 'global') {
+        const monthNum = parseInt(selectedPeriod) - 1;
+        list = transactions.filter(t => {
+          const d = parseISO(t.date);
+          return d.getFullYear() === selectedYear && d.getMonth() === monthNum;
+        });
+      } else {
+        list = transactions.filter(t => {
+          const d = parseISO(t.date);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        });
+      }
+    } else if (filterPeriod === 'last30') {
+      const thirtyDaysAgo = subDays(now, 30);
+      list = transactions.filter(t => {
+        const d = parseISO(t.date);
+        return isAfter(d, thirtyDaysAgo);
+      });
+    } else if (filterPeriod === 'year' || filterPeriod === 'global') {
+      list = transactions.filter(t => {
+        const d = parseISO(t.date);
+        return d.getFullYear() === selectedYear;
+      });
+    }
+    return list;
+  }, [transactions, filterPeriod, selectedPeriod, selectedYear]);
+
   return (
+    <>
     <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm h-full overflow-hidden flex flex-col">
       <div className="flex items-center justify-between mb-2 shrink-0">
         <div className="flex items-center gap-2">
@@ -96,13 +133,25 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
         {filteredClients.map((client, index) => {
           const percentage = client.percentage; // Use the percentage calculated globally in getTopClients
           const barWidth = maxAmount > 0 ? (client.total / maxAmount) * 100 : 0; // Keep visual bar relative to max to look good
+          const isClickable = client.name !== 'Outros Clientes';
+          
           return (
-            <div key={index} className="group cursor-default py-0.5">
+            <div 
+              key={index} 
+              onClick={() => isClickable && setSelectedClient(client.name)}
+              className={cn(
+                "group py-0.5 rounded-lg px-1 -mx-1 transition-colors",
+                isClickable ? "cursor-pointer hover:bg-slate-50" : "cursor-default"
+              )}
+            >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-black text-slate-300 w-3">{index + 1}</span>
                 <div className="flex-1 min-w-0">
                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <p className="text-[11px] font-black text-[#0F172A] truncate group-hover:text-blue-600 transition-colors">
+                      <p className={cn(
+                        "text-[11px] font-black truncate transition-colors",
+                        isClickable ? "text-[#0F172A] group-hover:text-blue-600" : "text-slate-500"
+                      )}>
                         {client.name}
                       </p>
                       <p className="text-[11px] font-black text-slate-900 shrink-0">
@@ -113,7 +162,10 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
                    <div className="flex items-center gap-2">
                       <div className="flex-1 h-0.5 bg-slate-50 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-emerald-500 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                          className={cn(
+                            "h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]",
+                            isClickable ? "bg-emerald-500" : "bg-slate-300 shadow-none"
+                          )}
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>
@@ -134,5 +186,13 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
         )}
       </div>
     </div>
+    
+    <ClientDetailsModal 
+      isOpen={!!selectedClient}
+      onClose={() => setSelectedClient(null)}
+      clientName={selectedClient || ''}
+      transactions={modalTransactions}
+    />
+    </>
   );
 }
