@@ -15,6 +15,7 @@ import {
   Trash2,
   ShieldCheck,
   Activity,
+  Receipt,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/core/utils/formatters';
@@ -53,6 +54,7 @@ const MENU_GROUPS: SidebarSection[] = [
     title: 'Automação',
     items: [
       { icon: Upload, label: 'Importações', href: '/importacoes', variant: 'cyan' },
+      { icon: Receipt, label: 'Notas Fiscais', href: '/importacao-notas', variant: 'blue' },
       { icon: Scan, label: 'OCR / IA', href: '/ocr-ia', variant: 'indigo' },
       { icon: Sparkles, label: 'Insights IA', href: '/insights-ia', variant: 'ai' },
     ]
