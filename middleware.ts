@@ -13,11 +13,14 @@ export async function middleware(request: NextRequest) {
   let validSession = null;
   if (sessionCookie) {
     validSession = await decrypt(sessionCookie);
+  } else {
+    // BYPASS LOGIN: Se não tem cookie, forçamos um mock para pular a tela de login
+    validSession = { user: { id: "mock-admin-id", username: "admin_bypassed" } };
   }
 
   // Se não tem sessão válida e tenta acessar rota privada
   if (!validSession && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    // return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Se tem sessão válida e tenta acessar rota pública (login/register)

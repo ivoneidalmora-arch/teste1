@@ -20,7 +20,17 @@ export async function createSession(userId: string, username: string) {
 export async function getSession() {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  if (!session) return null;
+  
+  // BYPASS LOGIN: Se não tem sessão, retorna mock admin para pular o login no lado do servidor
+  if (!session) {
+    return {
+      user: {
+        id: "mock-admin-id",
+        username: "admin_bypassed"
+      }
+    };
+  }
+  
   return await decrypt(session);
 }
 
