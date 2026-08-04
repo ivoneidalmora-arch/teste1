@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { InvoiceImportData, validateInvoiceData } from '../schemas/invoice.schema';
 import { format } from 'date-fns';
+import { readXlsFile } from '@/lib/xls-reader';
 
 // Helper aliases to find columns even if slightly misnamed
 const COLUMNS = {
@@ -59,18 +60,18 @@ export const invoiceParserService = {
       throw new Error('Apenas arquivos Excel (.xlsx, .xls) ou CSV são suportados para notas fiscais.');
     }
 
+    if (extension === 'csv') {
+      throw new Error('Para importar CSV, por favor salve como .xlsx no Excel antes de importar.');
+    }
+
+    // Arquivos .xls legados: usar SheetJS para leitura
     if (extension === 'xls') {
-      throw new Error('Formato .xls legado não é suportado por segurança. Salve como .xlsx e tente novamente.');
+      return this._parseXls(file);
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const workbook = new ExcelJS.Workbook();
-    
-    if (extension === 'csv') {
-      throw new Error('Para importar CSV, por favor salve como .xlsx no Excel antes de importar.');
-    } else {
-      await workbook.xlsx.load(arrayBuffer);
-    }
+    await workbook.xlsx.load(arrayBuffer);
 
     const worksheet = workbook.worksheets[0];
     if (!worksheet) {
@@ -183,5 +184,98 @@ export const invoiceParserService = {
 
       return item as InvoiceImportData;
     });
+  },
+
+  /**
+   * Lê arquivo .xls legado via SheetJS e converte para InvoiceImportData[].
+   * A lógica de mapeamento de colunas é a mesma usada para .xlsx acima.
+   */
+  async _parseXls(file: File): Promise<InvoiceImportData[]> {
+    const rows = await readXlsFile(file);
+
+    if (rows.length === 0) throw new Error('A planilha está vazia.');
+
+    // Encontrar linha de cabeçalho (igual ao fluxo ExcelJS)
+    let headerRowIndex = 0;
+    let headers: string[] = [];
+
+    for (let i = 0; i < Math.min(20, rows.length); i++) {
+      const cellValues = (rows[i] ?? []).map((c: any) => String(c ?? ''));
+      const normalized = cellValues.map((c) =>
+        c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+      );
+      const hasGeracao = normalized.some((c) => c.includes('geracao'));
+      const hasTomador = normalized.some((c) => c.includes('tomador'));
+      if (hasGeracao || hasTomador || cellValues.filter(Boolean).length > 3) {
+        headerRowIndex = i;
+        headers = cellValues;
+        break;
+      }
+    }
+
+    if (headers.length === 0)
+      throw new Error('Não foi possível identificar o cabeçalho da planilha de notas fiscais.');
+
+    const colData = findColumn(headers, COLUMNS.data);
+    const colCliente = findColumn(headers, COLUMNS.cliente);
+    const colSituacao = findColumn(headers, COLUMNS.situacao);
+    const colValor = findColumn(headers, COLUMNS.valorBruto);
+    const colDescricao = findColumn(headers, COLUMNS.discriminacao);
+
+    if (!colData && !colCliente)
+      throw new Error('As colunas de "Geração" (Data) e "Tomador" (Cliente) não foram encontradas.');
+
+    const dataRows = rows.slice(headerRowIndex + 1);
+
+    return dataRows
+      .map((rawRow, index) => {
+        const rowData: Record<string, unknown> = {};
+        headers.forEach((header, colIdx) => {
+          if (header) rowData[header] = rawRow[colIdx] ?? null;
+        });
+
+        const rawDate = colData ? rowData[colData] : '';
+        const rawCliente = colCliente ? String(rowData[colCliente] ?? '').trim() : '';
+        const rawSituacao = colSituacao ? String(rowData[colSituacao] ?? '').trim() : '';
+        const rawValor = colValor ? rowData[colValor] : 0;
+        const rawDescricao = colDescricao ? String(rowData[colDescricao] ?? '') : '';
+
+        let dateStr = '';
+        if (rawDate instanceof Date) {
+          dateStr = format(rawDate, 'yyyy-MM-dd');
+        } else if (typeof rawDate === 'string') {
+          const dateMatch = rawDate.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+          if (dateMatch) dateStr = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+        }
+
+        const grossValue =
+          typeof rawValor === 'number' ? rawValor : parseCurrencyBR(String(rawValor ?? '0'));
+        const placa = extractPlate(rawDescricao);
+
+        const item: Partial<InvoiceImportData> = {
+          id: `inv-${index}-${Math.random().toString(36).substr(2, 5)}`,
+          date: dateStr,
+          cliente: rawCliente || 'NÃO INFORMADO',
+          placa,
+          statusNota: rawSituacao || 'NÃO INFORMADA',
+          grossValue,
+          description: rawDescricao,
+          sourceRowNumber: index + headerRowIndex + 2,
+          errors: [],
+          warnings: [],
+          status: 'pending',
+        };
+
+        const validation = validateInvoiceData(item);
+        if (!validation.isValid) {
+          item.status = 'error';
+          item.errors = validation.errors;
+        } else {
+          item.status = 'valid';
+        }
+
+        return item as InvoiceImportData;
+      })
+      .filter((item) => item.cliente !== 'NÃO INFORMADO' || item.grossValue > 0);
   }
 };
