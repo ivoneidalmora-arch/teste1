@@ -122,8 +122,8 @@ export function InvoiceImportPage() {
         cliente: item.cliente,
         category: 'Nota Fiscal',
         amountBruto: item.grossValue,
-        amountLiquido: item.grossValue,
-        amount: item.grossValue,
+        amountLiquido: item.netValue ?? item.grossValue,
+        amount: item.netValue ?? item.grossValue,
         pagamento: 'Pix',
         observacao: `[NF ${item.statusNota}] IMPORTAÇÃO AUTOMÁTICA`,
       }));

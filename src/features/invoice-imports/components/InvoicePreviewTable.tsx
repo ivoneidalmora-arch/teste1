@@ -22,6 +22,7 @@ export function InvoicePreviewTable({ items, onEdit, onDelete, onIgnore }: Props
             <th className="px-6 py-4">Placa</th>
             <th className="px-6 py-4">Situação</th>
             <th className="px-6 py-4 text-right">Valor Bruto</th>
+            <th className="px-6 py-4 text-right">Valor Líquido</th>
             <th className="px-6 py-4 text-center">Status</th>
             <th className="px-6 py-4 text-right">Ações</th>
           </tr>
@@ -64,6 +65,11 @@ export function InvoicePreviewTable({ items, onEdit, onDelete, onIgnore }: Props
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-slate-900">
                   {formatBRL(item.grossValue)}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <span className="font-bold text-emerald-700">
+                    {formatBRL(item.netValue ?? item.grossValue)}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   {isIgnored ? (

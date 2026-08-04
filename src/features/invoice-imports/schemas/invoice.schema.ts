@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { parse } from 'date-fns';
 
 export const invoiceImportSchema = z.object({
   id: z.string(),
@@ -12,6 +11,8 @@ export const invoiceImportSchema = z.object({
     }, 'Placa em formato inválido'),
   statusNota: z.string().min(1, 'Situação da nota é obrigatória'),
   grossValue: z.number().min(0.01, 'Valor deve ser maior que zero'),
+  /** Valor líquido (após impostos). Pode vir da planilha ou ser calculado automaticamente. */
+  netValue: z.number().min(0).optional(),
   status: z.enum(['pending', 'valid', 'invalid', 'corrected', 'manual_approved', 'duplicate', 'error', 'ignored']),
   errors: z.array(z.string()),
   warnings: z.array(z.string()),

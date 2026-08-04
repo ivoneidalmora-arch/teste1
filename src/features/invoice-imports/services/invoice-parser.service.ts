@@ -8,8 +8,9 @@ const COLUMNS = {
   data: ['geração', 'geracao', 'data'],
   cliente: ['tomador', 'cliente'],
   situacao: ['situação', 'situacao', 'status'],
-  valorBruto: ['valor total', 'valor', 'total', 'bruto'],
-  discriminacao: ['discriminação do serviço', 'discriminacao', 'serviço', 'servico', 'descrição', 'descricao']
+  valorBruto: ['valor total', 'valor bruto', 'bruto', 'valor'],
+  valorLiquido: ['valor líquido', 'valor liquido', 'liquido', 'líquido', 'valor servico', 'valor do servico', 'vl. liquido', 'vl liquido'],
+  discriminacao: ['discriminação do serviço', 'discriminacao', 'serviço', 'servico', 'descrição', 'descricao', 'discriminação']
 };
 
 const findColumn = (headers: string[], aliases: string[]): string | undefined => {
@@ -39,17 +40,44 @@ const parseCurrencyBR = (value: string | number): number => {
   return parseFloat(cleaned) || 0;
 };
 
-const extractPlate = (text: string): string => {
-  if (!text) return 'PLACA NÃO IDENTIFICADA';
-  
-  // Regex to match ABC1234 or ABC1D23, with optional space between letters and numbers
-  const regex = /[A-Za-z]{3}\s?[0-9][A-Za-z0-9][0-9]{2}/;
-  const match = text.match(regex);
-  
-  if (match) {
-    return match[0].toUpperCase().replace(/\s/g, '');
+/**
+ * Extrai a placa de um texto qualquer.
+ * Suporta:
+ *  - Formato antigo:   ABC1234  (3 letras + 4 dígitos)
+ *  - Formato Mercosul: ABC1D23  (3 letras + dígito + letra + 2 dígitos)
+ * Aceita separadores: espaço, hífen, barra, ponto ou nenhum.
+ * Também busca placa no formato com hífen (ABC-1234).
+ */
+const extractPlate = (text: string, fallbackTexts: string[] = []): string => {
+  const allTexts = [text, ...fallbackTexts].filter(Boolean);
+
+  // Mercosul + antigo, com ou sem separador entre grupo de letras e números
+  const regex = /\b([A-Za-z]{3})[\s\-\.\/_]?([0-9][A-Za-z0-9][0-9]{2})\b/g;
+
+  for (const src of allTexts) {
+    if (!src) continue;
+    const matches = [...src.matchAll(regex)];
+    for (const m of matches) {
+      const candidate = (m[1] + m[2]).toUpperCase();
+      // Valida formato final: 3 letras + 4 chars (onde o 5º pode ser letra ou dígito)
+      if (/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(candidate)) {
+        return candidate;
+      }
+    }
   }
+
   return 'PLACA NÃO IDENTIFICADA';
+};
+
+/**
+ * Calcula valor líquido: subtrai ISS (5%) + outros impostos padrão (3%).
+ * Use sempre que não houver coluna de valor líquido explícita.
+ * Regra: líquido = bruto * 0.92 (desconto de 8% de impostos totais)
+ * Ajuste o percentual conforme sua aliquota real.
+ */
+const calcNetValue = (gross: number): number => {
+  // 8% de imposto total (ISS 5% + outros 3%) — ajuste conforme necessidade
+  return parseFloat((gross * 0.92).toFixed(2));
 };
 
 export const invoiceParserService = {
@@ -108,6 +136,7 @@ export const invoiceParserService = {
     const colCliente = findColumn(headers, COLUMNS.cliente);
     const colSituacao = findColumn(headers, COLUMNS.situacao);
     const colValor = findColumn(headers, COLUMNS.valorBruto);
+    const colLiquido = findColumn(headers, COLUMNS.valorLiquido);
     const colDescricao = findColumn(headers, COLUMNS.discriminacao);
 
     if (!colData && !colCliente) {
@@ -145,6 +174,7 @@ export const invoiceParserService = {
       const rawSituacao = colSituacao ? String(row[colSituacao] || '').trim() : '';
       const rawValor = colValor ? row[colValor] : 0;
       const rawDescricao = colDescricao ? String(row[colDescricao] || '') : '';
+      const rawLiquido = colLiquido ? row[colLiquido] : null;
 
       // Trata data
       let dateStr = '';
@@ -158,15 +188,23 @@ export const invoiceParserService = {
       }
 
       const grossValue = typeof rawValor === 'number' ? rawValor : parseCurrencyBR(String(rawValor || '0'));
-      const placa = extractPlate(rawDescricao);
+
+      // Valor líquido: usa coluna explícita se existir, senão calcula automaticamente
+      const netValue = rawLiquido !== null && rawLiquido !== undefined
+        ? (typeof rawLiquido === 'number' ? rawLiquido : parseCurrencyBR(String(rawLiquido)))
+        : calcNetValue(grossValue);
+
+      // Extrai placa da discriminação; usa campo cliente como fallback
+      const placa = extractPlate(rawDescricao, [rawCliente]);
 
       const item: Partial<InvoiceImportData> = {
         id: `inv-${index}-${Math.random().toString(36).substr(2, 5)}`,
         date: dateStr,
         cliente: rawCliente || 'NÃO INFORMADO',
-        placa: placa,
+        placa,
         statusNota: rawSituacao || 'NÃO INFORMADA',
-        grossValue: grossValue,
+        grossValue,
+        netValue,
         description: rawDescricao,
         sourceRowNumber: Number(row._sourceRowNumber) || index + headerRowIndex + 1,
         errors: [],
@@ -220,6 +258,7 @@ export const invoiceParserService = {
     const colCliente = findColumn(headers, COLUMNS.cliente);
     const colSituacao = findColumn(headers, COLUMNS.situacao);
     const colValor = findColumn(headers, COLUMNS.valorBruto);
+    const colLiquido = findColumn(headers, COLUMNS.valorLiquido);
     const colDescricao = findColumn(headers, COLUMNS.discriminacao);
 
     if (!colData && !colCliente)
@@ -239,6 +278,7 @@ export const invoiceParserService = {
         const rawSituacao = colSituacao ? String(rowData[colSituacao] ?? '').trim() : '';
         const rawValor = colValor ? rowData[colValor] : 0;
         const rawDescricao = colDescricao ? String(rowData[colDescricao] ?? '') : '';
+        const rawLiquido = colLiquido ? rowData[colLiquido] : null;
 
         let dateStr = '';
         if (rawDate instanceof Date) {
@@ -250,7 +290,14 @@ export const invoiceParserService = {
 
         const grossValue =
           typeof rawValor === 'number' ? rawValor : parseCurrencyBR(String(rawValor ?? '0'));
-        const placa = extractPlate(rawDescricao);
+
+        // Valor líquido: usa coluna explícita se existir, senão calcula automaticamente
+        const netValue = rawLiquido !== null && rawLiquido !== undefined
+          ? (typeof rawLiquido === 'number' ? rawLiquido : parseCurrencyBR(String(rawLiquido)))
+          : calcNetValue(grossValue);
+
+        // Extrai placa da discriminação; usa campo cliente como fallback
+        const placa = extractPlate(rawDescricao, [rawCliente]);
 
         const item: Partial<InvoiceImportData> = {
           id: `inv-${index}-${Math.random().toString(36).substr(2, 5)}`,
@@ -259,6 +306,7 @@ export const invoiceParserService = {
           placa,
           statusNota: rawSituacao || 'NÃO INFORMADA',
           grossValue,
+          netValue,
           description: rawDescricao,
           sourceRowNumber: index + headerRowIndex + 2,
           errors: [],
