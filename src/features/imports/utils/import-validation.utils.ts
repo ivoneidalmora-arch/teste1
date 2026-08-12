@@ -1,5 +1,6 @@
 import { ImportedTransaction, ValidationStatus, ImportSummary, ImportValidationError } from '../types/import.types';
 import { differenceInDays, parseISO, isValid } from 'date-fns';
+import { isValidPlate } from './import-utils';
 
 /**
  * Validates a single transaction.
@@ -13,8 +14,9 @@ export function validateImportedTransaction(
 
   const preserveStatus = ["manual_approved", "ignored", "ignorado", "deleted"].includes(status);
 
-  // Field: Date
-  if (!item.date) {
+  // Field: Date (Geração)
+  if (!item.date || item.date.trim() === '') {
+    errors.push('DATA_AUSENTE');
     errors.push('DATA_INVALIDA');
   } else {
     const d = parseISO(item.date);
@@ -23,12 +25,17 @@ export function validateImportedTransaction(
     }
   }
 
-  // Field: Gross Value
+  // Field: Client (Tomador)
+  if (!item.cliente || item.cliente.trim() === '' || item.cliente === 'NÃO INFORMADO') {
+    errors.push('CLIENTE_AUSENTE');
+  }
+
+  // Field: Gross Value (Valor)
   if (item.grossValue === undefined || item.grossValue === null) {
+    errors.push('VALOR_AUSENTE');
     errors.push('VALOR_BRUTO_AUSENTE');
-  } else if (typeof item.grossValue !== 'number' || isNaN(item.grossValue)) {
-    errors.push('VALOR_BRUTO_INVALIDO');
-  } else if (item.grossValue <= 0) {
+  } else if (typeof item.grossValue !== 'number' || isNaN(item.grossValue) || item.grossValue <= 0) {
+    errors.push('VALOR_INVALIDO');
     errors.push('VALOR_BRUTO_INVALIDO');
   }
 
@@ -39,16 +46,15 @@ export function validateImportedTransaction(
     }
   }
 
-  // Field: Plate
+  // Field: Plate (Discriminação Serviço)
   if (!item.placa || item.placa.trim() === '') {
-    errors.push('PLACA_AUSENTE');
-  } else if (item.placa.replace(/[^A-Z0-9]/gi, '').length < 7) {
-    errors.push('PLACA_INVALIDA');
-  }
-
-  // Field: Client
-  if (!item.cliente || item.cliente.trim() === '') {
-    errors.push('CLIENTE_AUSENTE');
+    // Placa não encontrada no texto da discriminação
+    errors.push('PLACA_NAO_ENCONTRADA');
+  } else {
+    const cleanPlaca = item.placa.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+    if (!isValidPlate(cleanPlaca)) {
+      errors.push('PLACA_INVALIDA');
+    }
   }
 
   // Field: Service
@@ -56,9 +62,17 @@ export function validateImportedTransaction(
     errors.push('SERVICO_AUSENTE');
   }
 
+  // Erros críticos que invalidam o lançamento (placa ausente NÃO invalida a nota)
+  const hasCriticalErrors = errors.some(err => 
+    err === 'DATA_AUSENTE' || err === 'DATA_INVALIDA' ||
+    err === 'CLIENTE_AUSENTE' || err === 'VALOR_AUSENTE' || 
+    err === 'VALOR_INVALIDO' || err === 'VALOR_BRUTO_INVALIDO' || 
+    err === 'PLACA_INVALIDA'
+  );
+
   // Determine final status if not preserving
   if (!preserveStatus) {
-    if (errors.length > 0) {
+    if (hasCriticalErrors) {
       status = "invalid";
     } else {
       status = (item.status === "corrigido" || item.status === "corrected") ? "corrected" : "valid";
@@ -80,10 +94,10 @@ export function validateImportedTransaction(
     date: item.date || '',
     placa: item.placa || '',
     cliente: item.cliente || '',
-    service: item.service || '',
-    category: item.category || '',
+    service: item.service || 'Vistoria Veicular',
+    category: item.category || 'Vistoria Veicular',
     grossValue: item.grossValue ?? 0,
-    netValue: item.netValue,
+    netValue: item.netValue ?? item.grossValue ?? 0,
     status,
     errors,
     warnings,
@@ -101,6 +115,7 @@ export function validateImportedTransaction(
     formaPagamento: item.formaPagamento || 'Pix'
   };
 }
+
 
 /**
  * Detects duplicates within a batch based on plate, service, and < 30 days interval.

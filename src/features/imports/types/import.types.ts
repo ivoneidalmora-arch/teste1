@@ -17,16 +17,21 @@ export type ValidationStatus =
   | "deleted";
 
 export type ImportValidationError =
+  | 'DATA_AUSENTE'
   | 'DATA_INVALIDA'
   | 'PLACA_AUSENTE'
   | 'PLACA_INVALIDA'
+  | 'PLACA_NAO_ENCONTRADA'
   | 'CLIENTE_AUSENTE'
   | 'SERVICO_AUSENTE'
+  | 'VALOR_AUSENTE'
+  | 'VALOR_INVALIDO'
   | 'VALOR_BRUTO_AUSENTE'
   | 'VALOR_BRUTO_INVALIDO'
   | 'VALOR_LIQUIDO_AUSENTE'
   | 'VALOR_LIQUIDO_INVALIDO'
   | 'DUPLICADO'
+  | 'DUPLICIDADE'
   | 'INCONSISTENTE';
 
 export interface ImportAuditLog {

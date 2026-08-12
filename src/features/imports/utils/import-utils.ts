@@ -1,38 +1,56 @@
 import { calculateLiquido } from '@/core/utils/finance';
 
 export const COLUMN_ALIASES = {
+  numeroNfse: [
+    'Número', 'Numero', 'Nº', 'N°', 'Número NF-e', 'Número da Nota', 'Numero da Nota', 'nf', 'nfe'
+  ],
+  numeroRps: [
+    'Nº RPS', 'N° RPS', 'Numero RPS', 'RPS'
+  ],
+  competencia: [
+    'Competência', 'Competencia'
+  ],
   data: [
-    'data', 'DATA', 'Data', 'Data Serviço', 'Data do Serviço', 'Dt Serviço', 'Dt',
-    'data_lancamento', 'data lançamento', 'Data Lançamento', 'vencimento', 'data_pagamento', 
-    'Data Pagamento', 'data_vistoria', 'vistoria'
+    'Geração', 'Geracao', 'Data Geração', 'Data de Geração', 'Data Geracao', 'data', 'DATA', 
+    'Data', 'Data Serviço', 'Data do Serviço', 'Dt Serviço', 'Dt', 'data_lancamento', 
+    'data lançamento', 'Data Lançamento', 'vencimento', 'data_pagamento', 'Data Pagamento'
   ],
   placa: [
     'placa', 'PLACA', 'Placa', 'Veículo', 'Veiculo', 'carro', 'identificacao'
   ],
   cliente: [
-    'cliente', 'CLIENTE', 'Cliente', 'Nome Cliente', 'Nome do Cliente', 'Proprietário', 
-    'Proprietario', 'nome', 'Nome', 'solicitante'
+    'Tomador', 'Tomador de Serviços', 'Nome Tomador', 'cliente', 'CLIENTE', 'Cliente', 
+    'Nome Cliente', 'Nome do Cliente', 'Proprietário', 'Proprietario', 'nome', 'Nome', 'solicitante'
+  ],
+  prestador: [
+    'Prestador', 'Prestador de Serviços', 'Nome Prestador'
+  ],
+  situacao: [
+    'Situação', 'Situacao', 'status', 'Status', 'pago', 'pendente'
   ],
   servico: [
-    'serviço', 'servico', 'SERVIÇO', 'SERVICO', 'Serviço', 'Servico', 'Tipo Serviço', 
-    'Tipo Servico', 'tipo_servico', 'item', 'categoria', 'Categoria', 'CATEGORIA', 
-    'grupo', 'classificacao', 'classificação'
+    'Serviço', 'Servico', 'Tipo Serviço', 'Tipo Servico', 'tipo_servico', 'item', 
+    'categoria', 'Categoria', 'CATEGORIA', 'grupo', 'classificacao', 'classificação'
   ],
   valorBruto: [
-    'valor', 'VALOR', 'Valor', 'Valor Bruto', 'VALOR BRUTO', 'Bruto', 'BRUTO', 
-    'Receita Bruta', 'Total', 'amount', 'total', 'preco', 'preço', 'valor_total', 
-    'valor total', 'valor_bruto', 'receita', 'despesa', 'credito', 'crédito', 
-    'debito', 'débito', 'entrada', 'saida', 'importancia', 'importância', 
-    'lancamento', 'lançamento', 'r$', 'valor (r$)'
+    'Valor', 'VALOR', 'valor', 'Valor Bruto', 'VALOR BRUTO', 'Valor Total', 'Bruto', 
+    'BRUTO', 'Receita Bruta', 'Total', 'amount', 'total', 'preco', 'preço', 'valor_total', 
+    'valor total', 'valor_bruto', 'receita', 'despesa', 'r$', 'valor (r$)'
+  ],
+  desconto: [
+    'Valor Desconto', 'Desconto', 'desconto'
   ],
   valorLiquido: [
     'liquido', 'líquido', 'LÍQUIDO', 'LIQUIDO', 'Valor Líquido', 'Valor Liquido', 
-    'VALOR LIQUIDO', 'VALOR LÍQUIDO', 'Liq', 'Líquido', 'Liquido', 'Receita Líquida', 
-    'Receita Liquida'
+    'VALOR LIQUIDO', 'VALOR LÍQUIDO', 'Liq', 'Líquido', 'Liquido', 'Receita Líquida'
   ],
   description: [
-    "descricao", "descrição", "Descrição", "DESCRIÇÃO", "historico", "histórico", 
-    "Histórico", "observacao", "observação", "obs", "historico_lancamento"
+    "Discriminação Serviço", "Discriminacao Servico", "Discriminação do Serviço", 
+    "Discriminacao do Servico", "Discriminação", "Discriminacao", "descricao", "descrição", 
+    "Descrição", "DESCRIÇÃO", "historico", "histórico", "Histórico", "observacao", "observação", "obs"
+  ],
+  observacao: [
+    "Observação", "Observacao", "observacao", "observação", "obs", "Obs", "nota"
   ],
   type: [
     "tipo", "Tipo", "TIPO", "natureza", "entrada_saida", "entrada/saida", "entrada saída"
@@ -48,6 +66,71 @@ export const COLUMN_ALIASES = {
   ]
 };
 
+/**
+ * Extrai exclusivamente a placa do veículo a partir do texto de Discriminação de Serviço.
+ * Valida os padrões brasileiros:
+ * - Antigo: ABC1234 (3 letras + 4 dígitos)
+ * - Mercosul: ABC1D23 (3 letras + 1 dígito + 1 letra + 2 dígitos)
+ * Retorna a placa normalizada em maiúsculas sem hífen/espaço ou null se não encontrada.
+ */
+export function extractVehiclePlate(discriminacao: unknown): string | null {
+  if (!discriminacao) return null;
+  const text = String(discriminacao).toUpperCase();
+  if (!text.trim()) return null;
+
+  // 1. Padrão Mercosul: 3 letras, hífen/espaço opcional, 1 dígito, 1 letra, 2 dígitos
+  // Ex: SKP4J26, SKP-4J26, SKP 4J26
+  const mercosulMatch = text.match(/\b([A-Z]{3})[-\s]?([0-9][A-Z][0-9]{2})\b/);
+  if (mercosulMatch) {
+    return `${mercosulMatch[1]}${mercosulMatch[2]}`;
+  }
+
+  // 2. Padrão Antigo: 3 letras, hífen/espaço opcional, 4 dígitos
+  // Ex: ABC1234, ABC-1234, ABC 1234
+  const antigoMatch = text.match(/\b([A-Z]{3})[-\s]?([0-9]{4})\b/);
+  if (antigoMatch) {
+    return `${antigoMatch[1]}${antigoMatch[2]}`;
+  }
+
+  return null;
+}
+
+/**
+ * Valida se uma string é uma placa no padrão brasileiro (Antigo ou Mercosul).
+ */
+export function isValidPlate(plate: string | null | undefined): boolean {
+  if (!plate) return false;
+  const p = plate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (p.length !== 7) return false;
+
+  const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+  const antigo = /^[A-Z]{3}[0-9]{4}$/;
+
+  return mercosul.test(p) || antigo.test(p);
+}
+
+/**
+ * Localiza dinamicamente a linha de cabeçalho da planilha de NFS-e (varrendo as primeiras 20 linhas).
+ */
+export function findHeaderRowIndex(rows: any[][]): number {
+  for (let i = 0; i < Math.min(20, rows.length); i++) {
+    const rowCells = (rows[i] || []).map(cell => 
+      String(cell || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+    );
+
+    const matches = rowCells.filter(cell => {
+      return [
+        'numero', 'geracao', 'valor', 'tomador', 'situacao', 'discriminacao', 'servico'
+      ].some(k => cell.includes(k));
+    });
+
+    if (matches.length >= 3) {
+      return i;
+    }
+  }
+  return 1;
+}
+
 export function normalizeColumnName(value: string): string {
   return String(value || '')
     .normalize('NFD')
@@ -60,7 +143,6 @@ export function normalizeColumnName(value: string): string {
 export function getValueByAliases(row: Record<string, unknown>, aliases: string[]): unknown {
   const normalizedRow = Object.entries(row).reduce((acc, [key, value]) => {
     const normalizedKey = normalizeColumnName(key);
-    // Preserva o primeiro valor encontrado ou valores não vazios
     if (!(normalizedKey in acc) || (value !== undefined && value !== null && String(value).trim() !== "")) {
       acc[normalizedKey] = value;
     }
@@ -138,7 +220,6 @@ export function parseBrazilianDate(value: unknown): Date | null {
   if (!isNaN(numVal) && !hasDateSeparators && numVal >= 30000 && numVal <= 60000) {
     const excelEpoch = new Date(1899, 11, 30);
     const result = new Date(excelEpoch.getTime() + numVal * 86400000);
-    // Evita timezone offset bugs
     return new Date(result.getUTCFullYear(), result.getUTCMonth(), result.getUTCDate());
   }
 
@@ -202,6 +283,7 @@ export function normalizeClientName(value: unknown): string {
 
 export function standardizeService(raw: string): string {
   const s = String(raw).trim();
+  if (!s) return 'Vistoria Veicular';
   const normalized = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   
   if (normalized.includes('completo') || normalized.includes('transferencia')) return 'Transferência';
@@ -212,3 +294,4 @@ export function standardizeService(raw: string): string {
   
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
+

@@ -4,7 +4,9 @@ import {
   parseBrazilianDate, 
   formatDateBR, 
   normalizeClientName,
-  getValueByAliases
+  getValueByAliases,
+  extractVehiclePlate,
+  isValidPlate
 } from '../utils/import-utils';
 
 describe('import-utils > Valores Financeiros', () => {
@@ -86,7 +88,34 @@ describe('import-utils > Colunas Dinâmicas', () => {
       'Preço Sugerido': '',
       'Preço': 150
     };
-    // Mesmo "Preço Sugerido" fazendo match parcial e vindo antes, ele está vazio, então deve pular
     expect(getValueByAliases(row, aliases)).toBe(150);
   });
 });
+
+describe('import-utils > Extração de Placas NFS-e', () => {
+  it('deve extrair placa no padrão Mercosul de Discriminação Serviço', () => {
+    const text = 'Serviço de vistoria veicular para a placa SKP4J26 FIAT ARGO DRIVE 1.3 AT';
+    expect(extractVehiclePlate(text)).toBe('SKP4J26');
+  });
+
+  it('deve extrair placa no padrão Antigo com hífen ou espaço', () => {
+    expect(extractVehiclePlate('Vistoria para o veículo ABC-1234 chevrolet celta')).toBe('ABC1234');
+    expect(extractVehiclePlate('Placa ABC 1234 ano 2015')).toBe('ABC1234');
+  });
+
+  it('deve retornar null para textos sem placa identificável e não inventar placas de números ou descrições', () => {
+    expect(extractVehiclePlate('VISTORIA FIXA')).toBeNull();
+    expect(extractVehiclePlate('VISTORIA DE VEICULO LEVE')).toBeNull();
+    expect(extractVehiclePlate('DESCRIÇÃO DO ITEM | QUANT. | VALOR UNIT. | DESCONTO | TOTAL\nVISTORIA DE VEICULO PESADO | 1,0000 | 142,0000 | 0,00 | 142,00')).toBeNull();
+    expect(extractVehiclePlate('031.713.247-41 - ERICSON VINICIUS FREIRE RAFAEL')).toBeNull();
+  });
+
+  it('deve validar padrões válidos de placa brasileira', () => {
+    expect(isValidPlate('SKP4J26')).toBe(true);
+    expect(isValidPlate('ABC1234')).toBe(true);
+    expect(isValidPlate('ABC-1234')).toBe(true);
+    expect(isValidPlate('INVALID')).toBe(false);
+    expect(isValidPlate('1234567')).toBe(false);
+  });
+});
+
