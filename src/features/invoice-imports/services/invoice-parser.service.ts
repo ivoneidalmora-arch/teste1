@@ -103,8 +103,8 @@ export const invoiceParserService = {
     const rawDescontoStr = String(getValueByAliases(row, COLUMN_ALIASES.desconto) || '0');
     const descontoVal = parseCurrencyUtils(rawDescontoStr) ?? 0;
 
-    // Valor Líquido no XLS: NÃO aplicar dedução de 8% (* 0.92). Igual ao bruto ou bruto - desconto.
-    const netValue = grossValue > 0 ? grossValue - descontoVal : 0;
+    // REGRA ÚNICA — VALOR LÍQUIDO DO XLS: Valor Líquido = Valor da coluna Valor do XLS.
+    const netValue = grossValue;
 
     const rawDescricao = String(getValueByAliases(row, COLUMN_ALIASES.description) || '');
     const extractedPlaca = extractVehiclePlate(rawDescricao) || extractVehiclePlate(getValueByAliases(row, COLUMN_ALIASES.placa));

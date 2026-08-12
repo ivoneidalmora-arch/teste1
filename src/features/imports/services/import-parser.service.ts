@@ -141,8 +141,8 @@ export const importParserService = {
     const descontoVal = parseCurrencyBR(rawDescontoStr) || 0;
 
     const grossValue = amount ?? 0;
-    // O XLS NÃO POSSUI coluna Valor Líquido -> NÃO aplicar deduções automáticas (ex: * 0.92)
-    const netValue = grossValue > 0 ? grossValue - descontoVal : 0;
+    // REGRA ÚNICA — VALOR LÍQUIDO DO XLS: Valor Líquido = Valor da coluna Valor do XLS.
+    const netValue = grossValue;
 
     // 5. Discriminação do Serviço
     const descriptionStr = String(
