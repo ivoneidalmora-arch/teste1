@@ -57,10 +57,8 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
         return d.getFullYear() === selectedYear;
       });
     } else if (filterPeriod === 'global') {
-      list = transactions.filter(t => {
-        const d = parseISO(t.date);
-        return d.getFullYear() === selectedYear;
-      });
+      // Ignora limites de data: pega todo o histórico desde o primeiro registro
+      list = transactions;
     }
 
     return getTopClients(list);
@@ -92,11 +90,13 @@ export function TopClientsCard({ transactions, selectedPeriod, selectedYear }: T
         const d = parseISO(t.date);
         return isAfter(d, thirtyDaysAgo);
       });
-    } else if (filterPeriod === 'year' || filterPeriod === 'global') {
+    } else if (filterPeriod === 'year') {
       list = transactions.filter(t => {
         const d = parseISO(t.date);
         return d.getFullYear() === selectedYear;
       });
+    } else if (filterPeriod === 'global') {
+      list = transactions;
     }
     return list;
   }, [transactions, filterPeriod, selectedPeriod, selectedYear]);
