@@ -2,7 +2,7 @@ import { calculateLiquido } from '@/core/utils/finance';
 
 export const COLUMN_ALIASES = {
   numeroNfse: [
-    'Número', 'Numero', 'Nº', 'N°', 'Número NF-e', 'Número da Nota', 'Numero da Nota', 'nf', 'nfe'
+    'Número', 'Numero', 'Nº', 'N°', 'Número NF-e', 'Número da Nota', 'Numero da Nota', 'nf', 'nfe', 'Nº da Nota Fiscal'
   ],
   numeroRps: [
     'Nº RPS', 'N° RPS', 'Numero RPS', 'RPS'
@@ -13,13 +13,13 @@ export const COLUMN_ALIASES = {
   data: [
     'Geração', 'Geracao', 'Data Geração', 'Data de Geração', 'Data Geracao', 'data', 'DATA', 
     'Data', 'Data Serviço', 'Data do Serviço', 'Dt Serviço', 'Dt', 'data_lancamento', 
-    'data lançamento', 'Data Lançamento', 'vencimento', 'data_pagamento', 'Data Pagamento'
+    'data lançamento', 'Data Lançamento', 'vencimento', 'data_pagamento', 'Data Pagamento', 'Recepção', 'Recepcão', 'Recepcao'
   ],
   placa: [
-    'placa', 'PLACA', 'Placa', 'Veículo', 'Veiculo', 'carro', 'identificacao'
+    'placa', 'PLACA', 'Placa', 'Veículo', 'Veiculo', 'carro', 'identificacao', 'Placa Veículo', 'Placa do Veículo'
   ],
   cliente: [
-    'Tomador', 'Tomador de Serviços', 'Nome Tomador', 'cliente', 'CLIENTE', 'Cliente', 
+    'Tomador', 'Tomador de Serviços', 'Nome Tomador', 'Razão Social', 'Razao Social', 'cliente', 'CLIENTE', 'Cliente', 
     'Nome Cliente', 'Nome do Cliente', 'Proprietário', 'Proprietario', 'nome', 'Nome', 'solicitante'
   ],
   prestador: [
@@ -35,18 +35,39 @@ export const COLUMN_ALIASES = {
   valorBruto: [
     'Valor', 'VALOR', 'valor', 'Valor Bruto', 'VALOR BRUTO', 'Valor Total', 'Bruto', 
     'BRUTO', 'Receita Bruta', 'Total', 'amount', 'total', 'preco', 'preço', 'valor_total', 
-    'valor total', 'valor_bruto', 'receita', 'despesa', 'r$', 'valor (r$)'
+    'valor total', 'valor_bruto', 'receita', 'despesa', 'r$', 'valor (r$)', 'Valor Serviço', 'Valor do Serviço'
   ],
   desconto: [
-    'Valor Desconto', 'Desconto', 'desconto'
+    'Valor Desconto', 'Desconto', 'desconto', 'Desconto Incondicional', 'Desconto Condicional'
   ],
   valorLiquido: [
     'liquido', 'líquido', 'LÍQUIDO', 'LIQUIDO', 'Valor Líquido', 'Valor Liquido', 
     'VALOR LIQUIDO', 'VALOR LÍQUIDO', 'Liq', 'Líquido', 'Liquido', 'Receita Líquida'
   ],
+  valorInss: [
+    'Valor INSS', 'INSS', 'Valor Retenção INSS', 'Retenção INSS'
+  ],
+  valorIr: [
+    'Valor IR', 'Valor IRRF', 'IR', 'IRRF', 'Valor Retenção IR'
+  ],
+  valorPis: [
+    'Valor PIS', 'PIS', 'Valor Retenção PIS'
+  ],
+  valorCofins: [
+    'Valor COFINS', 'COFINS', 'Valor Retenção COFINS'
+  ],
+  valorCsll: [
+    'Valor CSLL', 'CSLL', 'Valor Retenção CSLL'
+  ],
+  issRetido: [
+    'ISS Retido', 'Valor ISS Retido'
+  ],
+  outrasRetencoes: [
+    'Outras Retenções', 'Outras Retencoes', 'Retenções', 'Retencoes'
+  ],
   description: [
     "Discriminação Serviço", "Discriminacao Servico", "Discriminação do Serviço", 
-    "Discriminacao do Servico", "Discriminação", "Discriminacao", "descricao", "descrição", 
+    "Discriminacao do Servico", "Discriminação", "Discriminacao", "DISCRIMINAÇÃO DOS SERVIÇOS", "descricao", "descrição", 
     "Descrição", "DESCRIÇÃO", "historico", "histórico", "Histórico", "observacao", "observação", "obs"
   ],
   observacao: [
@@ -78,15 +99,24 @@ export function extractVehiclePlate(discriminacao: unknown): string | null {
   const text = String(discriminacao).toUpperCase();
   if (!text.trim()) return null;
 
-  // 1. Padrão Mercosul: 3 letras, hífen/espaço opcional, 1 dígito, 1 letra, 2 dígitos
-  // Ex: SKP4J26, SKP-4J26, SKP 4J26
+  // 1. Procura ocorrências associadas a palavras-chave como 'PLACA' ou 'VEICULO' primeiro
+  const keywordMatch = text.match(/(?:PLACA|VEICULO|VEÍCULO)\s*[:\-\s]*([A-Z]{3}[-\s]?[0-9][A-Z0-9][0-9]{2})/);
+  if (keywordMatch) {
+    const rawCandidate = keywordMatch[1].replace(/[^A-Z0-9]/g, '');
+    if (isValidPlate(rawCandidate)) {
+      return rawCandidate;
+    }
+  }
+
+  // 2. Padrão Mercosul: 3 letras, hífen/espaço opcional, 1 dígito, 1 letra, 2 dígitos
+  // Ex: LHQ5I01, SKP4J26, LHQ 5I01
   const mercosulMatch = text.match(/\b([A-Z]{3})[-\s]?([0-9][A-Z][0-9]{2})\b/);
   if (mercosulMatch) {
     return `${mercosulMatch[1]}${mercosulMatch[2]}`;
   }
 
-  // 2. Padrão Antigo: 3 letras, hífen/espaço opcional, 4 dígitos
-  // Ex: ABC1234, ABC-1234, ABC 1234
+  // 3. Padrão Antigo: 3 letras, hífen/espaço opcional, 4 dígitos
+  // Ex: ABC1234, MRT6045, ABC 1234
   const antigoMatch = text.match(/\b([A-Z]{3})[-\s]?([0-9]{4})\b/);
   if (antigoMatch) {
     return `${antigoMatch[1]}${antigoMatch[2]}`;
